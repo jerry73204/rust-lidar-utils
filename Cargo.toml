@@ -1,0 +1,17 @@
+[package]
+name = "lidar-buffer"
+version = "0.1.0"
+authors = ["jerry73204 <jerry73204@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+pcap = "~0"
+failure = "~0"
+serde = { version = "~1", features = ["derive"] }
+serde_json = "~1"
+serde-big-array = "~0"
+chrono = "~0"
+log = "~0"
+
+[dev-dependencies]
+pretty_env_logger = "~0"
