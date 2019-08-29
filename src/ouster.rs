@@ -1,6 +1,8 @@
 use chrono::NaiveDateTime;
 use failure::Fallible;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "enable-pcap")]
+use pcap::Packet as PcapPacket;
 use std::{
     fmt::{Debug, Formatter, Result as FormatResult},
     fs::File,
@@ -90,6 +92,21 @@ pub struct Packet {
 }
 
 impl Packet {
+    /// Construct packet from [pcap's Packet](pcap::Packet).
+    #[cfg(feature = "enable-pcap")]
+    pub fn from_pcap(packet: &PcapPacket) -> Fallible<Packet> {
+        let packet_header_size = 42;
+
+        ensure!(
+            packet.header.len as usize - packet_header_size == size_of::<Packet>(),
+            "Input pcap packet is not a valid Ouster Lidar packet",
+        );
+
+        let mut buffer = Box::new([0u8; size_of::<Packet>()]);
+        buffer.copy_from_slice(&packet.data[packet_header_size..]);
+        Ok(Self::from_buffer(*buffer))
+    }
+
     pub fn from_buffer(buffer: [u8; size_of::<Packet>()]) -> Packet {
         unsafe { std::mem::transmute::<_, Packet>(buffer) }
     }
