@@ -22,6 +22,7 @@ big_array! { BigArray; }
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy)]
 pub struct Pixel {
+    /// The least significant 20 bits form distance in millimeters.
     pub raw_range: u32,
     pub reflectivity: u16,
     pub signal_photons: u16,
@@ -30,6 +31,7 @@ pub struct Pixel {
 }
 
 impl Pixel {
+    /// Extract distance in millimeters from raw_range field.
     pub fn range(&self) -> u32 {
         self.raw_range & 0x000fffff
     }
@@ -38,25 +40,34 @@ impl Pixel {
 #[repr(C, packed)]
 #[derive(Clone, Copy)]
 pub struct Column {
+    /// Unix timestamp.
     pub timestamp: u64,
+    /// The column index.
     pub measurement_id: u16,
+    /// The frame index.
     pub frame_id: u16,
+    /// Encoder count of rotation motor ranging from 0 to 90111 (inclusive).
     pub encoder_ticks: u32,
+    /// Array of pixels.
     pub pixels: [Pixel; PIXELS_PER_COLUMN],
+    /// Packet validility mark. True if value is 0xffffffff.
     pub raw_valid: u32,
 }
 
 impl Column {
+    /// Construct [NaiveDateTime](chrono::NaiveDateTime) object from column timestamp.
     pub fn datetime(&self) -> NaiveDateTime {
         let secs = self.timestamp / 1_000_000_000;
         let nsecs = self.timestamp % 1_000_000_000;
         NaiveDateTime::from_timestamp(secs as i64, nsecs as u32)
     }
 
+    /// Compute azimuth angle in radian from encoder ticks.
     pub fn azimuth_angle(&self) -> f64 {
         2.0 * std::f64::consts::PI * self.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64
     }
 
+    /// Return if this packet is marked valid.
     pub fn valid(&self) -> bool {
         self.raw_valid == 0xffffffff
     }
@@ -107,10 +118,12 @@ impl Packet {
         Ok(Self::from_buffer(*buffer))
     }
 
+    /// Construct packet from binary buffer.
     pub fn from_buffer(buffer: [u8; size_of::<Packet>()]) -> Packet {
         unsafe { std::mem::transmute::<_, Packet>(buffer) }
     }
 
+    /// Construct packet from slice of bytes. Error if the slice size is not correct.
     pub fn from_slice<'a>(buffer: &'a [u8]) -> Fallible<&'a Packet> {
         ensure!(
             buffer.len() == size_of::<Packet>(),
@@ -147,22 +160,26 @@ pub struct Config {
 }
 
 impl Config {
+    /// Load config JSON file from path.
     pub fn from_path<P: AsRef<Path>>(path: P) -> Fallible<Config> {
         let file = File::open(path.as_ref())?;
         let ret = Self::from_reader(file)?;
         Ok(ret)
     }
 
+    /// Load config JSON data from reader with [Read](std::io::Read) trait.
     pub fn from_reader<R: Read>(reader: R) -> Fallible<Config> {
         let ret = serde_json::de::from_reader(reader)?;
         Ok(ret)
     }
 
+    /// Parse from JSON string.
     pub fn from_str(data: &str) -> Fallible<Config> {
         let ret = serde_json::from_str(data)?;
         Ok(ret)
     }
 
+    /// Get lidar scene width by its mode.
     pub fn width(&self) -> usize {
         use LidarMode::*;
         match self.lidar_mode {
@@ -172,6 +189,7 @@ impl Config {
         }
     }
 
+    /// Compute points on unit circle from each laser beam.
     pub fn xyz_lut(&self) -> Vec<Vec<(f64, f64, f64)>> {
         use std::f64::consts::PI;
 

@@ -36,12 +36,16 @@ impl LaserReturn {
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy)]
 pub struct FiringData {
+    /// Valid if either 0xeeff or 0xddff, corresponding to range from 0 to 31, or range from 32 to 63.
     pub block_identifier: BlockIdentifier,
+    /// Encoder count of rotation motor ranging from 0 to 36000 (inclusive).
     pub encoder_ticks: u16,
+    /// Array of laser returns.
     pub laster_returns: [LaserReturn; LASER_PER_FIRING],
 }
 
 impl FiringData {
+    /// Compute azimuth angle in radian from encoder ticks.
     pub fn azimuth_angle(&self) -> f64 {
         2.0 * std::f64::consts::PI * self.encoder_ticks as f64 / (ENCODER_TICKS_PER_REV - 1) as f64
     }
@@ -72,10 +76,12 @@ impl Packet {
         Ok(Self::from_buffer(*buffer))
     }
 
+    /// Construct packet from binary buffer.
     pub fn from_buffer(buffer: [u8; size_of::<Packet>()]) -> Packet {
         unsafe { std::mem::transmute::<_, Packet>(buffer) }
     }
 
+    /// Construct packet from slice of bytes. Fail if the slice size is not correct.
     pub fn from_slice<'a>(buffer: &'a [u8]) -> Fallible<&'a Packet> {
         ensure!(
             buffer.len() == size_of::<Packet>(),
