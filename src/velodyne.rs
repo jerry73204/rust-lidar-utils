@@ -1,6 +1,6 @@
+use failure::Fallible;
 #[cfg(feature = "enable-pcap")]
 use pcap::Packet as PcapPacket;
-use failure::Fallible;
 use std::mem::size_of;
 
 pub const DATA_PORT: u16 = 2368;

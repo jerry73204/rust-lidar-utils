@@ -1,8 +1,8 @@
 use chrono::NaiveDateTime;
 use failure::Fallible;
-use serde::{Deserialize, Serialize};
 #[cfg(feature = "enable-pcap")]
 use pcap::Packet as PcapPacket;
+use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Debug, Formatter, Result as FormatResult},
     fs::File,

@@ -57,11 +57,13 @@ fn velodyne_scan() -> Fallible<()> {
         buffer.copy_from_slice(&packet.data[PACKET_HEADER_SIZE..]);
         let lidar_packet = VelodynePacket::from_buffer(*buffer);
 
-        let points = lidar_packet.firings
+        let points = lidar_packet
+            .firings
             .iter()
             .map(|firing| {
                 let azimuth_angle = firing.azimuth_angle();
-                let column_points = firing.laster_returns
+                let column_points = firing
+                    .laster_returns
                     .iter()
                     .zip(ALTITUDE_DEGREES.iter())
                     .map(|(laster_return, altitude_deg)| {
