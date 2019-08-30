@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate failure;
 extern crate lidar_buffer;
 extern crate pcap;
@@ -8,14 +7,14 @@ extern crate log;
 extern crate pretty_env_logger;
 
 use failure::Fallible;
-use lidar_buffer::ouster::{Config, LidarMode, Packet as OusterPacket};
+use lidar_buffer::ouster::{Config, Helper, Packet as OusterPacket};
 use pcap::Capture;
 use std::mem::size_of;
 
 const PACKET_HEADER_SIZE: usize = 42; // Ethernet + IPv4 header size
 
 #[test]
-fn ouster_test() -> Fallible<()> {
+fn ouster_pcap_file() -> Fallible<()> {
     let mut packets = vec![];
 
     let mut cap = Capture::from_file("test_files/ouster_example.pcap")?;
@@ -48,7 +47,7 @@ fn ouster_scan() -> Fallible<()> {
 
     // Load config
     let config = Config::from_path("test_files/ouster_example.json")?;
-    let xyz_lut = config.xyz_lut();
+    let helper = Helper::from_config(config);
 
     // Load pcap file
     let mut cap = Capture::from_file("/home/jerry73204/Downloads/lombard_street_OS1.pcap")?;
@@ -89,11 +88,6 @@ fn ouster_scan() -> Fallible<()> {
             let new_fid = column.frame_id;
             let new_mid = column.measurement_id;
 
-            ensure!(
-                (new_mid as usize) < config.width(),
-                "Invalid measurement id out of bound"
-            );
-
             match curr_fid {
                 Some(orig_fid) => {
                     if orig_fid == new_fid {
@@ -128,19 +122,7 @@ fn ouster_scan() -> Fallible<()> {
             }
 
             // Construct point cloud
-            let mut column_points = xyz_lut[new_mid as usize]
-                .iter()
-                .zip(column.pixels.iter())
-                .map(|(xyz, pixel)| {
-                    let (x, y, z) = xyz;
-                    let range = pixel.range() as f64 * 0.01; // mm to meter
-                    let rx = (*x) as f64 * range;
-                    let ry = (*y) as f64 * range;
-                    let rz = (*z) as f64 * range;
-                    (rx, ry, rz)
-                })
-                .collect::<Vec<_>>();
-
+            let mut column_points = helper.column_to_points(&column)?;
             frame_points.append(&mut column_points);
         }
     }

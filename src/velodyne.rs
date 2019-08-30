@@ -1,4 +1,5 @@
 use failure::Fallible;
+use ndarray::Array3;
 #[cfg(feature = "enable-pcap")]
 use pcap::Packet as PcapPacket;
 use std::mem::size_of;
@@ -35,7 +36,7 @@ impl LaserReturn {
 
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy)]
-pub struct FiringData {
+pub struct Firing {
     /// Valid if either 0xeeff or 0xddff, corresponding to range from 0 to 31, or range from 32 to 63.
     pub block_identifier: BlockIdentifier,
     /// Encoder count of rotation motor ranging from 0 to 36000 (inclusive).
@@ -44,7 +45,7 @@ pub struct FiringData {
     pub laster_returns: [LaserReturn; LASER_PER_FIRING],
 }
 
-impl FiringData {
+impl Firing {
     /// Compute azimuth angle in radian from encoder ticks.
     pub fn azimuth_angle(&self) -> f64 {
         2.0 * std::f64::consts::PI * self.encoder_ticks as f64 / (ENCODER_TICKS_PER_REV - 1) as f64
@@ -54,7 +55,7 @@ impl FiringData {
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy)]
 pub struct Packet {
-    pub firings: [FiringData; FIRING_PER_PACKET],
+    pub firings: [Firing; FIRING_PER_PACKET],
     pub gps_timestamp: u32,
     pub mode: u8,
     pub sensor_type: u8,
@@ -91,6 +92,85 @@ impl Packet {
         );
         let packet = unsafe { &*(buffer.as_ptr() as *const Packet) };
         Ok(packet)
+    }
+}
+
+pub struct Helper {
+    altitude_degrees: [f64; LASER_PER_FIRING],
+    spherical_projection: Array3<f64>,
+}
+
+impl Helper {
+    pub fn new(altitude_degrees: [f64; LASER_PER_FIRING]) -> Helper {
+        let num_columns = ENCODER_TICKS_PER_REV - 1;
+        let num_rows = altitude_degrees.len();
+        let mut spherical_projection = Array3::<f64>::zeros((num_columns, num_rows, 3));
+
+        (0..num_columns).into_iter().for_each(|col_index| {
+            let azimuth_angle = 2.0 * std::f64::consts::PI * col_index as f64 / num_columns as f64;
+
+            altitude_degrees
+                .iter()
+                .enumerate()
+                .for_each(|(row_index, altitude_deg)| {
+                    let altitude_angle = std::f64::consts::PI * altitude_deg / 180.0;
+
+                    // TODO: the formula is different from upstream
+                    // https://github.com/PointCloudLibrary/pcl/blob/master/io/src/hdl_grabber.cpp#L396
+                    let x = altitude_angle.cos() * azimuth_angle.cos();
+                    let y = altitude_angle.cos() * azimuth_angle.sin();
+                    let z = altitude_angle.sin();
+
+                    spherical_projection[(col_index, row_index, 0)] = x;
+                    spherical_projection[(col_index, row_index, 1)] = y;
+                    spherical_projection[(col_index, row_index, 2)] = z;
+                })
+        });
+
+        Helper {
+            altitude_degrees,
+            spherical_projection,
+        }
+    }
+
+    pub fn altitude_degrees(&self) -> &[f64; LASER_PER_FIRING] {
+        &self.altitude_degrees
+    }
+
+    pub fn spherical_projection(&self) -> &Array3<f64> {
+        &self.spherical_projection
+    }
+
+    pub fn firing_to_points(&self, firing: &Firing) -> Fallible<Vec<(f64, f64, f64)>> {
+        ensure!(
+            (firing.encoder_ticks as usize) < ENCODER_TICKS_PER_REV,
+            "encoder_ticks is out of bound"
+        );
+        let azimuth_angle = firing.azimuth_angle();
+        let points = firing
+            .laster_returns
+            .iter()
+            .zip(self.altitude_degrees.iter())
+            .map(|(laster_return, altitude_deg)| {
+                let altitude_angle = std::f64::consts::PI * altitude_deg / 180.0;
+                let distance = laster_return.meter_distance();
+
+                // TODO: the formula is different from upstream
+                // https://github.com/PointCloudLibrary/pcl/blob/master/io/src/hdl_grabber.cpp#L396
+                let x = distance * altitude_angle.cos() * azimuth_angle.cos();
+                let y = distance * altitude_angle.cos() * azimuth_angle.sin();
+                let z = distance * altitude_angle.sin();
+
+                (x, y, z)
+            })
+            .collect::<Vec<_>>();
+        Ok(points)
+    }
+}
+
+impl Default for Helper {
+    fn default() -> Helper {
+        Helper::new(ALTITUDE_DEGREES)
     }
 }
 

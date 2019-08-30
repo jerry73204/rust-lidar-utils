@@ -1,5 +1,6 @@
 use chrono::NaiveDateTime;
 use failure::Fallible;
+use ndarray::{Array3, Axis};
 #[cfg(feature = "enable-pcap")]
 use pcap::Packet as PcapPacket;
 use serde::{Deserialize, Serialize};
@@ -136,7 +137,7 @@ impl Packet {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum LidarMode {
     #[serde(rename = "512x10")]
     Mode512x10,
@@ -160,6 +161,19 @@ pub struct Config {
 }
 
 impl Config {
+    /// Create new config.
+    pub fn new(
+        beam_altitude_angles: [f64; PIXELS_PER_COLUMN],
+        beam_azimuth_angles: [f64; PIXELS_PER_COLUMN],
+        lidar_mode: LidarMode,
+    ) -> Config {
+        Config {
+            beam_altitude_angles,
+            beam_azimuth_angles,
+            lidar_mode,
+        }
+    }
+
     /// Load config JSON file from path.
     pub fn from_path<P: AsRef<Path>>(path: P) -> Fallible<Config> {
         let file = File::open(path.as_ref())?;
@@ -177,50 +191,6 @@ impl Config {
     pub fn from_str(data: &str) -> Fallible<Config> {
         let ret = serde_json::from_str(data)?;
         Ok(ret)
-    }
-
-    /// Get lidar scene width by its mode.
-    pub fn width(&self) -> usize {
-        use LidarMode::*;
-        match self.lidar_mode {
-            Mode512x10 | Mode512x20 => 512,
-            Mode1024x10 | Mode1024x20 => 1024,
-            Mode2048x10 => 2048,
-        }
-    }
-
-    /// Compute points on unit circle from each laser beam.
-    pub fn xyz_lut(&self) -> Vec<Vec<(f64, f64, f64)>> {
-        use std::f64::consts::PI;
-
-        let deg2rad = |deg: f64| deg * PI / 180.0;
-        let width = self.width();
-        let points = (0..width)
-            .into_iter()
-            .map(|col| {
-                let azimuth_angle_base = 2.0 * PI * col as f64 / width as f64;
-
-                let row_points = self
-                    .beam_azimuth_angles
-                    .iter()
-                    .zip(self.beam_altitude_angles.iter())
-                    .map(|(azimuth_deg_off, altitude_deg)| {
-                        let azimuth_angle = deg2rad(*azimuth_deg_off) + azimuth_angle_base;
-                        let altitude_angle = deg2rad(*altitude_deg);
-
-                        let x = altitude_angle.cos() * azimuth_angle.cos();
-                        let y = altitude_angle.cos() * azimuth_angle.sin();
-                        let z = altitude_angle.sin();
-
-                        (x, y, z)
-                    })
-                    .collect::<Vec<_>>();
-
-                row_points
-            })
-            .collect::<Vec<_>>();
-
-        points
     }
 }
 
@@ -263,5 +233,170 @@ impl Default for Config {
             beam_azimuth_angles,
             lidar_mode: LidarMode::Mode512x10,
         }
+    }
+}
+
+impl From<Helper> for Config {
+    fn from(config: Helper) -> Config {
+        Config {
+            beam_altitude_angles: config.beam_altitude_angles,
+            beam_azimuth_angles: config.beam_azimuth_angles,
+            lidar_mode: config.lidar_mode,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct Helper {
+    beam_altitude_angles: [f64; PIXELS_PER_COLUMN],
+    beam_azimuth_angles: [f64; PIXELS_PER_COLUMN],
+    lidar_mode: LidarMode,
+    num_columns: usize,
+    spherical_projection: Array3<f64>,
+}
+
+impl Helper {
+    pub fn new(
+        beam_altitude_angles: [f64; PIXELS_PER_COLUMN],
+        beam_azimuth_angles: [f64; PIXELS_PER_COLUMN],
+        lidar_mode: LidarMode,
+    ) -> Helper {
+        Config::new(beam_altitude_angles, beam_azimuth_angles, lidar_mode).into()
+    }
+
+    pub fn from_config(config: Config) -> Helper {
+        config.into()
+    }
+
+    pub fn beam_altitude_angles(&self) -> &[f64; PIXELS_PER_COLUMN] {
+        &self.beam_altitude_angles
+    }
+
+    pub fn beam_azimuth_angles(&self) -> &[f64; PIXELS_PER_COLUMN] {
+        &self.beam_azimuth_angles
+    }
+
+    pub fn lidar_mode(&self) -> LidarMode {
+        self.lidar_mode
+    }
+
+    /// Get lidar scene width by its mode.
+    pub fn num_columns(&self) -> usize {
+        self.num_columns
+    }
+
+    /// Compute spherical projection on unit circle for each laser beam.
+    ///
+    /// It returns a three dimensional array indexed by column index,
+    /// row index and component index. The first dimension size depends on
+    /// [Helper::num_columns](Helper::num_columns). The second index size is fixed
+    /// [PIXELS_PER_COLUMN](PIXELS_PER_COLUMN). The last dimension corresponds
+    /// to x, y, z components.
+    pub fn spherical_projection(&self) -> &Array3<f64> {
+        &self.spherical_projection
+    }
+
+    /// Compute point locations from column returned from lidar.
+    ///
+    /// The method takes [Column.measurement_id](Column.measurement_id) as column index.
+    /// It returns error if the index is out of bound.
+    pub fn column_to_points(&self, column: &Column) -> Fallible<Vec<(f64, f64, f64)>> {
+        let col_index = column.measurement_id as usize;
+        ensure!(
+            col_index < self.spherical_projection.shape()[0],
+            "measurement_id is out of bound"
+        );
+
+        let sub_projection = self.spherical_projection.index_axis(Axis(0), col_index);
+
+        let points = column
+            .pixels
+            .iter()
+            .enumerate()
+            .map(|(row_index, pixel)| {
+                let x = sub_projection[(row_index, 0)];
+                let y = sub_projection[(row_index, 1)];
+                let z = sub_projection[(row_index, 2)];
+                let range = pixel.range() as f64;
+                let rx = x as f64 * range;
+                let ry = y as f64 * range;
+                let rz = z as f64 * range;
+                (rx, ry, rz)
+            })
+            .collect::<Vec<_>>();
+
+        Ok(points)
+    }
+}
+
+impl From<Config> for Helper {
+    fn from(ser_config: Config) -> Helper {
+        let num_columns = {
+            use LidarMode::*;
+            match ser_config.lidar_mode {
+                Mode512x10 | Mode512x20 => 512,
+                Mode1024x10 | Mode1024x20 => 1024,
+                Mode2048x10 => 2048,
+            }
+        };
+
+        let spherical_projection = {
+            use std::f64::consts::PI;
+            let deg2rad = |deg: f64| deg * PI / 180.0;
+
+            let mut projection = Array3::<f64>::zeros((num_columns, PIXELS_PER_COLUMN, 3));
+
+            (0..num_columns).into_iter().for_each(|col| {
+                let azimuth_angle_base = 2.0 * PI * col as f64 / num_columns as f64;
+
+                ser_config
+                    .beam_azimuth_angles
+                    .iter()
+                    .zip(ser_config.beam_altitude_angles.iter())
+                    .enumerate()
+                    .for_each(|(row, (azimuth_deg_off, altitude_deg))| {
+                        let azimuth_angle = deg2rad(*azimuth_deg_off) + azimuth_angle_base;
+                        let altitude_angle = deg2rad(*altitude_deg);
+
+                        let x = altitude_angle.cos() * azimuth_angle.cos();
+                        let y = altitude_angle.cos() * azimuth_angle.sin();
+                        let z = altitude_angle.sin();
+
+                        projection[(col, row, 0)] = x;
+                        projection[(col, row, 1)] = y;
+                        projection[(col, row, 2)] = z;
+                    });
+            });
+
+            projection
+        };
+
+        Helper {
+            beam_altitude_angles: ser_config.beam_altitude_angles,
+            beam_azimuth_angles: ser_config.beam_azimuth_angles,
+            lidar_mode: ser_config.lidar_mode,
+            num_columns,
+            spherical_projection,
+        }
+    }
+}
+
+impl Debug for Helper {
+    fn fmt(&self, formatter: &mut Formatter) -> FormatResult {
+        write!(
+            formatter,
+            "Helper {{
+    altitude_angles: [...{} elemnts],
+    azimuth_angle_offsets: [...{} elemnts],
+    lidar_mode: {:?},
+}}",
+            PIXELS_PER_COLUMN, PIXELS_PER_COLUMN, self.lidar_mode
+        )
+    }
+}
+
+impl Default for Helper {
+    fn default() -> Helper {
+        Config::default().into()
     }
 }
