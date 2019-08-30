@@ -16,6 +16,10 @@ lidar-buffer = { git = "https://github.com/jerry73204/rusts-lidar-buffer", branc
 
 Clone this repo and run `cargo doc` to compile the documents. The online reference will be available as soon as it is published to docs.io.
 
+## Examples
+
+Check out [Velodyne example](tests/velodyne.rs) and [Ouster example](tests/ouster.rs) in tests.
+
 ## License
 
 MIT
