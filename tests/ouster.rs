@@ -9,11 +9,9 @@ extern crate pretty_env_logger;
 use failure::Fallible;
 use lidar_buffer::ouster::{Config, Helper, Packet as OusterPacket};
 use pcap::Capture;
-use std::mem::size_of;
-
-const PACKET_HEADER_SIZE: usize = 42; // Ethernet + IPv4 header size
 
 #[test]
+#[cfg(feature = "enable-pcap")]
 fn ouster_pcap_file() -> Fallible<()> {
     let mut packets = vec![];
 
@@ -21,15 +19,7 @@ fn ouster_pcap_file() -> Fallible<()> {
     cap.filter("udp")?;
 
     while let Ok(packet) = cap.next() {
-        let buffer_len = packet.header.len as usize - PACKET_HEADER_SIZE;
-        if buffer_len != size_of::<OusterPacket>() {
-            continue;
-        }
-
-        let mut buffer = Box::new([0u8; size_of::<OusterPacket>()]);
-        buffer.copy_from_slice(&packet.data[PACKET_HEADER_SIZE..]);
-        let lidar_packet = OusterPacket::from_buffer(*buffer);
-
+        let lidar_packet = OusterPacket::from_pcap(&packet)?;
         packets.push(lidar_packet);
     }
 
@@ -42,6 +32,7 @@ fn ouster_pcap_file() -> Fallible<()> {
 }
 
 #[test]
+#[cfg(feature = "enable-pcap")]
 fn ouster_scan() -> Fallible<()> {
     pretty_env_logger::init();
 
@@ -60,14 +51,7 @@ fn ouster_scan() -> Fallible<()> {
     let mut frame_points = vec![];
 
     while let Ok(packet) = cap.next() {
-        let buffer_len = packet.header.len as usize - PACKET_HEADER_SIZE;
-        if buffer_len != size_of::<OusterPacket>() {
-            continue;
-        }
-
-        let mut buffer = Box::new([0u8; size_of::<OusterPacket>()]);
-        buffer.copy_from_slice(&packet.data[PACKET_HEADER_SIZE..]);
-        let lidar_packet = OusterPacket::from_buffer(*buffer);
+        let lidar_packet = OusterPacket::from_pcap(&packet)?;
 
         for column in lidar_packet.columns.iter() {
             // Skip invalid columns
