@@ -3,7 +3,7 @@ use failure::Fallible;
 use ndarray::{Array3, Axis};
 use serde::{Deserialize, Serialize};
 use std::{
-    fmt::{Debug, Formatter, Error as FormatError},
+    fmt::{Debug, Error as FormatError, Formatter},
     fs::File,
     io::Read,
     path::Path,
@@ -17,10 +17,10 @@ big_array! { BigArray; }
 #[derivative(Debug)]
 pub struct Config {
     #[serde(with = "BigArray")]
-    #[derivative(Debug(format_with="self::large_array_fmt"))]
+    #[derivative(Debug(format_with = "self::large_array_fmt"))]
     pub beam_altitude_angles: [f64; PIXELS_PER_COLUMN],
     #[serde(with = "BigArray")]
-    #[derivative(Debug(format_with="self::large_array_fmt"))]
+    #[derivative(Debug(format_with = "self::large_array_fmt"))]
     pub beam_azimuth_angles: [f64; PIXELS_PER_COLUMN],
     pub lidar_mode: LidarMode,
 }
@@ -217,9 +217,9 @@ impl From<Helper> for Config {
 #[derive(Clone, Derivative)]
 #[derivative(Debug)]
 pub struct Helper {
-    #[derivative(Debug(format_with="self::large_array_fmt"))]
+    #[derivative(Debug(format_with = "self::large_array_fmt"))]
     beam_altitude_angles: [f64; PIXELS_PER_COLUMN],
-    #[derivative(Debug(format_with="self::large_array_fmt"))]
+    #[derivative(Debug(format_with = "self::large_array_fmt"))]
     beam_azimuth_angles: [f64; PIXELS_PER_COLUMN],
     lidar_mode: LidarMode,
     num_columns: usize,
@@ -358,6 +358,9 @@ impl Default for Helper {
     }
 }
 
-fn large_array_fmt<T: Debug>(array: &[T; PIXELS_PER_COLUMN], formatter: &mut Formatter) -> Result<(), FormatError> {
+fn large_array_fmt<T: Debug>(
+    array: &[T; PIXELS_PER_COLUMN],
+    formatter: &mut Formatter,
+) -> Result<(), FormatError> {
     write!(formatter, "{:?}", array as &[_])
 }

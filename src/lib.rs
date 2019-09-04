@@ -11,6 +11,7 @@ extern crate ndarray;
 extern crate pcap;
 #[macro_use]
 extern crate derivative;
+extern crate regex;
 
 pub mod ouster;
 pub mod velodyne;

@@ -3,7 +3,6 @@ use chrono::NaiveDateTime;
 use failure::Fallible;
 #[cfg(feature = "enable-pcap")]
 use pcap::Packet as PcapPacket;
-use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Debug, Formatter, Result as FormatResult},
     mem::size_of,
@@ -73,7 +72,7 @@ impl Debug for Column {
 
         write!(
             formatter,
-            "Column {{\
+            "Column {{ \
              timestamp: {}, \
              measurement_id: {}, \
              frame_id: {}, \
@@ -124,18 +123,4 @@ impl Packet {
         let packet = unsafe { &*(buffer.as_ptr() as *const Packet) };
         Ok(packet)
     }
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub enum LidarMode {
-    #[serde(rename = "512x10")]
-    Mode512x10,
-    #[serde(rename = "512x20")]
-    Mode512x20,
-    #[serde(rename = "1024x10")]
-    Mode1024x10,
-    #[serde(rename = "1024x20")]
-    Mode1024x20,
-    #[serde(rename = "2048x10")]
-    Mode2048x10,
 }
