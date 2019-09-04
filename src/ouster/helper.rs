@@ -1,6 +1,5 @@
-use super::{Column, LidarMode, PIXELS_PER_COLUMN};
+use super::{Column, LidarMode, ENCODER_TICKS_PER_REV, PIXELS_PER_COLUMN};
 use failure::Fallible;
-use ndarray::{Array3, Axis};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Debug, Error as FormatError, Formatter},
@@ -223,7 +222,6 @@ pub struct Helper {
     beam_azimuth_angles: [f64; PIXELS_PER_COLUMN],
     lidar_mode: LidarMode,
     num_columns: usize,
-    spherical_projection: Array3<f64>,
 }
 
 impl Helper {
@@ -256,17 +254,6 @@ impl Helper {
         self.num_columns
     }
 
-    /// Compute spherical projection on unit circle for each laser beam.
-    ///
-    /// It returns a three dimensional array indexed by column index,
-    /// row index and component index. The first dimension size depends on
-    /// [Helper::num_columns](Helper::num_columns). The second index size is fixed
-    /// [PIXELS_PER_COLUMN](PIXELS_PER_COLUMN). The last dimension corresponds
-    /// to x, y, z components.
-    pub fn spherical_projection(&self) -> &Array3<f64> {
-        &self.spherical_projection
-    }
-
     /// Compute point locations from column returned from lidar.
     ///
     /// The method takes [Column.measurement_id](Column.measurement_id) as column index.
@@ -274,25 +261,26 @@ impl Helper {
     pub fn column_to_points(&self, column: &Column) -> Fallible<Vec<(f64, f64, f64)>> {
         let col_index = column.measurement_id as usize;
         ensure!(
-            col_index < self.spherical_projection.shape()[0],
+            col_index < self.num_columns,
             "measurement_id is out of bound"
         );
-
-        let sub_projection = self.spherical_projection.index_axis(Axis(0), col_index);
 
         let points = column
             .pixels
             .iter()
             .enumerate()
             .map(|(row_index, pixel)| {
-                let x = sub_projection[(row_index, 0)];
-                let y = sub_projection[(row_index, 1)];
-                let z = sub_projection[(row_index, 2)];
+                use std::f64::consts::PI;
+                let azimuth_angle = 2.0
+                    * PI
+                    * (column.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64
+                        + self.beam_azimuth_angles[row_index] / 360.0);
+                let altitude_angle = 2.0 * PI * self.beam_altitude_angles[row_index] / 360.0;
                 let range = pixel.range() as f64;
-                let rx = x as f64 * range;
-                let ry = y as f64 * range;
-                let rz = z as f64 * range;
-                (rx, ry, rz)
+                let x = range * azimuth_angle.cos() * altitude_angle.cos();
+                let y = -range * azimuth_angle.sin() * altitude_angle.cos();
+                let z = range * altitude_angle.sin();
+                (x, y, z)
             })
             .collect::<Vec<_>>();
 
@@ -311,43 +299,11 @@ impl From<Config> for Helper {
             }
         };
 
-        let spherical_projection = {
-            use std::f64::consts::PI;
-            let deg2rad = |deg: f64| deg * PI / 180.0;
-
-            let mut projection = Array3::<f64>::zeros((num_columns, PIXELS_PER_COLUMN, 3));
-
-            (0..num_columns).into_iter().for_each(|col| {
-                let azimuth_angle_base = 2.0 * PI * col as f64 / num_columns as f64;
-
-                ser_config
-                    .beam_azimuth_angles
-                    .iter()
-                    .zip(ser_config.beam_altitude_angles.iter())
-                    .enumerate()
-                    .for_each(|(row, (azimuth_deg_off, altitude_deg))| {
-                        let azimuth_angle = deg2rad(*azimuth_deg_off) + azimuth_angle_base;
-                        let altitude_angle = deg2rad(*altitude_deg);
-
-                        let x = altitude_angle.cos() * azimuth_angle.cos();
-                        let y = altitude_angle.cos() * azimuth_angle.sin();
-                        let z = altitude_angle.sin();
-
-                        projection[(col, row, 0)] = x;
-                        projection[(col, row, 1)] = y;
-                        projection[(col, row, 2)] = z;
-                    });
-            });
-
-            projection
-        };
-
         Helper {
             beam_altitude_angles: ser_config.beam_altitude_angles,
             beam_azimuth_angles: ser_config.beam_azimuth_angles,
             lidar_mode: ser_config.lidar_mode,
             num_columns,
-            spherical_projection,
         }
     }
 }
