@@ -9,6 +9,8 @@ extern crate log;
 extern crate ndarray;
 #[cfg(feature = "enable-pcap")]
 extern crate pcap;
+#[macro_use]
+extern crate derivative;
 
 pub mod ouster;
 pub mod velodyne;

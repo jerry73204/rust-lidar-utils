@@ -1,161 +1,26 @@
-use chrono::NaiveDateTime;
+use super::{Column, LidarMode, PIXELS_PER_COLUMN};
 use failure::Fallible;
 use ndarray::{Array3, Axis};
-#[cfg(feature = "enable-pcap")]
-use pcap::Packet as PcapPacket;
 use serde::{Deserialize, Serialize};
 use std::{
-    fmt::{Debug, Formatter, Result as FormatResult},
+    fmt::{Debug, Formatter, Error as FormatError},
     fs::File,
     io::Read,
-    mem::size_of,
     path::Path,
 };
-
-pub const ENCODER_TICKS_PER_REV: u32 = 90112;
-pub const PIXELS_PER_COLUMN: usize = 64;
-pub const COLUMNS_PER_PACKET: usize = 16;
 
 // TODO: This workaround handles large array for serde.
 //       We'll remove is it once the const generics is introduced.
 big_array! { BigArray; }
 
-#[repr(C, packed)]
-#[derive(Debug, Clone, Copy)]
-pub struct Pixel {
-    /// The least significant 20 bits form distance in millimeters.
-    pub raw_range: u32,
-    pub reflectivity: u16,
-    pub signal_photons: u16,
-    pub noise_photons: u16,
-    _pad: u16,
-}
-
-impl Pixel {
-    /// Extract distance in millimeters from raw_range field.
-    pub fn range(&self) -> u32 {
-        self.raw_range & 0x000fffff
-    }
-}
-
-#[repr(C, packed)]
-#[derive(Clone, Copy)]
-pub struct Column {
-    /// Unix timestamp.
-    pub timestamp: u64,
-    /// The column index.
-    pub measurement_id: u16,
-    /// The frame index.
-    pub frame_id: u16,
-    /// Encoder count of rotation motor ranging from 0 to 90111 (inclusive).
-    pub encoder_ticks: u32,
-    /// Array of pixels.
-    pub pixels: [Pixel; PIXELS_PER_COLUMN],
-    /// Packet validility mark. True if value is 0xffffffff.
-    pub raw_valid: u32,
-}
-
-impl Column {
-    /// Construct [NaiveDateTime](chrono::NaiveDateTime) object from column timestamp.
-    pub fn datetime(&self) -> NaiveDateTime {
-        let secs = self.timestamp / 1_000_000_000;
-        let nsecs = self.timestamp % 1_000_000_000;
-        NaiveDateTime::from_timestamp(secs as i64, nsecs as u32)
-    }
-
-    /// Compute azimuth angle in radian from encoder ticks.
-    pub fn azimuth_angle(&self) -> f64 {
-        2.0 * std::f64::consts::PI * self.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64
-    }
-
-    /// Return if this packet is marked valid.
-    pub fn valid(&self) -> bool {
-        self.raw_valid == 0xffffffff
-    }
-}
-
-impl Debug for Column {
-    fn fmt(&self, formatter: &mut Formatter) -> FormatResult {
-        let timestamp = self.timestamp;
-        let measurement_id = self.measurement_id;
-        let frame_id = self.frame_id;
-        let encoder_ticks = self.encoder_ticks;
-        let raw_valid = self.raw_valid;
-
-        write!(
-            formatter,
-            "Column {{
-    timestamp: {},
-    measurement_id: {},
-    frame_id: {},
-    encoder_ticks: {},
-    pixels: [...{} elemnts],
-    raw_valid: 0x{:x},
-}}",
-            timestamp, measurement_id, frame_id, encoder_ticks, PIXELS_PER_COLUMN, raw_valid
-        )
-    }
-}
-
-#[repr(C, packed)]
-#[derive(Debug, Clone, Copy)]
-pub struct Packet {
-    pub columns: [Column; COLUMNS_PER_PACKET],
-}
-
-impl Packet {
-    /// Construct packet from [pcap's Packet](pcap::Packet).
-    #[cfg(feature = "enable-pcap")]
-    pub fn from_pcap(packet: &PcapPacket) -> Fallible<Packet> {
-        let packet_header_size = 42;
-
-        ensure!(
-            packet.header.len as usize - packet_header_size == size_of::<Packet>(),
-            "Input pcap packet is not a valid Ouster Lidar packet",
-        );
-
-        let mut buffer = Box::new([0u8; size_of::<Packet>()]);
-        buffer.copy_from_slice(&packet.data[packet_header_size..]);
-        Ok(Self::from_buffer(*buffer))
-    }
-
-    /// Construct packet from binary buffer.
-    pub fn from_buffer(buffer: [u8; size_of::<Packet>()]) -> Packet {
-        unsafe { std::mem::transmute::<_, Packet>(buffer) }
-    }
-
-    /// Construct packet from slice of bytes. Error if the slice size is not correct.
-    pub fn from_slice<'a>(buffer: &'a [u8]) -> Fallible<&'a Packet> {
-        ensure!(
-            buffer.len() == size_of::<Packet>(),
-            "Requre the slice length to be {}, but get {}",
-            size_of::<Packet>(),
-            buffer.len(),
-        );
-        let packet = unsafe { &*(buffer.as_ptr() as *const Packet) };
-        Ok(packet)
-    }
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub enum LidarMode {
-    #[serde(rename = "512x10")]
-    Mode512x10,
-    #[serde(rename = "512x20")]
-    Mode512x20,
-    #[serde(rename = "1024x10")]
-    Mode1024x10,
-    #[serde(rename = "1024x20")]
-    Mode1024x20,
-    #[serde(rename = "2048x10")]
-    Mode2048x10,
-}
-
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Derivative)]
+#[derivative(Debug)]
 pub struct Config {
     #[serde(with = "BigArray")]
+    #[derivative(Debug(format_with="self::large_array_fmt"))]
     pub beam_altitude_angles: [f64; PIXELS_PER_COLUMN],
     #[serde(with = "BigArray")]
+    #[derivative(Debug(format_with="self::large_array_fmt"))]
     pub beam_azimuth_angles: [f64; PIXELS_PER_COLUMN],
     pub lidar_mode: LidarMode,
 }
@@ -194,38 +59,141 @@ impl Config {
     }
 }
 
-impl Debug for Config {
-    fn fmt(&self, formatter: &mut Formatter) -> FormatResult {
-        write!(
-            formatter,
-            "Config {{
-    altitude_angles: [...{} elemnts],
-    azimuth_angle_offsets: [...{} elemnts],
-    lidar_mode: {:?},
-}}",
-            PIXELS_PER_COLUMN, PIXELS_PER_COLUMN, self.lidar_mode
-        )
-    }
-}
-
 impl Default for Config {
     fn default() -> Config {
+        // From firmare 1.12.0
         let beam_altitude_angles = [
-            16.611, 16.084, 15.557, 15.029, 14.502, 13.975, 13.447, 12.920, 12.393, 11.865, 11.338,
-            10.811, 10.283, 9.756, 9.229, 8.701, 8.174, 7.646, 7.119, 6.592, 6.064, 5.537, 5.010,
-            4.482, 3.955, 3.428, 2.900, 2.373, 1.846, 1.318, 0.791, 0.264, -0.264, -0.791, -1.318,
-            -1.846, -2.373, -2.900, -3.428, -3.955, -4.482, -5.010, -5.537, -6.064, -6.592, -7.119,
-            -7.646, -8.174, -8.701, -9.229, -9.756, -10.283, -10.811, -11.338, -11.865, -12.393,
-            -12.920, -13.447, -13.975, -14.502, -15.029, -15.557, -16.084, -16.611,
+            17.042,
+            16.427,
+            15.872,
+            15.324,
+            14.851,
+            14.269,
+            13.733,
+            13.18,
+            12.713,
+            12.136,
+            11.599,
+            11.067,
+            10.587,
+            10.046,
+            9.503,
+            8.965999999999999,
+            8.504,
+            7.952,
+            7.414,
+            6.869,
+            6.417,
+            5.866,
+            5.331,
+            4.792,
+            4.329,
+            3.791,
+            3.248,
+            2.699,
+            2.26,
+            1.709,
+            1.17,
+            0.62,
+            0.177,
+            -0.37,
+            -0.916,
+            -1.466,
+            -1.924,
+            -2.454,
+            -3.001,
+            -3.551,
+            -3.997,
+            -4.545,
+            -5.088,
+            -5.64,
+            -6.08,
+            -6.638,
+            -7.17,
+            -7.736,
+            -8.196999999999999,
+            -8.728,
+            -9.282,
+            -9.853999999999999,
+            -10.299,
+            -10.833,
+            -11.386,
+            -11.965,
+            -12.422,
+            -12.957,
+            -13.525,
+            -14.109,
+            -14.576,
+            -15.133,
+            -15.691,
+            -16.3,
         ];
 
         let beam_azimuth_angles = [
-            3.164, 1.055, -1.055, -3.164, 3.164, 1.055, -1.055, -3.164, 3.164, 1.055, -1.055,
-            -3.164, 3.164, 1.055, -1.055, -3.164, 3.164, 1.055, -1.055, -3.164, 3.164, 1.055,
-            -1.055, -3.164, 3.164, 1.055, -1.055, -3.164, 3.164, 1.055, -1.055, -3.164, 3.164,
-            1.055, -1.055, -3.164, 3.164, 1.055, -1.055, -3.164, 3.164, 1.055, -1.055, -3.164,
-            3.164, 1.055, -1.055, -3.164, 3.164, 1.055, -1.055, -3.164, 3.164, 1.055, -1.055,
-            -3.164, 3.164, 1.055, -1.055, -3.164, 3.164, 1.055, -1.055, -3.164,
+            3.073,
+            0.922,
+            -1.238,
+            -3.386,
+            3.057,
+            0.915,
+            -1.214,
+            -3.321,
+            3.06,
+            0.9370000000000001,
+            -1.174,
+            -3.284,
+            3.051,
+            0.953,
+            -1.154,
+            -3.242,
+            3.05,
+            0.958,
+            -1.126,
+            -3.198,
+            3.053,
+            0.981,
+            -1.104,
+            -3.177,
+            3.082,
+            1.001,
+            -1.079,
+            -3.141,
+            3.101,
+            1.025,
+            -1.048,
+            -3.124,
+            3.115,
+            1.041,
+            -1.028,
+            -3.1,
+            3.135,
+            1.066,
+            -1.0,
+            -3.077,
+            3.177,
+            1.093,
+            -0.981,
+            -3.06,
+            3.213,
+            1.117,
+            -0.963,
+            -3.048,
+            3.249,
+            1.158,
+            -0.948,
+            -3.047,
+            3.297,
+            1.2,
+            -0.913,
+            -3.023,
+            3.345,
+            1.231,
+            -0.881,
+            -3.022,
+            3.425,
+            1.267,
+            -0.872,
+            -3.024,
         ];
 
         Config {
@@ -246,9 +214,12 @@ impl From<Helper> for Config {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Derivative)]
+#[derivative(Debug)]
 pub struct Helper {
+    #[derivative(Debug(format_with="self::large_array_fmt"))]
     beam_altitude_angles: [f64; PIXELS_PER_COLUMN],
+    #[derivative(Debug(format_with="self::large_array_fmt"))]
     beam_azimuth_angles: [f64; PIXELS_PER_COLUMN],
     lidar_mode: LidarMode,
     num_columns: usize,
@@ -381,22 +352,12 @@ impl From<Config> for Helper {
     }
 }
 
-impl Debug for Helper {
-    fn fmt(&self, formatter: &mut Formatter) -> FormatResult {
-        write!(
-            formatter,
-            "Helper {{
-    altitude_angles: [...{} elemnts],
-    azimuth_angle_offsets: [...{} elemnts],
-    lidar_mode: {:?},
-}}",
-            PIXELS_PER_COLUMN, PIXELS_PER_COLUMN, self.lidar_mode
-        )
-    }
-}
-
 impl Default for Helper {
     fn default() -> Helper {
         Config::default().into()
     }
+}
+
+fn large_array_fmt<T: Debug>(array: &[T; PIXELS_PER_COLUMN], formatter: &mut Formatter) -> Result<(), FormatError> {
+    write!(formatter, "{:?}", array as &[_])
 }
