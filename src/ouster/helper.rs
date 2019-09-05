@@ -2,6 +2,7 @@ use super::{Column, LidarMode, ENCODER_TICKS_PER_REV, PIXELS_PER_COLUMN};
 use failure::Fallible;
 use serde::{Deserialize, Serialize};
 use std::{
+    cmp::Ordering,
     fmt::{Debug, Error as FormatError, Formatter},
     fs::File,
     io::Read,
@@ -55,6 +56,18 @@ impl Config {
     pub fn from_str(data: &str) -> Fallible<Config> {
         let ret = serde_json::from_str(data)?;
         Ok(ret)
+    }
+
+    pub fn beam_azimuth_angles(&mut self, beam_azimuth_angles: [f64; PIXELS_PER_COLUMN]) {
+        self.beam_azimuth_angles = beam_azimuth_angles;
+    }
+
+    pub fn beam_altitude_angles(&mut self, beam_altitude_angles: [f64; PIXELS_PER_COLUMN]) {
+        self.beam_altitude_angles = beam_altitude_angles;
+    }
+
+    pub fn lidar_mode(&mut self, lidar_mode: LidarMode) {
+        self.lidar_mode = lidar_mode;
     }
 }
 
@@ -203,54 +216,23 @@ impl Default for Config {
     }
 }
 
-impl From<Helper> for Config {
-    fn from(config: Helper) -> Config {
-        Config {
-            beam_altitude_angles: config.beam_altitude_angles,
-            beam_azimuth_angles: config.beam_azimuth_angles,
-            lidar_mode: config.lidar_mode,
-        }
-    }
+#[derive(Clone, Debug)]
+pub struct PointCloudConverter {
+    config: Config,
+    num_columns: u16,
 }
 
-#[derive(Clone, Derivative)]
-#[derivative(Debug)]
-pub struct Helper {
-    #[derivative(Debug(format_with = "self::large_array_fmt"))]
-    beam_altitude_angles: [f64; PIXELS_PER_COLUMN],
-    #[derivative(Debug(format_with = "self::large_array_fmt"))]
-    beam_azimuth_angles: [f64; PIXELS_PER_COLUMN],
-    lidar_mode: LidarMode,
-    num_columns: usize,
-}
-
-impl Helper {
-    pub fn new(
-        beam_altitude_angles: [f64; PIXELS_PER_COLUMN],
-        beam_azimuth_angles: [f64; PIXELS_PER_COLUMN],
-        lidar_mode: LidarMode,
-    ) -> Helper {
-        Config::new(beam_altitude_angles, beam_azimuth_angles, lidar_mode).into()
-    }
-
-    pub fn from_config(config: Config) -> Helper {
+impl PointCloudConverter {
+    pub fn from_config(config: Config) -> Self {
         config.into()
     }
 
-    pub fn beam_altitude_angles(&self) -> &[f64; PIXELS_PER_COLUMN] {
-        &self.beam_altitude_angles
-    }
-
-    pub fn beam_azimuth_angles(&self) -> &[f64; PIXELS_PER_COLUMN] {
-        &self.beam_azimuth_angles
-    }
-
-    pub fn lidar_mode(&self) -> LidarMode {
-        self.lidar_mode
+    pub fn config(&self) -> &Config {
+        &self.config
     }
 
     /// Get lidar scene width by its mode.
-    pub fn num_columns(&self) -> usize {
+    pub fn num_columns(&self) -> u16 {
         self.num_columns
     }
 
@@ -259,7 +241,7 @@ impl Helper {
     /// The method takes [Column.measurement_id](Column.measurement_id) as column index.
     /// It returns error if the index is out of bound.
     pub fn column_to_points(&self, column: &Column) -> Fallible<Vec<(f64, f64, f64)>> {
-        let col_index = column.measurement_id as usize;
+        let col_index = column.measurement_id;
         ensure!(
             col_index < self.num_columns,
             "measurement_id is out of bound"
@@ -274,8 +256,8 @@ impl Helper {
                 let azimuth_angle = 2.0
                     * PI
                     * (column.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64
-                        + self.beam_azimuth_angles[row_index] / 360.0);
-                let altitude_angle = 2.0 * PI * self.beam_altitude_angles[row_index] / 360.0;
+                        + self.config.beam_azimuth_angles[row_index] / 360.0);
+                let altitude_angle = 2.0 * PI * self.config.beam_altitude_angles[row_index] / 360.0;
                 let range = pixel.range() as f64;
                 let x = range * azimuth_angle.cos() * altitude_angle.cos();
                 let y = -range * azimuth_angle.sin() * altitude_angle.cos();
@@ -288,30 +270,256 @@ impl Helper {
     }
 }
 
-impl From<Config> for Helper {
-    fn from(ser_config: Config) -> Helper {
+impl From<Config> for PointCloudConverter {
+    fn from(config: Config) -> Self {
         let num_columns = {
             use LidarMode::*;
-            match ser_config.lidar_mode {
+            match config.lidar_mode {
                 Mode512x10 | Mode512x20 => 512,
                 Mode1024x10 | Mode1024x20 => 1024,
                 Mode2048x10 => 2048,
             }
         };
 
-        Helper {
-            beam_altitude_angles: ser_config.beam_altitude_angles,
-            beam_azimuth_angles: ser_config.beam_azimuth_angles,
-            lidar_mode: ser_config.lidar_mode,
+        Self {
+            config,
             num_columns,
         }
     }
 }
 
-impl Default for Helper {
-    fn default() -> Helper {
-        Config::default().into()
+#[derive(Debug, Clone)]
+pub struct Frame {
+    pub frame_id: u16,
+    pub skipped_frame_ids: Vec<u16>,
+    pub skipped_measurement_ids: Vec<u16>,
+    pub points: Vec<(f64, f64, f64)>,
+}
+
+#[derive(Debug, Clone)]
+pub struct FrameConverter {
+    pcd_converter: PointCloudConverter,
+    state: Option<FrameConverterState>,
+}
+
+impl FrameConverter {
+    pub fn from_config(config: Config) -> Self {
+        config.into()
     }
+
+    pub fn push(&mut self, column: &Column) -> Fallible<Vec<Frame>> {
+        if !column.valid() {
+            return Ok(vec![]);
+        }
+
+        let curr_points = self.pcd_converter.column_to_points(&column)?;
+        let curr_fid = column.frame_id;
+        let curr_mid = column.measurement_id;
+
+        match self.state.take() {
+            Some(state) => {
+                match state.last_fid.cmp(&curr_fid) {
+                    Ordering::Less => {
+                        // First frame
+                        let first_frame_opt = if state.expect_new_fid {
+                            None
+                        } else {
+                            let skipped_mids = {
+                                let mut skipped_mids = state.skipped_mids;
+                                skipped_mids
+                                    .extend((state.last_mid + 1)..self.pcd_converter.num_columns());
+                                skipped_mids
+                            };
+                            let frame = Frame {
+                                frame_id: state.last_fid,
+                                skipped_frame_ids: state.skipped_fids,
+                                skipped_measurement_ids: skipped_mids,
+                                points: state.points,
+                            };
+                            Some(frame)
+                        };
+
+                        // Second frame
+                        let (second_frame_opt, new_state) = {
+                            let skipped_fids = ((state.last_fid + 1)..curr_fid).collect();
+                            let skipped_mids = (0..curr_mid).collect();
+
+                            if curr_mid + 1 == self.pcd_converter.num_columns {
+                                let second_frame = Frame {
+                                    frame_id: curr_fid,
+                                    skipped_frame_ids: skipped_fids,
+                                    skipped_measurement_ids: skipped_mids,
+                                    points: curr_points,
+                                };
+
+                                let new_state = FrameConverterState {
+                                    expect_new_fid: true,
+                                    last_mid: curr_mid,
+                                    last_fid: curr_fid,
+                                    skipped_fids: vec![],
+                                    skipped_mids: vec![],
+                                    points: vec![],
+                                };
+
+                                (Some(second_frame), new_state)
+                            } else {
+                                let new_state = FrameConverterState {
+                                    expect_new_fid: false,
+                                    last_mid: curr_mid,
+                                    last_fid: curr_fid,
+                                    skipped_fids,
+                                    skipped_mids,
+                                    points: curr_points,
+                                };
+
+                                (None, new_state)
+                            }
+                        };
+
+                        // Update and return
+                        self.state = Some(new_state);
+
+                        let output_frames = first_frame_opt
+                            .into_iter()
+                            .chain(second_frame_opt.into_iter())
+                            .collect();
+
+                        return Ok(output_frames);
+                    }
+                    Ordering::Equal => {
+                        if state.last_mid >= curr_mid {
+                            let error = format_err!(
+                                "Input measurement ID is less than that of last column"
+                            );
+                            return Err(error);
+                        }
+
+                        let skipped_fids = state.skipped_fids;
+
+                        let mut skipped_mids = state.skipped_mids;
+                        skipped_mids.extend((state.last_mid + 1)..curr_mid);
+
+                        let mut points = state.points;
+                        points.extend(curr_points);
+
+                        let (frame_opt, new_state) =
+                            if curr_mid + 1 == self.pcd_converter.num_columns() {
+                                let frame = Frame {
+                                    frame_id: curr_fid,
+                                    skipped_frame_ids: skipped_fids,
+                                    skipped_measurement_ids: skipped_mids,
+                                    points,
+                                };
+
+                                let new_state = FrameConverterState {
+                                    expect_new_fid: true,
+                                    last_mid: curr_mid,
+                                    last_fid: curr_fid,
+                                    skipped_fids: vec![],
+                                    skipped_mids: vec![],
+                                    points: vec![],
+                                };
+
+                                (Some(frame), new_state)
+                            } else {
+                                let new_state = FrameConverterState {
+                                    expect_new_fid: false,
+                                    last_mid: curr_mid,
+                                    last_fid: curr_fid,
+                                    skipped_fids,
+                                    skipped_mids,
+                                    points,
+                                };
+
+                                (None, new_state)
+                            };
+
+                        let output_frames = frame_opt.into_iter().collect();
+                        self.state = Some(new_state);
+                        return Ok(output_frames);
+                    }
+                    Ordering::Greater => {
+                        let error = format_err!("Input frame ID is less than that of last column");
+                        return Err(error);
+                    }
+                }
+            }
+            None => {
+                if curr_mid + 1 == self.pcd_converter.num_columns() {
+                    let new_state = FrameConverterState {
+                        expect_new_fid: true,
+                        last_mid: curr_mid,
+                        last_fid: curr_fid,
+                        skipped_fids: vec![],
+                        skipped_mids: vec![],
+                        points: vec![],
+                    };
+                    self.state = Some(new_state);
+                    let output_frame = Frame {
+                        frame_id: curr_fid,
+                        skipped_frame_ids: vec![],
+                        skipped_measurement_ids: (0..(column.measurement_id)).collect(),
+                        points: curr_points,
+                    };
+                    return Ok(vec![output_frame]);
+                } else {
+                    let new_state = FrameConverterState {
+                        expect_new_fid: false,
+                        last_mid: curr_mid,
+                        last_fid: curr_fid,
+                        skipped_fids: vec![],
+                        skipped_mids: (0..(column.measurement_id)).collect(),
+                        points: curr_points,
+                    };
+                    self.state = Some(new_state);
+                    return Ok(vec![]);
+                }
+            }
+        }
+    }
+
+    pub fn finish(mut self) -> Option<Frame> {
+        match self.state.take() {
+            Some(state) => {
+                if state.expect_new_fid {
+                    None
+                } else {
+                    let mut skipped_mids = state.skipped_mids;
+                    skipped_mids.extend((state.last_mid + 1)..(self.pcd_converter.num_columns()));
+
+                    let frame = Frame {
+                        frame_id: state.last_fid,
+                        skipped_frame_ids: state.skipped_fids,
+                        skipped_measurement_ids: skipped_mids,
+                        points: state.points,
+                    };
+                    Some(frame)
+                }
+            }
+            None => None,
+        }
+    }
+}
+
+impl From<Config> for FrameConverter {
+    fn from(config: Config) -> Self {
+        let pcd_converter = PointCloudConverter::from(config);
+
+        Self {
+            pcd_converter,
+            state: None,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+struct FrameConverterState {
+    expect_new_fid: bool,
+    skipped_fids: Vec<u16>,
+    skipped_mids: Vec<u16>,
+    last_mid: u16,
+    last_fid: u16,
+    points: Vec<(f64, f64, f64)>,
 }
 
 fn large_array_fmt<T: Debug>(

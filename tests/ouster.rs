@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate failure;
 extern crate lidar_buffer;
 extern crate pcap;
@@ -7,12 +8,14 @@ extern crate log;
 extern crate pretty_env_logger;
 
 use failure::Fallible;
-use lidar_buffer::ouster::{Config, Helper, Packet as OusterPacket};
+use lidar_buffer::ouster::{
+    Config, Frame, FrameConverter, Packet as OusterPacket, PointCloudConverter,
+};
 use pcap::Capture;
 
 #[test]
 #[cfg(feature = "enable-pcap")]
-fn ouster_pcap_file() -> Fallible<()> {
+fn ouster_create_packet() -> Fallible<()> {
     let mut packets = vec![];
 
     let mut cap = Capture::from_file("test_files/ouster_example.pcap")?;
@@ -33,22 +36,16 @@ fn ouster_pcap_file() -> Fallible<()> {
 
 #[test]
 #[cfg(feature = "enable-pcap")]
-fn ouster_scan() -> Fallible<()> {
-    pretty_env_logger::init();
-
+fn ouster_pcd_converter() -> Fallible<()> {
     // Load config
     let config = Config::from_path("test_files/ouster_example.json")?;
-    let helper = Helper::from_config(config);
+    let pcd_converter = PointCloudConverter::from_config(config);
 
     // Load pcap file
-    let mut cap = Capture::from_file("/home/jerry73204/Downloads/lombard_street_OS1.pcap")?;
+    let mut cap = Capture::from_file("test_files/ouster_example.pcap")?;
     cap.filter("udp")?;
 
-    let mut curr_fid = None;
-    let mut expect_mid = None;
-
-    let mut frames = vec![];
-    let mut frame_points = vec![];
+    let mut last_fid_opt = None;
 
     while let Ok(packet) = cap.next() {
         let lidar_packet = OusterPacket::from_pcap(&packet)?;
@@ -60,55 +57,64 @@ fn ouster_scan() -> Fallible<()> {
                 continue;
             }
 
-            // Skip columns with late frame ids
-            if let Some(orig_fid) = curr_fid {
-                if column.frame_id < orig_fid {
-                    warn!("Column with inconsecutive frame id detected");
-                    continue;
-                }
-            }
-
-            // Update frame id and expected measurement id
-            let new_fid = column.frame_id;
-            let new_mid = column.measurement_id;
-
-            match curr_fid {
-                Some(orig_fid) => {
-                    if orig_fid == new_fid {
-                        expect_mid = match expect_mid {
-                            Some(orig_mid) => Some(orig_mid + 1),
-                            None => Some(new_mid),
-                        };
-                    } else {
-                        if orig_fid + 1 != new_fid {
-                            warn!("Skipped frame id detected");
-                        }
-                        frames.push((orig_fid, frame_points));
-                        frame_points = vec![];
-                        curr_fid = Some(new_fid);
-                        expect_mid = Some(0);
-                    }
-                }
-                None => {
-                    curr_fid = Some(column.frame_id);
-                    expect_mid = Some(new_mid);
-                }
-            };
-
-            // Check measurement id
-            match expect_mid {
-                Some(mid) => {
-                    if mid != new_mid {
-                        warn!("Unordered measurement id detected");
-                    }
-                }
-                None => unreachable!(),
-            }
+            // Check if frame ID rewinds
+            ensure!(
+                last_fid_opt
+                    .map(|last_fid| last_fid <= column.frame_id)
+                    .unwrap_or(true),
+                "Column with inconsecutive frame id detected. Please report this bug."
+            );
 
             // Construct point cloud
-            let mut column_points = helper.column_to_points(&column)?;
-            frame_points.append(&mut column_points);
+            last_fid_opt = Some(column.frame_id);
+            let _column_points = pcd_converter.column_to_points(&column)?;
         }
+    }
+
+    Ok(())
+}
+
+#[test]
+#[cfg(feature = "enable-pcap")]
+fn ouster_frame_converter() -> Fallible<()> {
+    // Load config
+    let config = Config::from_path("test_files/ouster_example.json")?;
+    let mut frame_converter = FrameConverter::from_config(config);
+
+    // Load pcap file
+    let mut cap = Capture::from_file("test_files/ouster_example.pcap")?;
+    cap.filter("udp")?;
+
+    let mut frames = vec![];
+
+    while let Ok(packet) = cap.next() {
+        let lidar_packet = OusterPacket::from_pcap(&packet)?;
+
+        let new_frames = lidar_packet
+            .columns
+            .into_iter()
+            .map(|column| {
+                let new_frames = frame_converter.push(column)?;
+                Ok(new_frames)
+            })
+            .collect::<Fallible<Vec<_>>>()?
+            .into_iter()
+            .flat_map(|frames| frames)
+            .collect::<Vec<Frame>>();
+
+        frames.extend(new_frames);
+    }
+
+    if let Some(frame) = frame_converter.finish() {
+        frames.push(frame);
+    }
+
+    let mut prev_frame_id_opt = None;
+    for frame in frames {
+        if let Some(prev_frame_id) = prev_frame_id_opt {
+            ensure!(prev_frame_id < frame.frame_id, "Frame ID is not ordered");
+        }
+        prev_frame_id_opt = Some(frame.frame_id);
     }
 
     Ok(())
