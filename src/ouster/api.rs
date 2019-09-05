@@ -4,7 +4,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{
     fmt::{Debug, Display, Error as FormatError, Formatter},
     io::{prelude::*, BufReader, LineWriter, Lines},
-    net::{Ipv4Addr, TcpStream, ToSocketAddrs},
+    net::{Ipv4Addr, SocketAddr, TcpStream, ToSocketAddrs},
 };
 
 // TODO: This workaround handles large array for serde.
@@ -47,17 +47,22 @@ pub struct BeamIntrinsics {
     pub beam_azimuth_angles: [f64; PIXELS_PER_COLUMN],
 }
 
-pub struct CommandClient {
+pub struct CommandClient<A: ToSocketAddrs> {
+    address: A,
     reader: Lines<BufReader<TcpStream>>,
     writer: LineWriter<TcpStream>,
 }
 
-impl CommandClient {
-    pub fn connect<A: ToSocketAddrs>(address: A) -> Fallible<CommandClient> {
-        let stream = TcpStream::connect(address)?;
+impl<A: ToSocketAddrs> CommandClient<A> {
+    pub fn connect(address: A) -> Fallible<CommandClient<A>> {
+        let stream = TcpStream::connect(&address)?;
         let reader = BufReader::new(stream.try_clone()?).lines();
         let writer = LineWriter::new(stream);
-        let client = CommandClient { reader, writer };
+        let client = CommandClient {
+            reader,
+            writer,
+            address,
+        };
         Ok(client)
     }
 
@@ -88,6 +93,12 @@ impl CommandClient {
             .next()
             .ok_or(format_err!("Unexpected end of stream"))??;
         ensure!(line == "reinitialize", "Unexpected response {:?}", line);
+
+        // Re-establish TCP connection to prevent blocking the buggy LIDAR server
+        let stream = TcpStream::connect(&self.address)?;
+        self.reader = BufReader::new(stream.try_clone()?).lines();
+        self.writer = LineWriter::new(stream);
+
         Ok(())
     }
 
@@ -126,7 +137,7 @@ impl CommandClient {
         Ok(())
     }
 
-    fn set_config_param<A: Display>(&mut self, param: &str, arg: A) -> Fallible<()> {
+    fn set_config_param<T: Display>(&mut self, param: &str, arg: T) -> Fallible<()> {
         let command = format!("set_config_param {} {}\n", param, arg);
         self.writer.write_all(command.as_bytes())?;
         let line = self
