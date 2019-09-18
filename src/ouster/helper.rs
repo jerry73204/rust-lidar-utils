@@ -26,7 +26,7 @@ pub struct Config {
 }
 
 impl Config {
-    /// Create new config.
+    /// Creates new config.
     pub fn new(
         beam_altitude_angles: [f64; PIXELS_PER_COLUMN],
         beam_azimuth_angles: [f64; PIXELS_PER_COLUMN],
@@ -39,33 +39,36 @@ impl Config {
         }
     }
 
-    /// Load config JSON file from path.
+    /// Loads config JSON file from path.
     pub fn from_path<P: AsRef<Path>>(path: P) -> Fallible<Config> {
         let file = File::open(path.as_ref())?;
         let ret = Self::from_reader(file)?;
         Ok(ret)
     }
 
-    /// Load config JSON data from reader with [Read](std::io::Read) trait.
+    /// Loads config JSON data from reader with [Read](std::io::Read) trait.
     pub fn from_reader<R: Read>(reader: R) -> Fallible<Config> {
         let ret = serde_json::de::from_reader(reader)?;
         Ok(ret)
     }
 
-    /// Parse from JSON string.
+    /// Parses from JSON string.
     pub fn from_str(data: &str) -> Fallible<Config> {
         let ret = serde_json::from_str(data)?;
         Ok(ret)
     }
 
+    /// Sets `beam_azimuth_angles` field.
     pub fn beam_azimuth_angles(&mut self, beam_azimuth_angles: [f64; PIXELS_PER_COLUMN]) {
         self.beam_azimuth_angles = beam_azimuth_angles;
     }
 
+    /// Sets `beam_altitude_angles` field.
     pub fn beam_altitude_angles(&mut self, beam_altitude_angles: [f64; PIXELS_PER_COLUMN]) {
         self.beam_altitude_angles = beam_altitude_angles;
     }
 
+    /// Sets `lidar_mode` field.
     pub fn lidar_mode(&mut self, lidar_mode: LidarMode) {
         self.lidar_mode = lidar_mode;
     }
@@ -216,6 +219,8 @@ impl Default for Config {
     }
 }
 
+/// A conversion tool that transforms [Column](Column) raw sensor data
+/// into point clouds.
 #[derive(Clone, Debug)]
 pub struct PointCloudConverter {
     config: Config,
@@ -223,15 +228,19 @@ pub struct PointCloudConverter {
 }
 
 impl PointCloudConverter {
+    /// Create a converter from config.
     pub fn from_config(config: Config) -> Self {
         config.into()
     }
 
+    /// Get internal configuration.
     pub fn config(&self) -> &Config {
         &self.config
     }
 
-    /// Get lidar scene width by its mode.
+    /// Get lidar scene width by its mode. For example,
+    /// [Mode1024x10](LidarMode::Mode1024x10) mode results
+    /// in 1024.
     pub fn num_columns(&self) -> u16 {
         self.num_columns
     }
@@ -288,14 +297,28 @@ impl From<Config> for PointCloudConverter {
     }
 }
 
+/// A frame is a collection of points gathered in one
+/// LIDAR rotation.
 #[derive(Debug, Clone)]
 pub struct Frame {
+    /// The ID marked by [FrameConverter](FrameConverter).
     pub frame_id: u16,
+    /// The IDs of dropped frames before this frame comes in.
     pub skipped_frame_ids: Vec<u16>,
+    /// Stands for missing columns in this frame.
     pub skipped_measurement_ids: Vec<u16>,
+    /// Point cloud data.
     pub points: Vec<(f64, f64, f64)>,
 }
 
+/// It reads [columns](Column) of sensor data, and
+/// gathers points into sequence of frames.
+///
+/// It internally computes point cloud using
+/// [PointCloudConverter](PointCloudConverter).
+/// The columns must be pushed in the same order
+/// of LIDAR output. It keeps track of skipped
+/// columns and dropped frames.
 #[derive(Debug, Clone)]
 pub struct FrameConverter {
     pcd_converter: PointCloudConverter,
@@ -303,10 +326,14 @@ pub struct FrameConverter {
 }
 
 impl FrameConverter {
+    /// Creates converter from config.
     pub fn from_config(config: Config) -> Self {
         config.into()
     }
 
+    /// Pushes new [column](Column) to converter.
+    /// Make sure the columns are pushed in the same
+    /// order of LIDAR output.
     pub fn push(&mut self, column: &Column) -> Fallible<Vec<Frame>> {
         if !column.valid() {
             return Ok(vec![]);
@@ -478,6 +505,8 @@ impl FrameConverter {
         }
     }
 
+    /// Consumes the instance and outputs last maybe
+    /// incomplete frame.
     pub fn finish(mut self) -> Option<Frame> {
         match self.state.take() {
             Some(state) => {

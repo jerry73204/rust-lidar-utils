@@ -1,8 +1,8 @@
-mod api;
-mod consts;
-mod enums;
-mod helper;
-mod packet;
+pub mod api;
+pub mod consts;
+pub mod enums;
+pub mod helper;
+pub mod packet;
 
 pub use packet::{Column, Packet, Pixel};
 
