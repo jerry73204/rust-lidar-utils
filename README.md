@@ -1,20 +1,22 @@
-# lidar-buffer
+# lidar-utils
 
-The crate aims to encode and decode packets from lidar devices. Currently support Velodyne's and Ouster's packet format.
+The crate provides utilities for Velodyne and Ouster LIDAR devices. It features:
 
-The repository is under development, and is not available on crates.io until it's stablized.
+- Packet encoding and decoding
+- Raw sensor data to point cloud and frame conversion
+- Ouster's command API tools
 
 ## Usage
 
 Put this line to include this crate to your project.
 
 ```toml
-lidar-buffer = { git = "https://github.com/jerry73204/rusts-lidar-buffer", branch = "master" }
+lidar-utils = "*"
 ```
 
 ## Documentation
 
-Clone this repo and run `cargo doc` to compile the documents. The online reference will be available as soon as it is published to docs.io.
+Please visit [docs.rs](https://docs.rs/lidar-utils/).
 
 ## Examples
 

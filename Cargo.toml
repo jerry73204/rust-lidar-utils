@@ -1,8 +1,14 @@
 [package]
-name = "lidar-buffer"
+name = "lidar-utils"
 version = "0.1.0"
 authors = ["jerry73204 <jerry73204@gmail.com>"]
 edition = "2018"
+description = "Utilities for Velodyne and Ouster LIDARs"
+documentation = "https://docs.rs/lidar-utils/"
+homepage = "https://github.com/jerry73204/rust-lidar-utils"
+repository = "https://github.com/jerry73204/rust-lidar-utils"
+readme = "README.md"
+license-file = "LICENSE"
 
 [dependencies]
 failure = "~0"

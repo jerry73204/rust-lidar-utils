@@ -347,7 +347,7 @@ impl FrameConverter {
             Some(state) => {
                 match state.last_fid.cmp(&curr_fid) {
                     Ordering::Less => {
-                        // First frame
+                        // Produce frame if new frame ID is not expected
                         let first_frame_opt = if state.expect_new_fid {
                             None
                         } else {
@@ -366,7 +366,7 @@ impl FrameConverter {
                             Some(frame)
                         };
 
-                        // Second frame
+                        // Produce frame if measurement ID is exactly the latest ID of frame
                         let (second_frame_opt, new_state) = {
                             let skipped_fids = ((state.last_fid + 1)..curr_fid).collect();
                             let skipped_mids = (0..curr_mid).collect();
@@ -429,6 +429,7 @@ impl FrameConverter {
                         let mut points = state.points;
                         points.extend(curr_points);
 
+                        // Produce frame if measurement ID is the latest one in frame
                         let (frame_opt, new_state) =
                             if curr_mid + 1 == self.pcd_converter.num_columns() {
                                 let frame = Frame {

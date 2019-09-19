@@ -1,9 +1,10 @@
 extern crate failure;
-extern crate lidar_buffer;
+extern crate lidar_utils;
 
 use failure::Fallible;
-use lidar_buffer::ouster::CommandClient;
+use lidar_utils::ouster::CommandClient;
 
+// Uncomment to enable test
 // #[test]
 fn ouster_client() -> Fallible<()> {
     let addr = "10.42.0.243";

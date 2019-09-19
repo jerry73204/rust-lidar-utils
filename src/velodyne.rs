@@ -98,14 +98,14 @@ impl Packet {
     }
 }
 
-pub struct Helper {
+pub struct PointCloudConverter {
     altitude_degrees: [f64; LASER_PER_FIRING],
     spherical_projection: Array3<f64>,
 }
 
-impl Helper {
+impl PointCloudConverter {
     /// Construct helper from altitude degrees for each laser beam.
-    pub fn new(altitude_degrees: [f64; LASER_PER_FIRING]) -> Helper {
+    pub fn new(altitude_degrees: [f64; LASER_PER_FIRING]) -> Self {
         let num_columns = ENCODER_TICKS_PER_REV - 1;
         let num_rows = altitude_degrees.len();
         let mut spherical_projection = Array3::<f64>::zeros((num_columns, num_rows, 3));
@@ -131,12 +131,10 @@ impl Helper {
                 })
         });
 
-        let helper = Helper {
+        Self {
             altitude_degrees,
             spherical_projection,
-        };
-
-        helper
+        }
     }
 
     pub fn altitude_degrees(&self) -> &[f64; LASER_PER_FIRING] {
@@ -175,9 +173,9 @@ impl Helper {
     }
 }
 
-impl Default for Helper {
-    fn default() -> Helper {
-        Helper::new(DEFAULT_ALTITUDE_DEGREES)
+impl Default for PointCloudConverter {
+    fn default() -> Self {
+        Self::new(DEFAULT_ALTITUDE_DEGREES)
     }
 }
 

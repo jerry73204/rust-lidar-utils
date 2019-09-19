@@ -4,7 +4,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{
     fmt::{Debug, Display, Error as FormatError, Formatter},
     io::{prelude::*, BufReader, LineWriter, Lines},
-    net::{Ipv4Addr, SocketAddr, TcpStream, ToSocketAddrs},
+    net::{Ipv4Addr, TcpStream, ToSocketAddrs},
 };
 
 // TODO: This workaround handles large array for serde.

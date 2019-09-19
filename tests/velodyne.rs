@@ -1,11 +1,11 @@
 extern crate failure;
-extern crate lidar_buffer;
+extern crate lidar_utils;
 extern crate pcap;
 extern crate pretty_env_logger;
 extern crate serde_json;
 
 use failure::Fallible;
-use lidar_buffer::velodyne::{Helper, Packet as VelodynePacket};
+use lidar_utils::velodyne::{PointCloudConverter, Packet as VelodynePacket};
 use pcap::Capture;
 
 #[test]
@@ -33,7 +33,7 @@ fn velodyne_pcap_file() -> Fallible<()> {
 #[test]
 #[cfg(feature = "enable-pcap")]
 fn velodyne_scan() -> Fallible<()> {
-    let helper = Helper::default();
+    let converter = PointCloudConverter::default();
 
     let mut cap = Capture::from_file("test_files/velodyne_example.pcap")?;
     cap.filter("udp")?;
@@ -43,7 +43,7 @@ fn velodyne_scan() -> Fallible<()> {
 
         let mut frame_points = vec![];
         for firing in lidar_packet.firings.iter() {
-            let mut column_points = helper.firing_to_points(&firing)?;
+            let mut column_points = converter.firing_to_points(&firing)?;
             frame_points.append(&mut column_points);
         }
     }
