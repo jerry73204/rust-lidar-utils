@@ -5,7 +5,7 @@ extern crate pretty_env_logger;
 extern crate serde_json;
 
 use failure::Fallible;
-use lidar_utils::velodyne::{PointCloudConverter, Packet as VelodynePacket};
+use lidar_utils::velodyne::{Packet as VelodynePacket, PointCloudConverter};
 use pcap::Capture;
 
 #[test]

@@ -1,11 +1,7 @@
 #[macro_use]
 extern crate failure;
-extern crate lidar_utils;
-extern crate pcap;
-extern crate serde_json;
 #[macro_use]
 extern crate log;
-extern crate pretty_env_logger;
 
 use failure::Fallible;
 use lidar_utils::ouster::{
