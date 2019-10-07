@@ -78,7 +78,7 @@ fn ouster_frame_converter() -> Fallible<()> {
     let mut frame_converter = FrameConverter::from_config(config);
 
     // Load pcap file
-    let mut cap = Capture::from_file("test_files/ouster_example.pcap")?;
+    let mut cap = Capture::from_file("/home/jerry73204/Downloads/lombard_street_OS1.pcap")?;
     cap.filter("udp")?;
 
     let mut frames = vec![];
@@ -106,11 +106,28 @@ fn ouster_frame_converter() -> Fallible<()> {
     }
 
     let mut prev_frame_id_opt = None;
+    let mut prev_timestamp_opt = None;
     for frame in frames {
         if let Some(prev_frame_id) = prev_frame_id_opt {
             ensure!(prev_frame_id < frame.frame_id, "Frame ID is not ordered");
         }
         prev_frame_id_opt = Some(frame.frame_id);
+
+        let mut prev_measurement_id_opt = None;
+        for (measurement_id, timestamp) in frame.timestamps.iter() {
+            if let Some(prev_timestamp) = prev_timestamp_opt {
+                ensure!(prev_timestamp < *timestamp, "Timestamp is not ordered");
+            }
+            prev_timestamp_opt = Some(*timestamp);
+
+            if let Some(prev_measurement_id) = prev_measurement_id_opt {
+                ensure!(
+                    prev_measurement_id < *measurement_id,
+                    "Measurement ID is not ordered"
+                );
+            }
+            prev_measurement_id_opt = Some(*measurement_id);
+        }
     }
 
     Ok(())

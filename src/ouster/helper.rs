@@ -1,4 +1,4 @@
-use super::{Column, LidarMode, ENCODER_TICKS_PER_REV, PIXELS_PER_COLUMN};
+use super::{Column, LidarMode, COLUMNS_PER_PACKET, ENCODER_TICKS_PER_REV, PIXELS_PER_COLUMN};
 use failure::Fallible;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -6,6 +6,7 @@ use std::{
     fmt::{Debug, Error as FormatError, Formatter},
     fs::File,
     io::Read,
+    ops::Range,
     path::Path,
 };
 
@@ -249,7 +250,7 @@ impl PointCloudConverter {
     ///
     /// The method takes [Column.measurement_id](Column.measurement_id) as column index.
     /// It returns error if the index is out of bound.
-    pub fn column_to_points(&self, column: &Column) -> Fallible<Vec<(f64, f64, f64)>> {
+    pub fn column_to_points(&self, column: &Column) -> Fallible<Vec<(f64, f64, f64, u64)>> {
         let col_index = column.measurement_id;
         ensure!(
             col_index < self.num_columns,
@@ -271,7 +272,8 @@ impl PointCloudConverter {
                 let x = range * azimuth_angle.cos() * altitude_angle.cos();
                 let y = -range * azimuth_angle.sin() * altitude_angle.cos();
                 let z = range * altitude_angle.sin();
-                (x, y, z)
+                let ts = column.timestamp;
+                (x, y, z, ts)
             })
             .collect::<Vec<_>>();
 
@@ -304,11 +306,11 @@ pub struct Frame {
     /// The ID marked by [FrameConverter](FrameConverter).
     pub frame_id: u16,
     /// The IDs of dropped frames before this frame comes in.
-    pub skipped_frame_ids: Vec<u16>,
+    pub skipped_frame_ids: Range<u16>,
     /// Stands for missing columns in this frame.
-    pub skipped_measurement_ids: Vec<u16>,
+    pub timestamps: Vec<(u16, u64)>,
     /// Point cloud data.
-    pub points: Vec<(f64, f64, f64)>,
+    pub points: Vec<(f64, f64, f64, u64)>,
 }
 
 /// It reads [columns](Column) of sensor data, and
@@ -335,199 +337,165 @@ impl FrameConverter {
     /// Make sure the columns are pushed in the same
     /// order of LIDAR output.
     pub fn push(&mut self, column: &Column) -> Fallible<Vec<Frame>> {
-        if !column.valid() {
-            return Ok(vec![]);
-        }
-
-        let curr_points = self.pcd_converter.column_to_points(&column)?;
         let curr_fid = column.frame_id;
         let curr_mid = column.measurement_id;
+        let curr_ts = column.timestamp;
+        let curr_points = self.pcd_converter.column_to_points(&column)?;
 
-        match self.state.take() {
-            Some(state) => {
+        // If received column is not valid, update last_{fid,mid} only
+        if !column.valid() {
+            let (frame_opt, new_state) = match self.state.take() {
+                Some(mut state) => {
+                    let frame_opt = match state.last_fid.cmp(&curr_fid) {
+                        Ordering::Less => state.frame.take(),
+                        Ordering::Equal => None,
+                        Ordering::Greater => {
+                            let error = format_err!(
+                                "Measurement ID of received column is less than that of previous column"
+                            );
+                            return Err(error.into());
+                        }
+                    };
+
+                    state.last_fid = curr_fid;
+                    state.last_mid = curr_mid;
+                    (frame_opt, state)
+                }
+                None => {
+                    let new_state = FrameConverterState {
+                        last_fid: curr_fid,
+                        last_mid: curr_mid,
+                        frame: None,
+                    };
+                    (None, new_state)
+                }
+            };
+
+            self.state = Some(new_state);
+            return Ok(frame_opt.into_iter().collect());
+        }
+
+        let (new_state, output_frames) = match self.state.take() {
+            Some(mut state) => {
                 match state.last_fid.cmp(&curr_fid) {
                     Ordering::Less => {
-                        // Produce frame if new frame ID is not expected
-                        let first_frame_opt = if state.expect_new_fid {
-                            None
-                        } else {
-                            let skipped_mids = {
-                                let mut skipped_mids = state.skipped_mids;
-                                skipped_mids
-                                    .extend((state.last_mid + 1)..self.pcd_converter.num_columns());
-                                skipped_mids
-                            };
-                            let frame = Frame {
-                                frame_id: state.last_fid,
-                                skipped_frame_ids: state.skipped_fids,
-                                skipped_measurement_ids: skipped_mids,
-                                points: state.points,
-                            };
-                            Some(frame)
+                        // Case: New frame ID
+                        // Pop out saved frame and conditionally save or output second frame
+
+                        let first_frame_opt = state.frame.take();
+                        let second_frame = Frame {
+                            frame_id: curr_fid,
+                            skipped_frame_ids: (state.last_fid + 1)..curr_fid,
+                            timestamps: {
+                                let mut timestamps = Vec::with_capacity(COLUMNS_PER_PACKET);
+                                timestamps.push((curr_mid, curr_ts));
+                                timestamps
+                            },
+                            points: curr_points,
+                        };
+                        let mut new_state = FrameConverterState {
+                            last_mid: curr_mid,
+                            last_fid: curr_fid,
+                            frame: None,
                         };
 
                         // Produce frame if measurement ID is exactly the latest ID of frame
-                        let (second_frame_opt, new_state) = {
-                            let skipped_fids = ((state.last_fid + 1)..curr_fid).collect();
-                            let skipped_mids = (0..curr_mid).collect();
-
-                            if curr_mid + 1 == self.pcd_converter.num_columns {
-                                let second_frame = Frame {
-                                    frame_id: curr_fid,
-                                    skipped_frame_ids: skipped_fids,
-                                    skipped_measurement_ids: skipped_mids,
-                                    points: curr_points,
-                                };
-
-                                let new_state = FrameConverterState {
-                                    expect_new_fid: true,
-                                    last_mid: curr_mid,
-                                    last_fid: curr_fid,
-                                    skipped_fids: vec![],
-                                    skipped_mids: vec![],
-                                    points: vec![],
-                                };
-
+                        let (second_frame_opt, new_state) =
+                            if curr_mid + 1 == self.pcd_converter.num_columns() {
                                 (Some(second_frame), new_state)
                             } else {
-                                let new_state = FrameConverterState {
-                                    expect_new_fid: false,
-                                    last_mid: curr_mid,
-                                    last_fid: curr_fid,
-                                    skipped_fids,
-                                    skipped_mids,
-                                    points: curr_points,
-                                };
-
+                                new_state.frame = Some(second_frame);
                                 (None, new_state)
-                            }
-                        };
-
-                        // Update and return
-                        self.state = Some(new_state);
+                            };
 
                         let output_frames = first_frame_opt
                             .into_iter()
                             .chain(second_frame_opt.into_iter())
                             .collect();
 
-                        return Ok(output_frames);
+                        (new_state, output_frames)
                     }
                     Ordering::Equal => {
                         if state.last_mid >= curr_mid {
                             let error = format_err!(
-                                "Input measurement ID is less than that of last column"
+                                "Measurement ID of received column is less than that of previous column"
                             );
                             return Err(error);
                         }
 
-                        let skipped_fids = state.skipped_fids;
+                        // Conditionally produce frame if measurement ID is the latest one
+                        let mut new_state = FrameConverterState {
+                            last_mid: curr_mid,
+                            last_fid: curr_fid,
+                            frame: None,
+                        };
+                        let frame = {
+                            let mut frame = state.frame.take().unwrap_or_else(|| {
+                                unreachable!("Please report bug to upstream");
+                            });
+                            frame.timestamps.push((curr_mid, curr_ts));
+                            frame.points.extend(curr_points);
+                            frame
+                        };
 
-                        let mut skipped_mids = state.skipped_mids;
-                        skipped_mids.extend((state.last_mid + 1)..curr_mid);
-
-                        let mut points = state.points;
-                        points.extend(curr_points);
-
-                        // Produce frame if measurement ID is the latest one in frame
                         let (frame_opt, new_state) =
                             if curr_mid + 1 == self.pcd_converter.num_columns() {
-                                let frame = Frame {
-                                    frame_id: curr_fid,
-                                    skipped_frame_ids: skipped_fids,
-                                    skipped_measurement_ids: skipped_mids,
-                                    points,
-                                };
-
-                                let new_state = FrameConverterState {
-                                    expect_new_fid: true,
-                                    last_mid: curr_mid,
-                                    last_fid: curr_fid,
-                                    skipped_fids: vec![],
-                                    skipped_mids: vec![],
-                                    points: vec![],
-                                };
-
                                 (Some(frame), new_state)
                             } else {
-                                let new_state = FrameConverterState {
-                                    expect_new_fid: false,
-                                    last_mid: curr_mid,
-                                    last_fid: curr_fid,
-                                    skipped_fids,
-                                    skipped_mids,
-                                    points,
-                                };
-
+                                new_state.frame = Some(frame);
                                 (None, new_state)
                             };
 
                         let output_frames = frame_opt.into_iter().collect();
-                        self.state = Some(new_state);
-                        return Ok(output_frames);
+                        (new_state, output_frames)
                     }
                     Ordering::Greater => {
-                        let error = format_err!("Input frame ID is less than that of last column");
+                        let error = format_err!(
+                            "Frame ID of received column is less than that of previous column"
+                        );
                         return Err(error);
                     }
                 }
             }
             None => {
-                if curr_mid + 1 == self.pcd_converter.num_columns() {
-                    let new_state = FrameConverterState {
-                        expect_new_fid: true,
-                        last_mid: curr_mid,
-                        last_fid: curr_fid,
-                        skipped_fids: vec![],
-                        skipped_mids: vec![],
-                        points: vec![],
-                    };
-                    self.state = Some(new_state);
-                    let output_frame = Frame {
-                        frame_id: curr_fid,
-                        skipped_frame_ids: vec![],
-                        skipped_measurement_ids: (0..(column.measurement_id)).collect(),
-                        points: curr_points,
-                    };
-                    return Ok(vec![output_frame]);
+                let frame = Frame {
+                    frame_id: curr_fid,
+                    skipped_frame_ids: curr_fid..curr_fid,
+                    timestamps: {
+                        let mut timestamps = Vec::with_capacity(COLUMNS_PER_PACKET);
+                        timestamps.push((curr_mid, curr_ts));
+                        timestamps
+                    },
+                    points: curr_points,
+                };
+                let mut new_state = FrameConverterState {
+                    last_mid: curr_mid,
+                    last_fid: curr_fid,
+                    frame: None,
+                };
+
+                let frame_opt = if curr_mid + 1 == self.pcd_converter.num_columns() {
+                    Some(frame)
                 } else {
-                    let new_state = FrameConverterState {
-                        expect_new_fid: false,
-                        last_mid: curr_mid,
-                        last_fid: curr_fid,
-                        skipped_fids: vec![],
-                        skipped_mids: (0..(column.measurement_id)).collect(),
-                        points: curr_points,
-                    };
-                    self.state = Some(new_state);
-                    return Ok(vec![]);
-                }
+                    new_state.frame = Some(frame);
+                    None
+                };
+
+                (new_state, frame_opt.into_iter().collect())
             }
-        }
+        };
+
+        self.state = Some(new_state);
+        Ok(output_frames)
     }
 
     /// Consumes the instance and outputs last maybe
     /// incomplete frame.
     pub fn finish(mut self) -> Option<Frame> {
-        match self.state.take() {
-            Some(state) => {
-                if state.expect_new_fid {
-                    None
-                } else {
-                    let mut skipped_mids = state.skipped_mids;
-                    skipped_mids.extend((state.last_mid + 1)..(self.pcd_converter.num_columns()));
-
-                    let frame = Frame {
-                        frame_id: state.last_fid,
-                        skipped_frame_ids: state.skipped_fids,
-                        skipped_measurement_ids: skipped_mids,
-                        points: state.points,
-                    };
-                    Some(frame)
-                }
-            }
-            None => None,
-        }
+        self.state
+            .take()
+            .map(|mut state| state.frame.take())
+            .unwrap_or(None)
     }
 }
 
@@ -544,12 +512,9 @@ impl From<Config> for FrameConverter {
 
 #[derive(Clone, Debug)]
 struct FrameConverterState {
-    expect_new_fid: bool,
-    skipped_fids: Vec<u16>,
-    skipped_mids: Vec<u16>,
     last_mid: u16,
     last_fid: u16,
-    points: Vec<(f64, f64, f64)>,
+    frame: Option<Frame>,
 }
 
 fn large_array_fmt<T: Debug>(
