@@ -14,6 +14,8 @@ use std::{
 //       We'll remove is it once the const generics is introduced.
 big_array! { BigArray; }
 
+pub type Point = (f64, f64, f64);
+
 #[derive(Clone, Serialize, Deserialize, Derivative)]
 #[derivative(Debug)]
 pub struct Config {
@@ -250,7 +252,7 @@ impl PointCloudConverter {
     ///
     /// The method takes [Column.measurement_id](Column.measurement_id) as column index.
     /// It returns error if the index is out of bound.
-    pub fn column_to_points(&self, column: &Column) -> Fallible<Vec<(f64, f64, f64, u64)>> {
+    pub fn column_to_points(&self, column: &Column) -> Fallible<Vec<(Point, u64)>> {
         let col_index = column.measurement_id;
         ensure!(
             col_index < self.num_columns,
@@ -272,7 +274,7 @@ impl PointCloudConverter {
                 let y = -range * azimuth_angle.sin() * altitude_angle.cos();
                 let z = range * altitude_angle.sin();
                 let ts = column.timestamp;
-                (x, y, z, ts)
+                ((x, y, z), ts)
             })
             .collect::<Vec<_>>();
 
@@ -309,7 +311,7 @@ pub struct Frame {
     /// Stands for missing columns in this frame.
     pub timestamps: Vec<(u16, u64)>,
     /// Point cloud data.
-    pub points: Vec<(f64, f64, f64, u64)>,
+    pub points: Vec<(Point, u64)>,
 }
 
 /// It reads [columns](Column) of sensor data, and
