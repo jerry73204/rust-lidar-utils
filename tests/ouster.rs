@@ -22,9 +22,14 @@ fn ouster_create_packet() -> Fallible<()> {
         packets.push(lidar_packet);
     }
 
-    for (idx, packet) in packets.iter().enumerate() {
-        let ts = packet.columns[0].timestamp;
-        println!("No. {}, timestamp = {}", idx, ts);
+    let mut prev_timestamp = None;
+
+    for packet in packets.iter() {
+        let timestamp = packet.columns[0].timestamp;
+        if let Some(prev) = prev_timestamp {
+            ensure!(timestamp > prev, "packets are not ordered by timestsamp");
+        }
+        prev_timestamp = Some(timestamp);
     }
 
     Ok(())
