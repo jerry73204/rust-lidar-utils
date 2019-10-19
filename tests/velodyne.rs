@@ -4,8 +4,10 @@ extern crate pcap;
 extern crate pretty_env_logger;
 extern crate serde_json;
 
-use failure::Fallible;
-use lidar_utils::velodyne::{Packet as VelodynePacket, PointCloudConverter};
+use failure::{ensure, Fallible};
+use lidar_utils::velodyne::{
+    Config, FrameConverter, Packet as VelodynePacket, PointCloudConverter, VelodynePoint,
+};
 use pcap::Capture;
 
 #[test]
@@ -22,9 +24,14 @@ fn velodyne_pcap_file() -> Fallible<()> {
         packets.push(lidar_packet);
     }
 
-    for (idx, packet) in packets.iter().enumerate() {
-        let ts = packet.gps_timestamp;
-        println!("No. {}, gps_timestamp = {}", idx, ts);
+    let mut prev_timestamp = None;
+
+    for packet in packets.iter() {
+        if let Some(prev) = prev_timestamp {
+            let curr = packet.timestamp;
+            assert!(curr > prev);
+        }
+        prev_timestamp = Some(packet.timestamp);
     }
 
     Ok(())
@@ -33,18 +40,78 @@ fn velodyne_pcap_file() -> Fallible<()> {
 #[test]
 #[cfg(feature = "enable-pcap")]
 fn velodyne_scan() -> Fallible<()> {
-    let converter = PointCloudConverter::default();
+    use std::f64::consts::PI;
+
+    let config = Config::vlp_16_config();
+    let converter = PointCloudConverter::new(config);
+
+    let mut cap = Capture::from_file("test_files/velodyne_example.pcap")?;
+    cap.filter("udp")?;
+
+    let mut prev_timestamp = None;
+
+    while let Ok(packet) = cap.next() {
+        let lidar_packet = VelodynePacket::from_pcap(&packet)?;
+
+        for point in converter.packet_to_points(&lidar_packet)?.into_iter() {
+            let time_azimuth = match point {
+                VelodynePoint::Strongest(_, time_azimuth) => time_azimuth,
+                VelodynePoint::LastReturn(_, time_azimuth) => time_azimuth,
+                VelodynePoint::DualReturn(_, _, time_azimuth) => time_azimuth,
+            };
+
+            let (timestamp, azimuth_angle) = time_azimuth;
+
+            ensure!(
+                azimuth_angle >= 0.0 && azimuth_angle <= 2.0 * PI,
+                "azimuth angle is out of range"
+            );
+
+            if let Some(prev) = prev_timestamp {
+                ensure!(timestamp > prev, "Points are not ordered by timestamp");
+            }
+            prev_timestamp = Some(timestamp);
+        }
+    }
+
+    Ok(())
+}
+
+#[test]
+#[cfg(feature = "enable-pcap")]
+fn velodyne_frames() -> Fallible<()> {
+    use std::f64::consts::PI;
+
+    let config = Config::vlp_16_config();
+    let mut converter = FrameConverter::new(300, config)?;
 
     let mut cap = Capture::from_file("test_files/velodyne_example.pcap")?;
     cap.filter("udp")?;
 
     while let Ok(packet) = cap.next() {
-        let lidar_packet = VelodynePacket::from_pcap(&packet)?;
+        let lidar_packet = match VelodynePacket::from_pcap(&packet) {
+            Ok(packet) => packet,
+            Err(_) => continue,
+        };
+        let frames = converter.push(&lidar_packet)?;
 
-        let mut frame_points = vec![];
-        for firing in lidar_packet.firings.iter() {
-            let mut column_points = converter.firing_to_points(&firing)?;
-            frame_points.append(&mut column_points);
+        let mut prev_timestamp = None;
+
+        for frame in frames.into_iter() {
+            for point in frame.points.into_iter() {
+                let (timestamp, azimuth_angle) = point.time_azimuth();
+
+                ensure!(
+                    azimuth_angle >= 0.0 && azimuth_angle <= 2.0 * PI,
+                    "azimuth angle is out of range"
+                );
+
+                if let Some(prev) = prev_timestamp {
+                    ensure!(timestamp > prev, "points are not ordered by timestamp");
+                }
+
+                prev_timestamp = Some(timestamp);
+            }
         }
     }
 

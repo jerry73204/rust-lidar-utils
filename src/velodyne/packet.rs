@@ -1,4 +1,4 @@
-use super::{ENCODER_TICKS_PER_REV, FIRING_PER_PACKET, LASER_PER_FIRING};
+use super::{AZIMUTH_COUNT_PER_REV, CHANNEL_PER_FIRING, FIRING_PER_PACKET};
 
 use failure::Fallible;
 #[cfg(feature = "enable-pcap")]
@@ -6,14 +6,34 @@ use pcap::Packet as PcapPacket;
 use std::mem::size_of;
 
 #[repr(u16)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BlockIdentifier {
     Block0To31 = 0xeeff,
     Block32To63 = 0xddff,
 }
 
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ReturnMode {
+    Strongest = 0x37,
+    LastReturn = 0x38,
+    DualReturn = 0x39,
+}
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ProductID {
+    HDL32E = 0x21,
+    VLP16 = 0x22,
+    PuckLite = 0x23,
+    PuckHiRes = 0x24,
+    VLP32C = 0x28,
+    Velarray = 0x31,
+    VLS128 = 0xa1,
+}
+
 #[repr(C, packed)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct LaserReturn {
     /// The raw distance of laser return. The distance in meter is the raw distance times 0.002.
     pub distance: u16,
@@ -26,33 +46,44 @@ impl LaserReturn {
     pub fn meter_distance(&self) -> f64 {
         self.distance as f64 * 0.002
     }
+
+    /// Compute distance in millimetres from sensor data.
+    pub fn mm_distance(&self) -> f64 {
+        self.distance as f64 * 2.0
+    }
 }
 
 #[repr(C, packed)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Firing {
     /// Valid if either 0xeeff or 0xddff, corresponding to range from 0 to 31, or range from 32 to 63.
     pub block_identifier: BlockIdentifier,
     /// Encoder count of rotation motor ranging from 0 to 36000 (inclusive).
-    pub encoder_ticks: u16,
+    pub azimuth_count: u16,
     /// Array of laser returns.
-    pub laster_returns: [LaserReturn; LASER_PER_FIRING],
+    pub sequence_former: [LaserReturn; CHANNEL_PER_FIRING],
+    /// Array of laser returns.
+    pub sequence_latter: [LaserReturn; CHANNEL_PER_FIRING],
 }
 
 impl Firing {
     /// Compute azimuth angle in radian from encoder ticks.
     pub fn azimuth_angle(&self) -> f64 {
-        2.0 * std::f64::consts::PI * self.encoder_ticks as f64 / (ENCODER_TICKS_PER_REV - 1) as f64
+        2.0 * std::f64::consts::PI * self.azimuth_count as f64 / (AZIMUTH_COUNT_PER_REV - 1) as f64
     }
 }
 
 #[repr(C, packed)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Packet {
+    /// Sensor data.
     pub firings: [Firing; FIRING_PER_PACKET],
-    pub gps_timestamp: u32,
-    pub mode: u8,
-    pub sensor_type: u8,
+    /// Timestamp in microseconds.
+    pub timestamp: u32,
+    /// Indicates single return mode or dual return mode.
+    pub return_mode: ReturnMode,
+    /// Sensor model.
+    pub product_id: ProductID,
 }
 
 impl Packet {

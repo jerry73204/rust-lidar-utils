@@ -263,11 +263,10 @@ impl PointCloudConverter {
             .enumerate()
             .map(|(row_index, pixel)| {
                 use std::f64::consts::PI;
-                let azimuth_angle = 2.0
-                    * PI
-                    * (column.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64
-                        + self.config.beam_azimuth_angles[row_index] / 360.0);
-                let altitude_angle = 2.0 * PI * self.config.beam_altitude_angles[row_index] / 360.0;
+                let azimuth_angle =
+                    2.0 * PI * (column.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64)
+                        + self.config.beam_azimuth_angles[row_index].to_radians();
+                let altitude_angle = self.config.beam_altitude_angles[row_index].to_radians();
                 let range = pixel.range() as f64;
                 let x = range * azimuth_angle.cos() * altitude_angle.cos();
                 let y = -range * azimuth_angle.sin() * altitude_angle.cos();
