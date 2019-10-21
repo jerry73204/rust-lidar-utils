@@ -4,9 +4,7 @@ extern crate failure;
 extern crate log;
 
 use failure::Fallible;
-use lidar_utils::ouster::{
-    Config, Frame, FrameConverter, Packet as OusterPacket, PointCloudConverter,
-};
+use lidar_utils::ouster::{Config, FrameConverter, Packet as OusterPacket, PointCloudConverter};
 use pcap::Capture;
 
 #[test]
@@ -90,19 +88,7 @@ fn ouster_frame_converter() -> Fallible<()> {
 
     while let Ok(packet) = cap.next() {
         let lidar_packet = OusterPacket::from_pcap(&packet)?;
-
-        let new_frames = lidar_packet
-            .columns
-            .into_iter()
-            .map(|column| {
-                let new_frames = frame_converter.push(column)?;
-                Ok(new_frames)
-            })
-            .collect::<Fallible<Vec<_>>>()?
-            .into_iter()
-            .flat_map(|frames| frames)
-            .collect::<Vec<Frame>>();
-
+        let new_frames = frame_converter.push_packet(&lidar_packet)?;
         frames.extend(new_frames);
     }
 

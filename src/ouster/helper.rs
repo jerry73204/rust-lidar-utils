@@ -1,4 +1,6 @@
-use super::{Column, LidarMode, COLUMNS_PER_PACKET, ENCODER_TICKS_PER_REV, PIXELS_PER_COLUMN};
+use super::{
+    Column, LidarMode, Packet, COLUMNS_PER_PACKET, ENCODER_TICKS_PER_REV, PIXELS_PER_COLUMN,
+};
 use failure::Fallible;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -334,10 +336,8 @@ impl FrameConverter {
         config.into()
     }
 
-    /// Pushes new [column](Column) to converter.
-    /// Make sure the columns are pushed in the same
-    /// order of LIDAR output.
-    pub fn push(&mut self, column: &Column) -> Fallible<Vec<Frame>> {
+    /// Pushes new [Column] to converter.
+    pub fn push_column(&mut self, column: &Column) -> Fallible<Vec<Frame>> {
         let curr_fid = column.frame_id;
         let curr_mid = column.measurement_id;
         let curr_ts = column.timestamp;
@@ -488,6 +488,15 @@ impl FrameConverter {
 
         self.state = Some(new_state);
         Ok(output_frames)
+    }
+
+    /// Pushes new [Packet] to converter.
+    pub fn push_packet(&mut self, packet: &Packet) -> Fallible<Vec<Frame>> {
+        let mut frames = vec![];
+        for column in packet.columns.iter() {
+            frames.extend(self.push_column(&column)?);
+        }
+        Ok(frames)
     }
 
     /// Consumes the instance and outputs last maybe
