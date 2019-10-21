@@ -17,6 +17,7 @@ use std::{
 big_array! { BigArray; }
 
 pub type Point = (f64, f64, f64);
+pub type TimeAzimuth = (u64, f64);
 
 #[derive(Clone, Serialize, Deserialize, Derivative)]
 #[derivative(Debug)]
@@ -254,7 +255,7 @@ impl PointCloudConverter {
     ///
     /// The method takes [Column.measurement_id](Column.measurement_id) as column index.
     /// It returns error if the index is out of bound.
-    pub fn column_to_points(&self, column: &Column) -> Fallible<Vec<(Point, u64)>> {
+    pub fn column_to_points(&self, column: &Column) -> Fallible<Vec<(Point, TimeAzimuth)>> {
         let col_index = column.measurement_id;
         ensure!(
             col_index < self.num_columns,
@@ -266,17 +267,15 @@ impl PointCloudConverter {
             .iter()
             .enumerate()
             .map(|(row_index, pixel)| {
-                use std::f64::consts::PI;
                 let azimuth_angle =
-                    2.0 * PI * (column.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64)
+                    column.azimuth_angle()
                         + self.config.beam_azimuth_angles[row_index].to_radians();
                 let altitude_angle = self.config.beam_altitude_angles[row_index].to_radians();
                 let range = pixel.range() as f64;
                 let x = range * azimuth_angle.cos() * altitude_angle.cos();
                 let y = -range * azimuth_angle.sin() * altitude_angle.cos();
                 let z = range * altitude_angle.sin();
-                let ts = column.timestamp;
-                ((x, y, z), ts)
+                ((x, y, z), (column.timestamp, azimuth_angle))
             })
             .collect::<Vec<_>>();
 
@@ -310,10 +309,10 @@ pub struct Frame {
     pub frame_id: u16,
     /// The IDs of dropped frames before this frame comes in.
     pub skipped_frame_ids: Range<u16>,
-    /// Stands for missing columns in this frame.
+    /// Pairs of `(measurement_id, timestamp)`.
     pub timestamps: Vec<(u16, u64)>,
     /// Point cloud data.
-    pub points: Vec<(Point, u64)>,
+    pub points: Vec<(Point, TimeAzimuth)>,
 }
 
 /// It reads [columns](Column) of sensor data, and
