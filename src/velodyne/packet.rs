@@ -1,3 +1,5 @@
+//! Provides `C-packed` structs for Velodyne data packets.
+
 use super::consts::{AZIMUTH_COUNT_PER_REV, CHANNEL_PER_FIRING, FIRING_PER_PACKET};
 
 use failure::{ensure, Fallible};
@@ -5,6 +7,7 @@ use failure::{ensure, Fallible};
 use pcap::Packet as PcapPacket;
 use std::mem::size_of;
 
+/// Represents the block index in range from 0 to 31, or from 32 to 63.
 #[repr(u16)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BlockIdentifier {
@@ -12,6 +15,7 @@ pub enum BlockIdentifier {
     Block32To63 = 0xddff,
 }
 
+/// Represents the way the sensor measures the laser signal.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ReturnMode {
@@ -20,6 +24,7 @@ pub enum ReturnMode {
     DualReturn = 0x39,
 }
 
+/// Represents the hardware model.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ProductID {
@@ -32,31 +37,33 @@ pub enum ProductID {
     VLS128 = 0xa1,
 }
 
+/// Represents a point of measurement.
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct LaserReturn {
-    /// The raw distance of laser return. The distance in meter is the raw distance times 0.002.
+    /// The raw distance of laser return.
     pub distance: u16,
     /// The intensity of laser return.
     pub intensity: u8,
 }
 
 impl LaserReturn {
-    /// Compute distance in meters from sensor data.
+    /// Compute distance in meters by raw distance times 0.002.
     pub fn meter_distance(&self) -> f64 {
         self.distance as f64 * 0.002
     }
 
-    /// Compute distance in millimetres from sensor data.
+    /// Compute distance in millimetres by raw distance times 0.002.
     pub fn mm_distance(&self) -> f64 {
         self.distance as f64 * 2.0
     }
 }
 
+/// Represents a sequence of measurements with meta data.
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Firing {
-    /// Valid if either 0xeeff or 0xddff, corresponding to range from 0 to 31, or range from 32 to 63.
+    /// Represents the block that the firing belongs to.
     pub block_identifier: BlockIdentifier,
     /// Encoder count of rotation motor ranging from 0 to 36000 (inclusive).
     pub azimuth_count: u16,
@@ -73,6 +80,7 @@ impl Firing {
     }
 }
 
+/// Represents the data packet from Velodyne sensor.
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Packet {

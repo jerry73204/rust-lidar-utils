@@ -1,3 +1,5 @@
+//! Provides a set of tools to convert raw data from Velodyne sensors.
+
 use super::{
     consts::{CHANNEL_PER_FIRING, FIRING_PERIOD, LASER_RETURN_PERIOD},
     packet::{Packet, ReturnMode},
@@ -10,6 +12,7 @@ pub type LastReturnPoint = Timestamped<PointPair>;
 pub type StrongestPoint = Timestamped<PointPair>;
 pub type DualPoint = Timestamped<(PointPair, PointPair)>; // (last_return, strongest)
 
+/// Represents configuration for Velodyne sensors.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Config {
     /// Vertical angles per laser in degrees.
@@ -59,6 +62,7 @@ impl Config {
     }
 }
 
+/// A list of points with mode.
 #[derive(Debug, Clone, PartialEq)]
 pub enum VelodynePointList {
     Strongest(Vec<StrongestPoint>),
@@ -147,6 +151,7 @@ impl IntoIterator for VelodynePointList {
     }
 }
 
+/// A point with mode.
 #[derive(Debug, Clone, PartialEq)]
 pub enum VelodynePoint {
     Strongest(StrongestPoint),
@@ -185,6 +190,7 @@ impl VelodynePoint {
     }
 }
 
+/// A struct that converts raw packets to point cloud data.
 #[derive(Debug, Clone)]
 pub struct PointCloudConverter {
     config: Config,
@@ -407,6 +413,7 @@ impl PointCloudConverter {
     }
 }
 
+/// A struct that converts and distributes raw packets into frames.
 #[derive(Debug, Clone)]
 pub struct FrameConverter {
     pcd_converter: PointCloudConverter,
@@ -513,6 +520,7 @@ struct FrameConverterState {
     pub frame_opt: Option<Frame>,
 }
 
+/// The frame of points returned by [FrameConverter].
 #[derive(Debug, Clone)]
 pub struct Frame {
     pub points: VelodynePointList,

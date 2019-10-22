@@ -1,17 +1,13 @@
-// #[macro_use]
-// extern crate failure;
-// extern crate serde;
-// extern crate serde_json;
-// #[macro_use]
-// extern crate serde_big_array;
-// extern crate chrono;
-// extern crate log;
-// extern crate ndarray;
+//! Provide data structures and utilities for LIDAR data.
+//!
+//! This crate supports the list of models.
+//! - Ouster OS1
+//! - Velodyne VLP-16
+//! - Velodyne Puke Lite
+//! - Velodyne Puke Hi-Res
+
 #[cfg(feature = "enable-pcap")]
 extern crate pcap;
-// #[macro_use]
-// extern crate derivative;
-// extern crate regex;
 
 mod common;
 pub mod ouster;

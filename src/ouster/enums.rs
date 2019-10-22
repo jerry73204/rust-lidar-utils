@@ -1,3 +1,5 @@
+//! Useful enums for Ouster sensors.
+
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter, Result as FormatResult};
 

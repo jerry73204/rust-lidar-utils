@@ -1,3 +1,5 @@
+//! Tools to work with TCP API on Ouster sensors.
+
 use super::{
     consts::PIXELS_PER_COLUMN,
     enums::{LidarMode, MultipurposeIoMode, Polarity, TimestampMode},

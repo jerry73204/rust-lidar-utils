@@ -1,3 +1,4 @@
+/// A Cartesian point.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Point {
     pub x: f64,
@@ -21,6 +22,7 @@ impl From<SphericalPoint> for Point {
     }
 }
 
+/// A point location in spherical coordinate system.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SphericalPoint {
     pub distance: f64,
@@ -66,12 +68,14 @@ impl From<Point> for SphericalPoint {
     }
 }
 
+/// A struct that wraps arbitrary type with additional timestampm.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Timestamped<T> {
     pub value: T,
     pub timestamp: f64,
 }
 
+/// A pair of [Point] and [SphericalPoint].
 #[derive(Debug, Clone, PartialEq)]
 pub struct PointPair {
     pub cartesian: Point,

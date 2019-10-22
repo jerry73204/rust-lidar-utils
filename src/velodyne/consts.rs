@@ -1,3 +1,5 @@
+//! Useful constants for Velodyne data structures and calculations.
+
 pub const DATA_PORT: u16 = 2368;
 pub const CHANNEL_PER_FIRING: usize = 16;
 pub const FIRING_PER_PACKET: usize = 12;

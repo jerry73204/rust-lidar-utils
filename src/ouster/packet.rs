@@ -1,3 +1,5 @@
+//! Provides a set of _C-packed_ structs for Ouster packets.
+
 use super::consts::{COLUMNS_PER_PACKET, ENCODER_TICKS_PER_REV, PIXELS_PER_COLUMN};
 use chrono::NaiveDateTime;
 use failure::{ensure, Fallible};
@@ -8,6 +10,7 @@ use std::{
     mem::size_of,
 };
 
+/// Represents a point of signal measurement.
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy)]
 pub struct Pixel {
@@ -26,6 +29,7 @@ impl Pixel {
     }
 }
 
+/// Represents a list of [Pixel]s along with meta data.
 #[repr(C, packed)]
 #[derive(Clone, Copy)]
 pub struct Column {
@@ -90,6 +94,7 @@ impl Debug for Column {
     }
 }
 
+/// Represents a data packet from Ouster sensor.
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy)]
 pub struct Packet {

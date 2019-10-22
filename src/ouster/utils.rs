@@ -1,9 +1,11 @@
+//! Provides a set of tools convert raw packets from Ouster sensors.
+
 use super::{
-    consts::{COLUMNS_PER_PACKET, ENCODER_TICKS_PER_REV, PIXELS_PER_COLUMN},
+    consts::{COLUMNS_PER_PACKET, PIXELS_PER_COLUMN},
     enums::LidarMode,
     packet::{Column, Packet},
 };
-use crate::common::{Point, PointPair, SphericalPoint, Timestamped};
+use crate::common::{PointPair, SphericalPoint, Timestamped};
 use derivative::Derivative;
 use failure::{ensure, format_err, Fallible};
 use serde::{Deserialize, Serialize};
@@ -23,6 +25,7 @@ big_array! { BigArray; }
 
 pub type OusterPoint = Timestamped<PointPair>;
 
+/// A serializable struct that represents a Ouster sensor configuration.
 #[derive(Clone, Serialize, Deserialize, Derivative)]
 #[derivative(Debug)]
 pub struct Config {
