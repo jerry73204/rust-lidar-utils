@@ -1,6 +1,11 @@
-use super::{LidarMode, MultipurposeIoMode, Polarity, TimestampMode, PIXELS_PER_COLUMN};
-use failure::Fallible;
+use super::{
+    consts::PIXELS_PER_COLUMN,
+    enums::{LidarMode, MultipurposeIoMode, Polarity, TimestampMode},
+};
+use derivative::Derivative;
+use failure::{ensure, format_err, Fallible};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_big_array::big_array;
 use std::{
     fmt::{Debug, Display, Error as FormatError, Formatter},
     io::{prelude::*, BufReader, LineWriter, Lines},

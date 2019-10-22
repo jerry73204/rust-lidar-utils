@@ -2,7 +2,7 @@ extern crate failure;
 extern crate lidar_utils;
 
 use failure::Fallible;
-use lidar_utils::ouster::CommandClient;
+use lidar_utils::ouster::client::CommandClient;
 
 // Uncomment to enable test
 // #[test]

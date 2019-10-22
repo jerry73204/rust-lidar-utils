@@ -4,7 +4,10 @@ extern crate failure;
 extern crate log;
 
 use failure::Fallible;
-use lidar_utils::ouster::{Config, FrameConverter, Packet as OusterPacket, PointCloudConverter};
+use lidar_utils::ouster::{
+    packet::Packet as OusterPacket,
+    utils::{Config, FrameConverter, PointCloudConverter},
+};
 use pcap::Capture;
 
 #[test]

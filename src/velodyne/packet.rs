@@ -1,6 +1,6 @@
-use super::{AZIMUTH_COUNT_PER_REV, CHANNEL_PER_FIRING, FIRING_PER_PACKET};
+use super::consts::{AZIMUTH_COUNT_PER_REV, CHANNEL_PER_FIRING, FIRING_PER_PACKET};
 
-use failure::Fallible;
+use failure::{ensure, Fallible};
 #[cfg(feature = "enable-pcap")]
 use pcap::Packet as PcapPacket;
 use std::mem::size_of;

@@ -1,6 +1,6 @@
-use super::{COLUMNS_PER_PACKET, ENCODER_TICKS_PER_REV, PIXELS_PER_COLUMN};
+use super::consts::{COLUMNS_PER_PACKET, ENCODER_TICKS_PER_REV, PIXELS_PER_COLUMN};
 use chrono::NaiveDateTime;
-use failure::Fallible;
+use failure::{ensure, Fallible};
 #[cfg(feature = "enable-pcap")]
 use pcap::Packet as PcapPacket;
 use std::{
@@ -12,7 +12,7 @@ use std::{
 #[derive(Debug, Clone, Copy)]
 pub struct Pixel {
     /// The least significant 20 bits form distance in millimeters.
-    pub raw_range: u32,
+    pub raw_distance: u32,
     pub reflectivity: u16,
     pub signal_photons: u16,
     pub noise_photons: u16,
@@ -20,9 +20,9 @@ pub struct Pixel {
 }
 
 impl Pixel {
-    /// Extract distance in millimeters from raw_range field.
-    pub fn range(&self) -> u32 {
-        self.raw_range & 0x000fffff
+    /// Extract distance in millimeters from raw_distance field.
+    pub fn distance(&self) -> u32 {
+        self.raw_distance & 0x000fffff
     }
 }
 
@@ -35,7 +35,7 @@ pub struct Column {
     pub measurement_id: u16,
     /// The frame index.
     pub frame_id: u16,
-    /// Encoder count of rotation motor ranging from 0 to 90111 (inclusive).
+    /// Clockwise encoder count of rotation motor ranging from 0 to [ENCODER_TICKS_PER_REV] (exclusive).
     pub encoder_ticks: u32,
     /// Array of pixels.
     pub pixels: [Pixel; PIXELS_PER_COLUMN],
@@ -51,9 +51,14 @@ impl Column {
         NaiveDateTime::from_timestamp(secs as i64, nsecs as u32)
     }
 
-    /// Compute azimuth angle in radian from encoder ticks.
+    /// Compute counter-clockwise azimuth angle in radian from encoder ticks.
     pub fn azimuth_angle(&self) -> f64 {
-        2.0 * std::f64::consts::PI * self.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64
+        if self.encoder_ticks == 0 {
+            0.0
+        } else {
+            2.0 * std::f64::consts::PI
+                * (1.0 - self.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64)
+        }
     }
 
     /// Return if this packet is marked valid.

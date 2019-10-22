@@ -6,7 +6,8 @@ extern crate serde_json;
 
 use failure::{ensure, Fallible};
 use lidar_utils::velodyne::{
-    Config, FrameConverter, Packet as VelodynePacket, PointCloudConverter, VelodynePoint,
+    packet::Packet as VelodynePacket,
+    utils::{Config, FrameConverter, PointCloudConverter},
 };
 use pcap::Capture;
 
@@ -54,13 +55,8 @@ fn velodyne_scan() -> Fallible<()> {
         let lidar_packet = VelodynePacket::from_pcap(&packet)?;
 
         for point in converter.packet_to_points(&lidar_packet)?.into_iter() {
-            let time_azimuth = match point {
-                VelodynePoint::Strongest(_, time_azimuth) => time_azimuth,
-                VelodynePoint::LastReturn(_, time_azimuth) => time_azimuth,
-                VelodynePoint::DualReturn(_, _, time_azimuth) => time_azimuth,
-            };
-
-            let (timestamp, azimuth_angle) = time_azimuth;
+            let timestamp = point.timestamp();
+            let azimuth_angle = point.azimuth_angle();
 
             ensure!(
                 azimuth_angle >= 0.0 && azimuth_angle <= 2.0 * PI,
@@ -99,7 +95,8 @@ fn velodyne_frames() -> Fallible<()> {
 
         for frame in frames.into_iter() {
             for point in frame.points.into_iter() {
-                let (timestamp, azimuth_angle) = point.time_azimuth();
+                let timestamp = point.timestamp();
+                let azimuth_angle = point.azimuth_angle();
 
                 ensure!(
                     azimuth_angle >= 0.0 && azimuth_angle <= 2.0 * PI,

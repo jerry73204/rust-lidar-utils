@@ -1,6 +1,14 @@
-use super::{Packet, ReturnMode, CHANNEL_PER_FIRING, FIRING_PERIOD, LASER_RETURN_PERIOD};
-use failure::Fallible;
+use super::{
+    consts::{CHANNEL_PER_FIRING, FIRING_PERIOD, LASER_RETURN_PERIOD},
+    packet::{Packet, ReturnMode},
+};
+use crate::common::{Point, PointPair, SphericalPoint, Timestamped};
+use failure::{bail, ensure, Fallible};
 use itertools::izip;
+
+pub type LastReturnPoint = Timestamped<PointPair>;
+pub type StrongestPoint = Timestamped<PointPair>;
+pub type DualPoint = Timestamped<(PointPair, PointPair)>; // (last_return, strongest)
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Config {
@@ -51,23 +59,15 @@ impl Config {
     }
 }
 
-/// Represents point in `(x, y, z)` form.
-pub type Point = (f64, f64, f64);
-pub type LastReturnPoint = Point;
-pub type StrongestSignalPoint = Point;
-
-/// Represents the `(timestamp, azimuth)` point property.
-pub type TimeAzimuth = (f64, f64);
-
 #[derive(Debug, Clone, PartialEq)]
-pub enum VelodynePoints {
-    Strongest(Vec<(StrongestSignalPoint, TimeAzimuth)>),
-    LastReturn(Vec<(LastReturnPoint, TimeAzimuth)>),
+pub enum VelodynePointList {
+    Strongest(Vec<StrongestPoint>),
+    LastReturn(Vec<LastReturnPoint>),
     /// List of (last return point, strongest or 2nd strongest return point).
-    DualReturn(Vec<(LastReturnPoint, StrongestSignalPoint, TimeAzimuth)>),
+    DualReturn(Vec<DualPoint>),
 }
 
-impl VelodynePoints {
+impl VelodynePointList {
     pub fn new(mode: ReturnMode) -> Self {
         match mode {
             ReturnMode::LastReturn => Self::LastReturn(vec![]),
@@ -94,23 +94,23 @@ impl VelodynePoints {
 
     pub fn push(&mut self, point: VelodynePoint) -> Fallible<()> {
         match self {
-            VelodynePoints::Strongest(points) => {
-                if let VelodynePoint::Strongest(pt, time_azimuth) = point {
-                    points.push((pt, time_azimuth));
+            VelodynePointList::Strongest(points) => {
+                if let VelodynePoint::Strongest(pt) = point {
+                    points.push(pt);
                 } else {
                     bail!("Inconsistent point variant");
                 }
             }
-            VelodynePoints::LastReturn(points) => {
-                if let VelodynePoint::LastReturn(pt, time_azimuth) = point {
-                    points.push((pt, time_azimuth));
+            VelodynePointList::LastReturn(points) => {
+                if let VelodynePoint::LastReturn(pt) = point {
+                    points.push(pt);
                 } else {
                     bail!("Inconsistent point variant");
                 }
             }
-            VelodynePoints::DualReturn(points) => {
-                if let VelodynePoint::DualReturn(last_pt, strongest_pt, time_azimuth) = point {
-                    points.push((last_pt, strongest_pt, time_azimuth));
+            VelodynePointList::DualReturn(points) => {
+                if let VelodynePoint::DualReturn(pt) = point {
+                    points.push(pt);
                 } else {
                     bail!("Inconsistent point variant");
                 }
@@ -121,28 +121,26 @@ impl VelodynePoints {
     }
 }
 
-impl IntoIterator for VelodynePoints {
+impl IntoIterator for VelodynePointList {
     type Item = VelodynePoint;
     type IntoIter = std::vec::IntoIter<VelodynePoint>;
 
     fn into_iter(self) -> Self::IntoIter {
         // TODO: use O(1) impl instead
         match self {
-            VelodynePoints::Strongest(points) => points
+            VelodynePointList::Strongest(points) => points
                 .into_iter()
-                .map(|(point, time_azimuth)| VelodynePoint::Strongest(point, time_azimuth))
+                .map(|point| VelodynePoint::Strongest(point))
                 .collect::<Vec<_>>()
                 .into_iter(),
-            VelodynePoints::LastReturn(points) => points
+            VelodynePointList::LastReturn(points) => points
                 .into_iter()
-                .map(|(point, time_azimuth)| VelodynePoint::LastReturn(point, time_azimuth))
+                .map(|point| VelodynePoint::LastReturn(point))
                 .collect::<Vec<_>>()
                 .into_iter(),
-            VelodynePoints::DualReturn(points) => points
+            VelodynePointList::DualReturn(points) => points
                 .into_iter()
-                .map(|(last_point, strongest_point, time_azimuth)| {
-                    VelodynePoint::DualReturn(last_point, strongest_point, time_azimuth)
-                })
+                .map(|point| VelodynePoint::DualReturn(point))
                 .collect::<Vec<_>>()
                 .into_iter(),
         }
@@ -151,42 +149,38 @@ impl IntoIterator for VelodynePoints {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum VelodynePoint {
-    Strongest(Point, TimeAzimuth),
-    LastReturn(Point, TimeAzimuth),
-    DualReturn(Point, Point, TimeAzimuth),
+    Strongest(StrongestPoint),
+    LastReturn(LastReturnPoint),
+    DualReturn(DualPoint),
 }
 
 impl VelodynePoint {
     pub fn timestamp(&self) -> f64 {
         match self {
-            Self::Strongest(_, (timestamp, _)) => *timestamp,
-            Self::LastReturn(_, (timestamp, _)) => *timestamp,
-            Self::DualReturn(_, _, (timestamp, _)) => *timestamp,
-        }
-    }
-
-    pub fn azimuth_angle(&self) -> f64 {
-        match self {
-            Self::Strongest(_, (_, azimuth_angle)) => *azimuth_angle,
-            Self::LastReturn(_, (_, azimuth_angle)) => *azimuth_angle,
-            Self::DualReturn(_, _, (_, azimuth_angle)) => *azimuth_angle,
-        }
-    }
-
-    /// Get `(timestamp, azimuth_angle)` pair.
-    pub fn time_azimuth(&self) -> (f64, f64) {
-        match self {
-            Self::Strongest(_, time_azimuth) => *time_azimuth,
-            Self::LastReturn(_, time_azimuth) => *time_azimuth,
-            Self::DualReturn(_, _, time_azimuth) => *time_azimuth,
+            Self::Strongest(pt) => pt.timestamp,
+            Self::LastReturn(pt) => pt.timestamp,
+            Self::DualReturn(pt) => pt.timestamp,
         }
     }
 
     pub fn mode(&self) -> ReturnMode {
         match self {
-            Self::Strongest(_, _) => ReturnMode::Strongest,
-            Self::LastReturn(_, _) => ReturnMode::LastReturn,
-            Self::DualReturn(_, _, _) => ReturnMode::DualReturn,
+            Self::Strongest(_) => ReturnMode::Strongest,
+            Self::LastReturn(_) => ReturnMode::LastReturn,
+            Self::DualReturn(_) => ReturnMode::DualReturn,
+        }
+    }
+
+    pub fn azimuth_angle(&self) -> f64 {
+        match self {
+            Self::Strongest(timestamped_point) => timestamped_point.value.spherical.azimuth_angle,
+            Self::LastReturn(timestamped_point) => timestamped_point.value.spherical.azimuth_angle,
+            Self::DualReturn(timestamped_point) => {
+                let angle1 = (timestamped_point.value.0).spherical.azimuth_angle;
+                let angle2 = (timestamped_point.value.1).spherical.azimuth_angle;
+                debug_assert_eq!(angle1, angle2, "please report this bug");
+                angle1
+            }
         }
     }
 }
@@ -203,15 +197,19 @@ impl PointCloudConverter {
     }
 
     /// Compute point locations from firing data from sensor.
-    pub fn packet_to_points(&self, packet: &Packet) -> Fallible<VelodynePoints> {
+    pub fn packet_to_points(&self, packet: &Packet) -> Fallible<VelodynePointList> {
         use std::f64::consts::PI;
 
-        let sphere_to_xyz =
+        let make_point =
             |distance: f64, vertical_angle: f64, azimuth_angle: f64, vertical_correction: f64| {
-                let x = distance * vertical_angle.cos() * azimuth_angle.sin();
-                let y = distance * vertical_angle.cos() * azimuth_angle.cos();
-                let z = distance * vertical_angle.sin() + vertical_correction;
-                (x, y, z)
+                let spherical =
+                    SphericalPoint::from_altitude_angle(distance, azimuth_angle, vertical_angle);
+                let mut cartesian = Point::from(spherical.clone());
+                cartesian.z += vertical_correction;
+                PointPair {
+                    cartesian,
+                    spherical,
+                }
             };
 
         let interpolate = |lhs: f64, rhs: f64, ratio: f64| lhs * (1.0 - ratio) + rhs * ratio;
@@ -314,24 +312,25 @@ impl PointCloudConverter {
                             let distance = laser_return.mm_distance();
                             let vertical_angle = vertical_degree.to_radians();
                             let laser_timestamp = base_timestamp + laser_time_offset;
-                            let (x, y, z) = sphere_to_xyz(
+                            let point = make_point(
                                 distance,
                                 vertical_angle,
                                 azimuth_angle,
                                 *vertical_correction,
                             );
 
-                            let point = (x, y, z);
-                            let time_azimuth = (laser_timestamp, azimuth_angle);
-                            (point, time_azimuth)
+                            Timestamped {
+                                value: point,
+                                timestamp: laser_timestamp,
+                            }
                         })
                         .collect::<Vec<_>>()
                     })
                     .collect::<Vec<_>>();
 
                 match packet.return_mode {
-                    ReturnMode::Strongest => VelodynePoints::Strongest(points),
-                    ReturnMode::LastReturn => VelodynePoints::LastReturn(points),
+                    ReturnMode::Strongest => VelodynePointList::Strongest(points),
+                    ReturnMode::LastReturn => VelodynePointList::LastReturn(points),
                     _ => unreachable!(),
                 }
             }
@@ -372,33 +371,35 @@ impl PointCloudConverter {
                                 interpolate_ratio,
                             ) % (2.0 * PI);
                             let vertical_angle = vertical_degree.to_radians();
-                            let laser_time_offset = firing_timestamp + laser_time_offset;
-                            let last_laser_point = {
-                                let (x, y, z) = sphere_to_xyz(
+                            let laser_timestamp = firing_timestamp + laser_time_offset;
+                            let last_return_point = {
+                                make_point(
                                     last_distance,
                                     vertical_angle,
                                     azimuth_angle,
                                     *vertical_correction,
-                                );
-                                (x, y, z)
+                                )
                             };
-                            let strongest_laser_point = {
-                                let (x, y, z) = sphere_to_xyz(
+                            let strongest_signal_point = {
+                                make_point(
                                     strongest_distance,
                                     vertical_angle,
                                     azimuth_angle,
                                     *vertical_correction,
-                                );
-                                (x, y, z)
+                                )
                             };
-                            let time_azimuth = (laser_time_offset, azimuth_angle);
-                            (last_laser_point, strongest_laser_point, time_azimuth)
+
+                            let point = Timestamped {
+                                value: (last_return_point, strongest_signal_point),
+                                timestamp: laser_timestamp,
+                            };
+                            point
                         })
                         .collect::<Vec<_>>()
                     })
                     .collect::<Vec<_>>();
 
-                VelodynePoints::DualReturn(points)
+                VelodynePointList::DualReturn(points)
             }
         };
 
@@ -415,9 +416,10 @@ pub struct FrameConverter {
 
 impl FrameConverter {
     pub fn new(rpm: u64, config: Config) -> Fallible<Self> {
-        if rpm == 0 || (rpm % 60) != 0 {
-            bail!("rpm must be positive and be multiple of 60");
-        }
+        ensure!(
+            rpm > 0 && (rpm % 60 == 0),
+            "rpm must be positive and be multiple of 60"
+        );
 
         let pcd_converter = PointCloudConverter::new(config);
         let period_per_frame = (rpm as f64).recip() * 60000.0;
@@ -434,25 +436,25 @@ impl FrameConverter {
         let points = self.pcd_converter.packet_to_points(packet)?;
 
         for point in points.into_iter() {
-            let (timestamp, azimuth_angle) = point.time_azimuth();
+            let timestamp = point.timestamp();
+            let mode = point.mode();
+            let azimuth_angle = point.azimuth_angle();
 
             match self.state_opt.take() {
                 Some(mut state) => {
-                    if timestamp < state.last_timestamp {
-                        bail!("Found timestamp is less than that of previous packet. Are the packets sent in time series order?");
-                    }
+                    ensure!(timestamp >= state.last_timestamp, "Found timestamp is less than that of previous packet. Are the packets sent in time series order?");
 
                     // in microseconds
                     let timestamp_diff = timestamp - state.last_timestamp;
 
                     // determine whether to complete current frame
-                    let to_complete_curr_frame = {
+                    let if_complete_curr_frame = {
                         let case1 = azimuth_angle < state.last_azimuth_angle;
                         let case2 = timestamp_diff >= self.period_per_frame - 3.0 * FIRING_PERIOD;
                         case1 || case2
                     };
 
-                    if to_complete_curr_frame {
+                    if if_complete_curr_frame {
                         if let Some(frame) = state.frame_opt.take() {
                             output_frames.push(frame);
                         }
@@ -470,7 +472,7 @@ impl FrameConverter {
                             new_state
                         }
                         None => {
-                            let mut points = VelodynePoints::new(point.mode());
+                            let mut points = VelodynePointList::new(mode);
                             points.push(point)?;
 
                             let frame = Frame { points };
@@ -486,7 +488,7 @@ impl FrameConverter {
                     self.state_opt = Some(new_state);
                 }
                 None => {
-                    let mut points = VelodynePoints::new(point.mode());
+                    let mut points = VelodynePointList::new(mode);
                     points.push(point)?;
 
                     let frame = Frame { points };
@@ -513,7 +515,7 @@ struct FrameConverterState {
 
 #[derive(Debug, Clone)]
 pub struct Frame {
-    pub points: VelodynePoints,
+    pub points: VelodynePointList,
 }
 
 // References
