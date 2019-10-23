@@ -72,7 +72,7 @@ impl From<Point> for SphericalPoint {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Timestamped<T> {
     pub value: T,
-    pub timestamp: f64,
+    pub timestamp_ns: u64,
 }
 
 /// A pair of [Point] and [SphericalPoint].

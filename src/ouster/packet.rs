@@ -24,7 +24,7 @@ pub struct Pixel {
 
 impl Pixel {
     /// Extract distance in millimeters from raw_distance field.
-    pub fn distance(&self) -> u32 {
+    pub fn mm_distance(&self) -> u32 {
         self.raw_distance & 0x000fffff
     }
 }
@@ -33,7 +33,7 @@ impl Pixel {
 #[repr(C, packed)]
 #[derive(Clone, Copy)]
 pub struct Column {
-    /// Unix timestamp.
+    /// Unix timestamp in nanoseconds.
     pub timestamp: u64,
     /// The column index.
     pub measurement_id: u16,

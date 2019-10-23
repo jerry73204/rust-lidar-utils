@@ -280,16 +280,17 @@ impl PointCloudConverter {
                     let azimuth_angle = column.azimuth_angle()
                         - self.config.beam_azimuth_angles[row_index].to_radians();
                     let altitude_angle = self.config.beam_altitude_angles[row_index].to_radians();
-                    let distance = pixel.distance() as f64;
+                    let distance = pixel.mm_distance() as f64;
 
                     SphericalPoint::from_altitude_angle(distance, azimuth_angle, altitude_angle)
                 };
 
                 let pair = PointPair::from(spherical);
+                let timestamp_ns = column.timestamp; // in nanoseconds
 
                 Timestamped {
                     value: pair,
-                    timestamp: column.timestamp as f64,
+                    timestamp_ns,
                 }
             })
             .collect::<Vec<_>>();

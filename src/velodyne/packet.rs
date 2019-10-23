@@ -2,6 +2,7 @@
 
 use super::consts::{AZIMUTH_COUNT_PER_REV, CHANNEL_PER_FIRING, FIRING_PER_PACKET};
 
+use chrono::NaiveDateTime;
 use failure::{ensure, Fallible};
 #[cfg(feature = "enable-pcap")]
 use pcap::Packet as PcapPacket;
@@ -125,5 +126,12 @@ impl Packet {
         );
         let packet = unsafe { &*(buffer.as_ptr() as *const Packet) };
         Ok(packet)
+    }
+
+    /// Construct [NaiveDateTime](chrono::NaiveDateTime) from packet timestamp.
+    pub fn datetime(&self) -> NaiveDateTime {
+        let secs = self.timestamp / 1_000_000;
+        let nsecs = (self.timestamp % 1_000_000) * 1000;
+        NaiveDateTime::from_timestamp(secs as i64, nsecs as u32)
     }
 }
