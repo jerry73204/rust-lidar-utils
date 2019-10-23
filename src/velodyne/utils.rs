@@ -438,7 +438,7 @@ impl FrameConverter {
         Ok(converter)
     }
 
-    pub fn push(&mut self, packet: &Packet) -> Fallible<Vec<Frame>> {
+    pub fn push_packet(&mut self, packet: &Packet) -> Fallible<Vec<Frame>> {
         let mut output_frames = vec![];
         let points = self.pcd_converter.packet_to_points(packet)?;
 

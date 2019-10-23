@@ -242,7 +242,7 @@ pub struct PointCloudConverter {
 
 impl PointCloudConverter {
     /// Create a converter from config.
-    pub fn from_config(config: Config) -> Self {
+    pub fn new(config: Config) -> Self {
         config.into()
     }
 
@@ -358,7 +358,7 @@ pub struct FrameConverter {
 
 impl FrameConverter {
     /// Creates converter from config.
-    pub fn from_config(config: Config) -> Self {
+    pub fn new(config: Config) -> Self {
         config.into()
     }
 
