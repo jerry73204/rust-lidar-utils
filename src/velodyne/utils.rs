@@ -417,7 +417,8 @@ impl PointCloudConverter {
 #[derive(Debug, Clone)]
 pub struct FrameConverter {
     pcd_converter: PointCloudConverter,
-    period_per_frame: f64, // in seconds
+    period_per_frame: f64, // in milliseconds
+    rpm: u64,
     state_opt: Option<FrameConverterState>,
 }
 
@@ -432,10 +433,15 @@ impl FrameConverter {
         let period_per_frame = (rpm as f64).recip() * 60000.0;
         let converter = Self {
             pcd_converter,
+            rpm,
             period_per_frame,
             state_opt: None,
         };
         Ok(converter)
+    }
+
+    pub fn firings_per_rev(&self) -> f64 {
+        60_000_000.0 / (self.rpm as f64 * FIRING_PERIOD)
     }
 
     pub fn push_packet(&mut self, packet: &Packet) -> Fallible<Vec<Frame>> {

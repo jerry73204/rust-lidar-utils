@@ -362,6 +362,12 @@ impl FrameConverter {
         config.into()
     }
 
+    /// Returns the resolution in `(width, height)` pair.
+    pub fn resulution(&self) -> (u16, u16) {
+        let width = self.pcd_converter.num_columns();
+        (width, 64)
+    }
+
     /// Pushes new [Column] to converter.
     pub fn push_column(&mut self, column: &Column) -> Fallible<Vec<Frame>> {
         let curr_fid = column.frame_id;
