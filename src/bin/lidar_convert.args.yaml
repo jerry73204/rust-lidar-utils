@@ -1,0 +1,43 @@
+name: lidar_convert
+version: "0.5.0"
+author: "jerry73204 <jerry73204@gmail.com>"
+about: LIDAR raw packets convertion tool
+args:
+    - output_directory:
+        short: o
+        long: output-dir
+        value_name: OUTPUT_DIR
+        takes_value: true
+        required: true
+        help: Output directory.
+    - model:
+        short: m
+        long: model
+        value_name: HARDWARE_NAME
+        takes_value: true
+        required: true
+        help: 'The LIDAR model name. Accepted: "OUSTER_OS_1" "VELODYNE_VLP_16".'
+    # - input_format:
+    #     long: input-format
+    #     value_name: FORMAT
+    #     takes_value: true
+    #     help: Input format. The program will guess by filename extension if it's not given.
+    - output_format:
+        long: output-format
+        value_name: FORMAT
+        takes_value: true
+        help: 'Output format. Accepted options: "pcd".'
+    - ouster_config:
+        long: ouster-config
+        value_name: CONFIG_FILE
+        takes_value: true
+        help: Ouster LIDAR configuration file.
+    - velodyne_rpm:
+        long: velodyne-rpm
+        value_name: RPM
+        takes_value: true
+        help: Rotatoin speed for Velodyne sensor.
+    - INPUT:
+        required: true
+        index: 1
+        help: Input path.
