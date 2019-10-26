@@ -96,3 +96,43 @@ impl Display for Polarity {
         write!(formatter, "{}", text)
     }
 }
+
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum OnOffMode {
+    #[serde(rename = "ON")]
+    On,
+    #[serde(rename = "OFF")]
+    Off,
+}
+
+impl Display for OnOffMode {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FormatResult {
+        use OnOffMode::*;
+        let text = match self {
+            On => "ON",
+            Off => "OFF",
+        };
+        write!(formatter, "{}", text)
+    }
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum NmeaBaudRate {
+    #[serde(rename = "BAUD_9600")]
+    Baud9600,
+    #[serde(rename = "BAUD_115200")]
+    Baud115200,
+}
+
+
+impl Display for NmeaBaudRate {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FormatResult {
+        use NmeaBaudRate::*;
+        let text = match self {
+            Baud9600 => "BAUD_9600",
+            Baud115200 => "BAUD_115200",
+        };
+        write!(formatter, "{}", text)
+    }
+}

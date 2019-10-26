@@ -2,7 +2,7 @@
 
 use super::{
     consts::PIXELS_PER_COLUMN,
-    enums::{LidarMode, MultipurposeIoMode, Polarity, TimestampMode},
+    enums::{LidarMode, MultipurposeIoMode, Polarity, TimestampMode, OnOffMode, NmeaBaudRate},
 };
 use derivative::Derivative;
 use failure::{ensure, format_err, Fallible};
@@ -34,8 +34,8 @@ pub struct ConfigText {
     pub sync_pulse_out_pulse_width: u64,
     pub timestamp_mode: TimestampMode,
     pub udp_ip: String,
-    pub udp_port_imu: u64,
-    pub udp_port_lidar: u64,
+    pub udp_port_imu: u16,
+    pub udp_port_lidar: u16,
     #[serde(
         deserialize_with = "de_bool_from_int",
         serialize_with = "ser_bool_to_int"
@@ -52,6 +52,121 @@ pub struct BeamIntrinsics {
     #[serde(with = "BigArray")]
     #[derivative(Debug(format_with = "self::large_array_fmt"))]
     pub beam_azimuth_angles: [f64; PIXELS_PER_COLUMN],
+}
+
+#[derive(Serialize, Deserialize, Derivative)]
+#[derivative(Debug)]
+pub struct LidarIntrinsics {
+    pub lidar_to_sensor_transform: [f64; 16],
+}
+
+#[derive(Serialize, Deserialize, Derivative)]
+#[derivative(Debug)]
+pub struct ImuIntrinsics {
+    pub imu_to_sensor_transform: [f64; 16],
+}
+
+#[derive(Serialize, Deserialize, Derivative)]
+#[derivative(Debug)]
+pub struct TimeInfo {
+    pub sync_pulse_in: SyncPulseInInfo,
+    pub nmea: NmeaInfo,
+    pub sync_pulse_out: SyncPulseOutInfo,
+    pub timestamp: TimestampInfo,
+}
+
+#[derive(Serialize, Deserialize, Derivative)]
+#[derivative(Debug)]
+pub struct SyncPulseInInfo {
+    pub diagnostics: SyncPulseInDiagnosticsInfo,
+    pub polarity: Polarity,
+    #[serde(
+        deserialize_with = "de_bool_from_int",
+        serialize_with = "ser_bool_to_int"
+    )]
+    pub locked: bool,
+}
+
+#[derive(Serialize, Deserialize, Derivative)]
+#[derivative(Debug)]
+pub struct NmeaInfo {
+    pub polarity: Polarity,
+    pub baud_rate: NmeaBaudRate,
+    pub diagnostics: NmeaDiagnosticsInfo,
+    pub leap_seconds: u64,
+    #[serde(
+        deserialize_with = "de_bool_from_int",
+        serialize_with = "ser_bool_to_int"
+    )]
+    pub ignore_valid_char: bool,
+    #[serde(
+        deserialize_with = "de_bool_from_int",
+        serialize_with = "ser_bool_to_int"
+    )]
+    pub locked: bool,
+}
+
+#[derive(Serialize, Deserialize, Derivative)]
+#[derivative(Debug)]
+pub struct SyncPulseOutInfo {
+    pub frequency_hz: u64,
+    pub angle_deg: u64,
+    pub pulse_width_ms: u64,
+    pub polarity: Polarity,
+    pub mode: OnOffMode,
+}
+
+#[derive(Serialize, Deserialize, Derivative)]
+#[derivative(Debug)]
+pub struct TimestampInfo {
+    pub time_options: TimeOptionsInfo,
+    pub mode: TimestampMode,
+    pub time: f64,
+}
+
+#[derive(Serialize, Deserialize, Derivative)]
+#[derivative(Debug)]
+pub struct SyncPulseInDiagnosticsInfo {
+    pub count_unfiltered: u64,
+    pub last_period_nsec: u64,
+    pub count: u64,
+}
+
+#[derive(Serialize, Deserialize, Derivative)]
+#[derivative(Debug)]
+pub struct NmeaDiagnosticsInfo {
+    pub io_checks: NmeaIoChecksInfo,
+    pub decoding: NmeaDecodingInfo,
+}
+
+#[derive(Serialize, Deserialize, Derivative)]
+#[derivative(Debug)]
+pub struct TimeOptionsInfo {
+    pub ptp_1588: u64,
+    #[serde(
+        deserialize_with = "de_bool_from_int",
+        serialize_with = "ser_bool_to_int"
+    )]
+    pub sync_pulse_in: bool,
+    pub internal_osc: u64,
+}
+
+#[derive(Serialize, Deserialize, Derivative)]
+#[derivative(Debug)]
+pub struct NmeaIoChecksInfo {
+    pub bit_count: u64,
+    pub start_char_count: u64,
+    pub bit_count_unfilterd: u64,
+    pub char_count: u64,
+}
+
+#[derive(Serialize, Deserialize, Derivative)]
+#[derivative(Debug)]
+pub struct NmeaDecodingInfo {
+    pub not_valid_count: u64,
+    pub last_read_message: String,
+    pub utc_decoded_count: u64,
+    pub date_decoded_count: u64,
 }
 
 pub struct CommandClient<A: ToSocketAddrs> {
@@ -83,6 +198,38 @@ impl<A: ToSocketAddrs> CommandClient<A> {
         Ok(config)
     }
 
+    pub fn get_time_info(&mut self) -> Fallible<TimeInfo> {
+        self.writer.write_all(b"get_time_info\n")?;
+        let line = self
+            .reader
+            .next()
+            .ok_or(format_err!("Unexpected end of stream"))??;
+        let config = serde_json::from_str(&line)?;
+        Ok(config)
+    }
+
+
+    pub fn get_lidar_intrinsics(&mut self) -> Fallible<LidarIntrinsics> {
+        self.writer.write_all(b"get_lidar_intrinsics\n")?;
+        let line = self
+            .reader
+            .next()
+            .ok_or(format_err!("Unexpected end of stream"))??;
+        let config = serde_json::from_str(&line)?;
+        Ok(config)
+    }
+
+
+    pub fn get_imu_intrinsics(&mut self) -> Fallible<ImuIntrinsics> {
+        self.writer.write_all(b"get_imu_intrinsics\n")?;
+        let line = self
+            .reader
+            .next()
+            .ok_or(format_err!("Unexpected end of stream"))??;
+        let config = serde_json::from_str(&line)?;
+        Ok(config)
+    }
+
     pub fn get_beam_intrinsics(&mut self) -> Fallible<BeamIntrinsics> {
         self.writer.write_all(b"get_beam_intrinsics\n")?;
         let line = self
@@ -101,11 +248,21 @@ impl<A: ToSocketAddrs> CommandClient<A> {
             .ok_or(format_err!("Unexpected end of stream"))??;
         ensure!(line == "reinitialize", "Unexpected response {:?}", line);
 
-        // Re-establish TCP connection to prevent blocking the buggy LIDAR server
+        // Re-establish TCP connection to prevent blocking the TCP API server
         let stream = TcpStream::connect(&self.address)?;
         self.reader = BufReader::new(stream.try_clone()?).lines();
         self.writer = LineWriter::new(stream);
 
+        Ok(())
+    }
+
+    pub fn write_config_txt(&mut self) -> Fallible<()> {
+        self.writer.write_all(b"write_config_txt\n")?;
+        let line = self
+            .reader
+            .next()
+            .ok_or(format_err!("Unexpected end of stream"))??;
+        ensure!(line == "write_config_txt", "Unexpected response {:?}", line);
         Ok(())
     }
 

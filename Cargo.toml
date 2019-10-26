@@ -28,10 +28,12 @@ clap = { version = "~2", features = ["yaml"], optional = true }
 [dev-dependencies]
 pretty_env_logger = "~0"
 pcap = "~0"
+toml = "~0"
 
 [features]
 enable-pcap = ["pcap"]
 build-binary = ["pcd-rs", "clap"]
+ouster-api-test = []
 
 [[bin]]
 name = "lidar_convert"
