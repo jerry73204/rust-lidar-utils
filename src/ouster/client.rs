@@ -170,20 +170,18 @@ pub struct NmeaDecodingInfo {
     pub date_decoded_count: u64,
 }
 
-pub struct CommandClient<A>
-where
-    A: ToSocketAddrs
+pub struct CommandClient
 {
-    address: A,
     reader: Lines<BufReader<TcpStream>>,
     writer: LineWriter<TcpStream>,
 }
 
-impl<A> CommandClient<A>
-where
-    A: ToSocketAddrs
+impl CommandClient
 {
-    pub fn connect(address: A, timeout: Option<Duration>) -> Fallible<CommandClient<A>> {
+    pub fn connect<A>(address: A, timeout: Option<Duration>) -> Fallible<CommandClient>
+    where
+        A: ToSocketAddrs,
+    {
         let stream = TcpStream::connect(&address)?;
         stream.set_read_timeout(timeout)?;
         stream.set_write_timeout(timeout)?;
@@ -193,7 +191,6 @@ where
         let client = CommandClient {
             reader,
             writer,
-            address,
         };
         Ok(client)
     }
@@ -248,19 +245,13 @@ where
         Ok(config)
     }
 
-    pub fn reinitialize(&mut self) -> Fallible<()> {
+    pub fn reinitialize(mut self) -> Fallible<()> {
         self.writer.write_all(b"reinitialize\n")?;
         let line = self
             .reader
             .next()
             .ok_or(format_err!("Unexpected end of stream"))??;
         ensure!(line == "reinitialize", "Unexpected response {:?}", line);
-
-        // Re-establish TCP connection to prevent blocking the TCP API server
-        let stream = TcpStream::connect(&self.address)?;
-        self.reader = BufReader::new(stream.try_clone()?).lines();
-        self.writer = LineWriter::new(stream);
-
         Ok(())
     }
 
