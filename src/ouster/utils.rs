@@ -358,9 +358,14 @@ impl FrameConverter {
     }
 
     /// Returns the resolution in `(width, height)` pair.
-    pub fn resulution(&self) -> (u16, u16) {
+    pub fn resolution(&self) -> (u16, u16) {
         let width = self.pcd_converter.columns_per_revolution();
         (width, 64)
+    }
+
+    /// Returns the number of columns per revolution.
+    pub fn columns_per_revolution(&self) -> (u16, u16) {
+        self.pcd_converter.columns_per_revolution()
     }
 
     /// Pushes new [Column] to converter.
