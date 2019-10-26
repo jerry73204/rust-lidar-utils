@@ -33,7 +33,7 @@ pub struct ConfigText {
     pub sync_pulse_out_polarity: Polarity,
     pub sync_pulse_out_pulse_width: u64,
     pub timestamp_mode: TimestampMode,
-    pub udp_ip: String,
+    pub udp_ip: Ipv4Addr,
     pub udp_port_imu: u16,
     pub udp_port_lidar: u16,
     #[serde(
