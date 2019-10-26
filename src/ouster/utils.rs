@@ -236,7 +236,7 @@ impl Config {
 #[derive(Clone, Debug)]
 pub struct PointCloudConverter {
     config: Config,
-    num_columns: u16,
+    columns_per_revolution: u16,
 }
 
 impl PointCloudConverter {
@@ -253,8 +253,8 @@ impl PointCloudConverter {
     /// Get lidar scene width by its mode. For example,
     /// [Mode1024x10](LidarMode::Mode1024x10) mode results
     /// in 1024.
-    pub fn num_columns(&self) -> u16 {
-        self.num_columns
+    pub fn columns_per_revolution(&self) -> u16 {
+        self.columns_per_revolution
     }
 
     /// Compute point locations from column returned from lidar.
@@ -264,8 +264,10 @@ impl PointCloudConverter {
     pub fn column_to_points(&self, column: &Column) -> Fallible<Vec<OusterPoint>> {
         let col_index = column.measurement_id;
         ensure!(
-            col_index < self.num_columns,
-            "measurement_id is out of bound"
+            col_index < self.columns_per_revolution,
+            "measurement_id {} is exceeds the upper bound {}. Is the lidar_mode configured correctly?",
+            col_index,
+            self.columns_per_revolution,
         );
 
         let points = column
@@ -312,18 +314,11 @@ impl PointCloudConverter {
 
 impl From<Config> for PointCloudConverter {
     fn from(config: Config) -> Self {
-        let num_columns = {
-            use LidarMode::*;
-            match config.lidar_mode {
-                Mode512x10 | Mode512x20 => 512,
-                Mode1024x10 | Mode1024x20 => 1024,
-                Mode2048x10 => 2048,
-            }
-        };
+        let columns_per_revolution = config.lidar_mode.columns_per_revolution();
 
         Self {
             config,
-            num_columns,
+            columns_per_revolution,
         }
     }
 }
@@ -364,7 +359,7 @@ impl FrameConverter {
 
     /// Returns the resolution in `(width, height)` pair.
     pub fn resulution(&self) -> (u16, u16) {
-        let width = self.pcd_converter.num_columns();
+        let width = self.pcd_converter.columns_per_revolution();
         (width, 64)
     }
 
@@ -434,7 +429,7 @@ impl FrameConverter {
 
                         // Produce frame if measurement ID is exactly the latest ID of frame
                         let (second_frame_opt, new_state) =
-                            if curr_mid + 1 == self.pcd_converter.num_columns() {
+                            if curr_mid + 1 == self.pcd_converter.columns_per_revolution() {
                                 (Some(second_frame), new_state)
                             } else {
                                 new_state.frame = Some(second_frame);
@@ -472,7 +467,7 @@ impl FrameConverter {
                         };
 
                         let (frame_opt, new_state) =
-                            if curr_mid + 1 == self.pcd_converter.num_columns() {
+                            if curr_mid + 1 == self.pcd_converter.columns_per_revolution() {
                                 (Some(frame), new_state)
                             } else {
                                 new_state.frame = Some(frame);
@@ -507,7 +502,7 @@ impl FrameConverter {
                     frame: None,
                 };
 
-                let frame_opt = if curr_mid + 1 == self.pcd_converter.num_columns() {
+                let frame_opt = if curr_mid + 1 == self.pcd_converter.columns_per_revolution() {
                     Some(frame)
                 } else {
                     new_state.frame = Some(frame);

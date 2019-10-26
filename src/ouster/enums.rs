@@ -17,6 +17,17 @@ pub enum LidarMode {
     Mode2048x10,
 }
 
+impl LidarMode {
+    pub fn columns_per_revolution(&self) -> u16 {
+        use LidarMode::*;
+        match self {
+            Mode512x10 | Mode512x20 => 512,
+            Mode1024x10 | Mode1024x20 => 1024,
+            Mode2048x10 => 2048,
+        }
+    }
+}
+
 impl Display for LidarMode {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FormatResult {
         use LidarMode::*;
