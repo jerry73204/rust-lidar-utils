@@ -41,7 +41,7 @@ fn ouster_create_packet() -> Fallible<()> {
 fn ouster_pcd_converter() -> Fallible<()> {
     // Load config
     let config = Config::from_path("test_files/ouster_example.json")?;
-    let pcd_converter = PointCloudConverter::from_config(config);
+    let pcd_converter = PointCloudConverter::new(config);
 
     // Load pcap file
     let mut cap = Capture::from_file("test_files/ouster_example.pcap")?;
@@ -81,7 +81,7 @@ fn ouster_pcd_converter() -> Fallible<()> {
 fn ouster_frame_converter() -> Fallible<()> {
     // Load config
     let config = Config::from_path("test_files/ouster_example.json")?;
-    let mut frame_converter = FrameConverter::from_config(config);
+    let mut frame_converter = FrameConverter::new(config);
 
     // Load pcap file
     let mut cap = Capture::from_file("/home/jerry73204/Downloads/lombard_street_OS1.pcap")?;

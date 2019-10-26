@@ -55,7 +55,7 @@ fn velodyne_scan() -> Fallible<()> {
         let lidar_packet = VelodynePacket::from_pcap(&packet)?;
 
         for point in converter.packet_to_points(&lidar_packet)?.into_iter() {
-            let timestamp = point.timestamp();
+            let timestamp = point.timestamp_ns();
             let azimuth_angle = point.azimuth_angle();
 
             ensure!(
@@ -89,13 +89,13 @@ fn velodyne_frames() -> Fallible<()> {
             Ok(packet) => packet,
             Err(_) => continue,
         };
-        let frames = converter.push(&lidar_packet)?;
+        let frames = converter.push_packet(&lidar_packet)?;
 
         let mut prev_timestamp = None;
 
         for frame in frames.into_iter() {
             for point in frame.points.into_iter() {
-                let timestamp = point.timestamp();
+                let timestamp = point.timestamp_ns();
                 let azimuth_angle = point.azimuth_angle();
 
                 ensure!(

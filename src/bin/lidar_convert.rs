@@ -97,7 +97,7 @@ fn convert_ouster_os1<P: AsRef<Path>>(
 
     let config = match config_path_opt {
         Some(path) => OusterConfig::from_path(path.as_ref())?,
-        None => OusterConfig::default(),
+        None => OusterConfig::os_1_config(),
     };
     let mut frame_converter = OusterFrameConverter::new(config);
 

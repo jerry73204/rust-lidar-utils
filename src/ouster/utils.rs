@@ -85,10 +85,9 @@ impl Config {
     pub fn lidar_mode(&mut self, lidar_mode: LidarMode) {
         self.lidar_mode = lidar_mode;
     }
-}
 
-impl Default for Config {
-    fn default() -> Config {
+    /// Create default configuration for Ouster OS-1.
+    pub fn os_1_config() -> Self {
         // From firmare 1.12.0
         let beam_altitude_angles = [
             17.042,
@@ -224,10 +223,10 @@ impl Default for Config {
             -3.024,
         ];
 
-        Config {
+        Self {
             beam_altitude_angles,
             beam_azimuth_angles,
-            lidar_mode: LidarMode::Mode512x10,
+            lidar_mode: LidarMode::Mode1024x10,
         }
     }
 }
