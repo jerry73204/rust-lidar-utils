@@ -97,7 +97,6 @@ impl Display for Polarity {
     }
 }
 
-
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum OnOffMode {
     #[serde(rename = "ON")]
@@ -124,7 +123,6 @@ pub enum NmeaBaudRate {
     #[serde(rename = "BAUD_115200")]
     Baud115200,
 }
-
 
 impl Display for NmeaBaudRate {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FormatResult {

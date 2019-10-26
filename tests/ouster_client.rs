@@ -2,19 +2,16 @@ extern crate failure;
 extern crate lidar_utils;
 
 use failure::Fallible;
-use lidar_utils::ouster::{
-    client::CommandClient,
-    packet::Packet as OusterPacket,
-};
+use lidar_utils::ouster::{client::CommandClient, packet::Packet as OusterPacket};
+use log::warn;
 use serde::Deserialize;
 use std::{
     fs::File,
-    path::PathBuf,
-    net::{UdpSocket, SocketAddr, Ipv4Addr},
     io::prelude::*,
+    net::{Ipv4Addr, SocketAddr, UdpSocket},
+    path::PathBuf,
     time::{Duration, Instant},
 };
-use log::warn;
 
 const MAX_UDP_PACKET_SIZE: usize = 65507;
 
@@ -79,16 +76,21 @@ fn ouster_client_test() -> Fallible<()> {
         let packet_buf = &buf[..packet_size];
         match OusterPacket::from_slice(packet_buf) {
             Ok(_packet) => {
-                println!("received packet from LIDAR in {} milliseconds", instant.elapsed().as_secs());
+                println!(
+                    "received packet from LIDAR in {} milliseconds",
+                    instant.elapsed().as_secs()
+                );
                 break;
-            },
+            }
             Err(error) => {
-                warn!("packet decoding error: {:?}. Proceed to next packet.", error);
+                warn!(
+                    "packet decoding error: {:?}. Proceed to next packet.",
+                    error
+                );
                 continue;
             }
         }
     }
-
 
     Ok(())
 }

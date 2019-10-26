@@ -2,7 +2,7 @@
 
 use super::{
     consts::PIXELS_PER_COLUMN,
-    enums::{LidarMode, MultipurposeIoMode, Polarity, TimestampMode, OnOffMode, NmeaBaudRate},
+    enums::{LidarMode, MultipurposeIoMode, NmeaBaudRate, OnOffMode, Polarity, TimestampMode},
 };
 use derivative::Derivative;
 use failure::{ensure, format_err, Fallible};
@@ -208,7 +208,6 @@ impl<A: ToSocketAddrs> CommandClient<A> {
         Ok(config)
     }
 
-
     pub fn get_lidar_intrinsics(&mut self) -> Fallible<LidarIntrinsics> {
         self.writer.write_all(b"get_lidar_intrinsics\n")?;
         let line = self
@@ -218,7 +217,6 @@ impl<A: ToSocketAddrs> CommandClient<A> {
         let config = serde_json::from_str(&line)?;
         Ok(config)
     }
-
 
     pub fn get_imu_intrinsics(&mut self) -> Fallible<ImuIntrinsics> {
         self.writer.write_all(b"get_imu_intrinsics\n")?;
