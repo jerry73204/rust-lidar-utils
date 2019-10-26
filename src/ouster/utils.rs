@@ -364,7 +364,7 @@ impl FrameConverter {
     }
 
     /// Returns the number of columns per revolution.
-    pub fn columns_per_revolution(&self) -> (u16, u16) {
+    pub fn columns_per_revolution(&self) -> u16 {
         self.pcd_converter.columns_per_revolution()
     }
 
