@@ -37,7 +37,8 @@ fn ouster_client_test() -> Fallible<()> {
     };
 
     let lidar_addr = SocketAddr::new(config.lidar_addr.into(), 7501);
-    let mut client = CommandClient::connect(lidar_addr)?;
+    let timeout = Duration::from_secs(config.timeout);
+    let mut client = CommandClient::connect(lidar_addr, Some(timeout))?;
 
     // get info
     let config_txt = client.get_config_txt()?;
@@ -60,7 +61,7 @@ fn ouster_client_test() -> Fallible<()> {
 
     let bind_addr = SocketAddr::from((config.listen_addr, config_txt.udp_port_lidar));
     let socket = UdpSocket::bind(bind_addr)?;
-    socket.set_read_timeout(Some(Duration::from_secs(config.timeout)))?;
+    socket.set_read_timeout(Some(timeout))?;
     let packet_size = std::mem::size_of::<OusterPacket>();
     let instant = Instant::now();
 

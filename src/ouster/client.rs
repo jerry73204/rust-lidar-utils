@@ -12,6 +12,7 @@ use std::{
     fmt::{Debug, Display, Error as FormatError, Formatter},
     io::{prelude::*, BufReader, LineWriter, Lines},
     net::{Ipv4Addr, TcpStream, ToSocketAddrs},
+    time::Duration,
 };
 
 // TODO: This workaround handles large array for serde.
@@ -169,15 +170,24 @@ pub struct NmeaDecodingInfo {
     pub date_decoded_count: u64,
 }
 
-pub struct CommandClient<A: ToSocketAddrs> {
+pub struct CommandClient<A>
+where
+    A: ToSocketAddrs
+{
     address: A,
     reader: Lines<BufReader<TcpStream>>,
     writer: LineWriter<TcpStream>,
 }
 
-impl<A: ToSocketAddrs> CommandClient<A> {
-    pub fn connect(address: A) -> Fallible<CommandClient<A>> {
+impl<A> CommandClient<A>
+where
+    A: ToSocketAddrs
+{
+    pub fn connect(address: A, timeout: Option<Duration>) -> Fallible<CommandClient<A>> {
         let stream = TcpStream::connect(&address)?;
+        stream.set_read_timeout(timeout)?;
+        stream.set_write_timeout(timeout)?;
+
         let reader = BufReader::new(stream.try_clone()?).lines();
         let writer = LineWriter::new(stream);
         let client = CommandClient {
