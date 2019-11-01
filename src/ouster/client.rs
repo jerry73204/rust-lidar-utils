@@ -170,14 +170,12 @@ pub struct NmeaDecodingInfo {
     pub date_decoded_count: u64,
 }
 
-pub struct CommandClient
-{
+pub struct CommandClient {
     reader: Lines<BufReader<TcpStream>>,
     writer: LineWriter<TcpStream>,
 }
 
-impl CommandClient
-{
+impl CommandClient {
     pub fn connect<A>(address: A, timeout: Option<Duration>) -> Fallible<CommandClient>
     where
         A: ToSocketAddrs,
@@ -188,10 +186,7 @@ impl CommandClient
 
         let reader = BufReader::new(stream.try_clone()?).lines();
         let writer = LineWriter::new(stream);
-        let client = CommandClient {
-            reader,
-            writer,
-        };
+        let client = CommandClient { reader, writer };
         Ok(client)
     }
 
