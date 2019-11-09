@@ -54,9 +54,14 @@ impl LaserReturn {
         self.distance as f64 * 0.002
     }
 
-    /// Compute distance in millimetres by raw distance times 0.002.
-    pub fn mm_distance(&self) -> f64 {
-        self.distance as f64 * 2.0
+    /// Compute distance in millimetres by raw distance times 2.
+    pub fn mm_distance(&self) -> u32 {
+        self.distance as u32 * 2
+    }
+
+    #[cfg(feature = "enable-uom")]
+    pub fn uom_distance(&self) -> uom::si::u32::Length {
+        uom::si::u32::Length::new::<uom::si::length::millimeter>(self.mm_distance())
     }
 }
 
@@ -78,6 +83,11 @@ impl Firing {
     /// Compute azimuth angle in radian from encoder ticks.
     pub fn azimuth_angle(&self) -> f64 {
         2.0 * std::f64::consts::PI * self.azimuth_count as f64 / (AZIMUTH_COUNT_PER_REV - 1) as f64
+    }
+
+    #[cfg(feature = "enable-uom")]
+    pub fn uom_azimuth_angle(&self) -> uom::si::f64::Angle {
+        uom::si::f64::Angle::new::<uom::si::angle::radian>(self.azimuth_angle())
     }
 }
 
@@ -133,5 +143,10 @@ impl Packet {
         let secs = self.timestamp / 1_000_000;
         let nsecs = (self.timestamp % 1_000_000) * 1000;
         NaiveDateTime::from_timestamp(secs as i64, nsecs as u32)
+    }
+
+    #[cfg(feature = "enable-uom")]
+    pub fn uom_time(&self) -> uom::si::u32::Time {
+        uom::si::u32::Time::new::<uom::si::time::microsecond>(self.timestamp)
     }
 }

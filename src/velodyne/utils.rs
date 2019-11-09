@@ -315,7 +315,7 @@ impl PointCloudConverter {
                                 base_azimuth_angle + azimuth_angle_diff,
                                 interpolate_ratio,
                             ) % (2.0 * PI);
-                            let distance = laser_return.mm_distance();
+                            let distance = laser_return.mm_distance() as f64;
                             let vertical_angle = vertical_degree.to_radians();
                             let laser_timestamp = base_timestamp + laser_time_offset;
                             let point = make_point(
@@ -368,8 +368,8 @@ impl PointCloudConverter {
                                 vertical_degree,
                                 vertical_correction,
                             ) = args;
-                            let last_distance = last_return.mm_distance();
-                            let strongest_distance = strongest_return.mm_distance();
+                            let last_distance = last_return.mm_distance() as f64;
+                            let strongest_distance = strongest_return.mm_distance() as f64;
                             let interpolate_ratio = laser_time_offset / FIRING_PERIOD;
                             let azimuth_angle = interpolate(
                                 base_azimuth_angle,

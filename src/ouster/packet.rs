@@ -27,6 +27,11 @@ impl Pixel {
     pub fn mm_distance(&self) -> u32 {
         self.raw_distance & 0x000fffff
     }
+
+    #[cfg(feature = "enable-uom")]
+    pub fn uom_distance(&self) -> uom::si::u32::Length {
+        uom::si::u32::Length::new::<uom::si::length::millimeter>(self.mm_distance())
+    }
 }
 
 /// Represents a list of [Pixel]s along with meta data.
@@ -55,6 +60,11 @@ impl Column {
         NaiveDateTime::from_timestamp(secs as i64, nsecs as u32)
     }
 
+    #[cfg(feature = "enable-uom")]
+    pub fn uom_time(&self) -> uom::si::u64::Time {
+        uom::si::u64::Time::new::<uom::si::time::nanosecond>(self.timestamp)
+    }
+
     /// Compute counter-clockwise azimuth angle in radian from encoder ticks.
     pub fn azimuth_angle(&self) -> f64 {
         if self.encoder_ticks == 0 {
@@ -63,6 +73,11 @@ impl Column {
             2.0 * std::f64::consts::PI
                 * (1.0 - self.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64)
         }
+    }
+
+    #[cfg(feature = "enable-uom")]
+    pub fn uom_azimuth_angle(&self) -> uom::si::f64::Angle {
+        uom::si::f64::Angle::new::<uom::si::angle::radian>(self.azimuth_angle())
     }
 
     /// Return if this packet is marked valid.
