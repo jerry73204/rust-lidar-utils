@@ -1,3 +1,5 @@
+#![cfg(feature = "ouster-api-test")]
+
 extern crate failure;
 extern crate lidar_utils;
 
@@ -24,7 +26,6 @@ struct OusterClientTestConfig {
 
 // Uncomment to enable test
 #[test]
-#[cfg(feature = "ouster-api-test")]
 fn ouster_client_test() -> Fallible<()> {
     let config: OusterClientTestConfig = {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))

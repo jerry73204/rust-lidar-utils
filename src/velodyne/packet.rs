@@ -10,7 +10,7 @@ use std::mem::size_of;
 
 /// Represents the block index in range from 0 to 31, or from 32 to 63.
 #[repr(u16)]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BlockIdentifier {
     Block0To31 = 0xeeff,
     Block32To63 = 0xddff,
@@ -18,7 +18,7 @@ pub enum BlockIdentifier {
 
 /// Represents the way the sensor measures the laser signal.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ReturnMode {
     Strongest = 0x37,
     LastReturn = 0x38,
@@ -27,7 +27,7 @@ pub enum ReturnMode {
 
 /// Represents the hardware model.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ProductID {
     HDL32E = 0x21,
     VLP16 = 0x22,
@@ -40,7 +40,7 @@ pub enum ProductID {
 
 /// Represents a point of measurement.
 #[repr(C, packed)]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LaserReturn {
     /// The raw distance of laser return.
     pub distance: u16,
@@ -67,7 +67,7 @@ impl LaserReturn {
 
 /// Represents a sequence of measurements with meta data.
 #[repr(C, packed)]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Firing {
     /// Represents the block that the firing belongs to.
     pub block_identifier: BlockIdentifier,
@@ -93,7 +93,7 @@ impl Firing {
 
 /// Represents the data packet from Velodyne sensor.
 #[repr(C, packed)]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Packet {
     /// Sensor data.
     pub firings: [Firing; FIRING_PER_PACKET],

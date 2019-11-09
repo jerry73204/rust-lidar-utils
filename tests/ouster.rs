@@ -84,7 +84,7 @@ fn ouster_frame_converter() -> Fallible<()> {
     let mut frame_converter = FrameConverter::new(config);
 
     // Load pcap file
-    let mut cap = Capture::from_file("/home/jerry73204/Downloads/lombard_street_OS1.pcap")?;
+    let mut cap = Capture::from_file("test_files/ouster_example.pcap")?;
     cap.filter("udp")?;
 
     let mut frames = vec![];

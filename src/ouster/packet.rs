@@ -12,7 +12,7 @@ use std::{
 
 /// Represents a point of signal measurement.
 #[repr(C, packed)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Pixel {
     /// The least significant 20 bits form distance in millimeters.
     pub raw_distance: u32,
@@ -86,13 +86,50 @@ impl Column {
     }
 }
 
+impl PartialEq for Column {
+    fn eq(&self, other: &Column) -> bool {
+        let Self {
+            timestamp: timestamp_lhs,
+            measurement_id: measurement_id_lhs,
+            frame_id: frame_id_lhs,
+            encoder_ticks: encoder_ticks_lhs,
+            raw_valid: raw_valid_lhs,
+            pixels: pixels_lhs,
+        } = self.clone();
+
+        let Self {
+            timestamp: timestamp_rhs,
+            measurement_id: measurement_id_rhs,
+            frame_id: frame_id_rhs,
+            encoder_ticks: encoder_ticks_rhs,
+            raw_valid: raw_valid_rhs,
+            pixels: pixels_rhs,
+        } = other.clone();
+
+        timestamp_lhs == timestamp_rhs
+            && measurement_id_lhs == measurement_id_rhs
+            && frame_id_lhs == frame_id_rhs
+            && encoder_ticks_lhs == encoder_ticks_rhs
+            && raw_valid_lhs == raw_valid_rhs
+            && pixels_lhs
+                .iter()
+                .zip(pixels_rhs.iter())
+                .all(|(lval, rval)| lval == rval)
+    }
+}
+
+impl Eq for Column {}
+
 impl Debug for Column {
     fn fmt(&self, formatter: &mut Formatter) -> FormatResult {
-        let timestamp = self.timestamp;
-        let measurement_id = self.measurement_id;
-        let frame_id = self.frame_id;
-        let encoder_ticks = self.encoder_ticks;
-        let raw_valid = self.raw_valid;
+        let Self {
+            timestamp,
+            measurement_id,
+            frame_id,
+            encoder_ticks,
+            raw_valid,
+            pixels,
+        } = self.clone();
 
         write!(
             formatter,
@@ -104,14 +141,14 @@ impl Debug for Column {
              pixels: {:?}, \
              raw_valid: 0x{:x} \
              }}",
-            timestamp, measurement_id, frame_id, encoder_ticks, &self.pixels as &[_], raw_valid
+            timestamp, measurement_id, frame_id, encoder_ticks, &pixels as &[_], raw_valid
         )
     }
 }
 
 /// Represents a data packet from Ouster sensor.
 #[repr(C, packed)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Packet {
     pub columns: [Column; COLUMNS_PER_PACKET],
 }
