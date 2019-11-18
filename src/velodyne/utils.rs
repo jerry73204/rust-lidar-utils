@@ -10,6 +10,7 @@ use super::{
 use crate::common::{Point, PointPair, SphericalPoint, Timestamped};
 use failure::{bail, ensure, Fallible};
 use itertools::izip;
+use log::warn;
 
 pub type LastReturnPoint = Timestamped<PointPair>;
 pub type StrongestPoint = Timestamped<PointPair>;
@@ -422,11 +423,12 @@ pub struct FrameConverter {
     pcd_converter: PointCloudConverter,
     period_per_frame: f64, // in milliseconds
     rpm: u64,
+    check_timestamp: bool,
     state_opt: Option<FrameConverterState>,
 }
 
 impl FrameConverter {
-    pub fn new(rpm: u64, config: Config) -> Fallible<Self> {
+    pub fn new(rpm: u64, check_timestamp: bool, config: Config) -> Fallible<Self> {
         ensure!(
             rpm > 0 && (rpm % 60 == 0),
             "rpm must be positive and be multiple of 60"
@@ -438,6 +440,7 @@ impl FrameConverter {
             pcd_converter,
             rpm,
             period_per_frame,
+            check_timestamp,
             state_opt: None,
         };
         Ok(converter)
@@ -450,16 +453,39 @@ impl FrameConverter {
     pub fn push_packet(&mut self, packet: &Packet) -> Fallible<Vec<Frame>> {
         let mut output_frames = vec![];
         let points = self.pcd_converter.packet_to_points(packet)?;
+        let timestamp_upper_bound = {
+            let packet_timestamp = packet.timestamp;
+            (packet_timestamp as f64
+                + (COLUMNS_PER_PACKET * FIRINGS_PER_COLUMN) as f64 * FIRING_PERIOD * 2.0)
+                * 1000.0
+        };
+
+        if let Some(state) = &self.state_opt {
+            let timestamp = packet.timestamp;
+            let current_ts = timestamp as u64 * 1000;
+            let previous_ts = state.last_timestamp_ns;
+
+            if self.check_timestamp {
+                ensure!(
+                    current_ts >= previous_ts,
+                    "timestamp of input packet is less than that of previous packet"
+                );
+            } else if current_ts < previous_ts {
+                warn!("timestamp of input packet is less than that of previous packet (current = {}ns, previous = {}ns)", current_ts, previous_ts);
+            }
+        }
 
         for point in points.into_iter() {
             let timestamp = point.timestamp_ns();
             let mode = point.mode();
             let azimuth_angle = point.azimuth_angle();
+            debug_assert!(
+                timestamp as f64 <= timestamp_upper_bound,
+                "please report bug"
+            );
 
             match self.state_opt.take() {
                 Some(mut state) => {
-                    ensure!(timestamp >= state.last_timestamp_ns, "Found timestamp is less than that of previous packet. Are the packets sent in time series order?");
-
                     // in microseconds
                     let timestamp_diff = timestamp - state.last_timestamp_ns;
 
