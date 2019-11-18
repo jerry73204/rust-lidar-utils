@@ -1,7 +1,10 @@
 //! Provides a set of tools to convert raw data from Velodyne sensors.
 
 use super::{
-    consts::{CHANNEL_PER_FIRING, FIRING_PERIOD, LASER_RETURN_PERIOD},
+    consts::{
+        CHANNEL_PER_FIRING, COLUMNS_PER_PACKET, FIRINGS_PER_COLUMN, FIRING_PERIOD,
+        LASER_RETURN_PERIOD,
+    },
     packet::{Packet, ReturnMode},
 };
 use crate::common::{Point, PointPair, SphericalPoint, Timestamped};
@@ -221,9 +224,9 @@ impl PointCloudConverter {
         let interpolate = |lhs: f64, rhs: f64, ratio: f64| lhs * (1.0 - ratio) + rhs * ratio;
 
         let azimuth_angle_diffs = {
-            let curr_angles = packet.firings.iter().map(|firing| firing.azimuth_angle());
+            let curr_angles = packet.columns.iter().map(|firing| firing.azimuth_angle());
             let next_angles = packet
-                .firings
+                .columns
                 .iter()
                 .skip(1)
                 .map(|firing| firing.azimuth_angle());
@@ -244,14 +247,14 @@ impl PointCloudConverter {
         let points = match packet.return_mode {
             ReturnMode::Strongest | ReturnMode::LastReturn => {
                 let points = packet
-                    .firings
+                    .columns
                     .iter()
                     .zip(azimuth_angle_diffs)
                     .enumerate()
                     .flat_map(|args| {
                         // one column = 2 firings
 
-                        let (column_idx, (firing, azimuth_angle_diff)) = args;
+                        let (column_idx, (column, azimuth_angle_diff)) = args;
 
                         // timestamp of current column
                         let base_timestamp =
@@ -264,7 +267,7 @@ impl PointCloudConverter {
                         let firing_time_offset_latter = FIRING_PERIOD;
 
                         // azimuth angle of current column
-                        let base_azimuth_angle = firing.azimuth_angle();
+                        let base_azimuth_angle = column.azimuth_angle();
 
                         vec![
                             (
@@ -272,14 +275,14 @@ impl PointCloudConverter {
                                 firing_time_offset_former,
                                 base_azimuth_angle,
                                 azimuth_angle_diff,
-                                firing.sequence_former,
+                                column.firing_former,
                             ),
                             (
                                 base_timestamp,
                                 firing_time_offset_latter,
                                 base_azimuth_angle,
                                 azimuth_angle_diff,
-                                firing.sequence_latter,
+                                column.firing_latter,
                             ),
                         ]
                     })
@@ -342,20 +345,20 @@ impl PointCloudConverter {
             }
             ReturnMode::DualReturn => {
                 let points = packet
-                    .firings
+                    .columns
                     .iter()
                     .zip(azimuth_angle_diffs)
                     .enumerate()
-                    .flat_map(|(column_idx, (firing, azimuth_angle_diff))| {
+                    .flat_map(|(column_idx, (column, azimuth_angle_diff))| {
                         let firing_timestamp =
                             packet.timestamp as f64 + column_idx as f64 * FIRING_PERIOD;
-                        let base_azimuth_angle = firing.azimuth_angle();
+                        let base_azimuth_angle = column.azimuth_angle();
                         let laser_time_offsets =
                             (0..).map(|laser_idx| laser_idx as f64 * LASER_RETURN_PERIOD);
 
                         izip!(
-                            firing.sequence_former.iter(),
-                            firing.sequence_latter.iter(),
+                            column.firing_former.iter(),
+                            column.firing_latter.iter(),
                             laser_time_offsets,
                             self.config.vertical_degrees.iter(),
                             self.config.vertical_corrections.iter(),

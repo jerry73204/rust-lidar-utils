@@ -1,6 +1,6 @@
 //! Provides `C-packed` structs for Velodyne data packets.
 
-use super::consts::{AZIMUTH_COUNT_PER_REV, CHANNEL_PER_FIRING, FIRING_PER_PACKET};
+use super::consts::{AZIMUTH_COUNT_PER_REV, CHANNEL_PER_FIRING, COLUMNS_PER_PACKET};
 
 use chrono::NaiveDateTime;
 use failure::{ensure, Fallible};
@@ -74,9 +74,9 @@ pub struct Firing {
     /// Encoder count of rotation motor ranging from 0 to 36000 (inclusive).
     pub azimuth_count: u16,
     /// Array of laser returns.
-    pub sequence_former: [LaserReturn; CHANNEL_PER_FIRING],
+    pub firing_former: [LaserReturn; CHANNEL_PER_FIRING],
     /// Array of laser returns.
-    pub sequence_latter: [LaserReturn; CHANNEL_PER_FIRING],
+    pub firing_latter: [LaserReturn; CHANNEL_PER_FIRING],
 }
 
 impl Firing {
@@ -96,7 +96,7 @@ impl Firing {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Packet {
     /// Sensor data.
-    pub firings: [Firing; FIRING_PER_PACKET],
+    pub columns: [Firing; COLUMNS_PER_PACKET],
     /// Timestamp in microseconds.
     pub timestamp: u32,
     /// Indicates single return mode or dual return mode.
