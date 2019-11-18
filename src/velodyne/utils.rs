@@ -421,7 +421,7 @@ impl PointCloudConverter {
 #[derive(Debug, Clone)]
 pub struct FrameConverter {
     pcd_converter: PointCloudConverter,
-    period_per_frame: f64, // in milliseconds
+    period_per_frame_us: f64, // in milliseconds
     rpm: u64,
     check_timestamp: bool,
     state_opt: Option<FrameConverterState>,
@@ -435,11 +435,11 @@ impl FrameConverter {
         );
 
         let pcd_converter = PointCloudConverter::new(config);
-        let period_per_frame = (rpm as f64).recip() * 60000.0;
+        let period_per_frame_us = (rpm as f64).recip() * 60_000_000.0;
         let converter = Self {
             pcd_converter,
             rpm,
-            period_per_frame,
+            period_per_frame_us,
             check_timestamp,
             state_opt: None,
         };
@@ -493,7 +493,7 @@ impl FrameConverter {
                     let if_complete_curr_frame = {
                         let case1 = azimuth_angle < state.last_azimuth_angle;
                         let case2 = timestamp_diff as f64
-                            >= (self.period_per_frame - 3.0 * FIRING_PERIOD) * 1000.0;
+                            >= (self.period_per_frame_us - 3.0 * FIRING_PERIOD) * 1000.0;
                         case1 || case2
                     };
 

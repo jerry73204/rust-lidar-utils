@@ -14,8 +14,8 @@ impl From<SphericalPoint> for Point {
             azimuth_angle,
         } = spherical_point;
 
-        let x = distance * polar_angle.sin() * azimuth_angle.sin();
-        let y = distance * polar_angle.sin() * azimuth_angle.cos();
+        let x = distance * polar_angle.sin() * azimuth_angle.cos();
+        let y = distance * polar_angle.sin() * azimuth_angle.sin();
         let z = distance * polar_angle.cos();
 
         Self { x, y, z }
