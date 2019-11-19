@@ -21,27 +21,30 @@ big_array! { BigArray; }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConfigText {
+    pub timestamp_mode: TimestampMode,
+    pub multipurpose_io_mode: MultipurposeIoMode,
+    pub lidar_mode: LidarMode,
+    pub sync_pulse_in_polarity: Polarity,
+    pub nmea_in_polarity: Polarity,
+    pub sync_pulse_out_polarity: Polarity,
+    pub udp_ip: Ipv4Addr,
+    #[serde(
+        deserialize_with = "de_bool_from_int",
+        serialize_with = "ser_bool_to_int"
+    )]
+    pub nmea_ignore_valid_char: bool,
     #[serde(
         deserialize_with = "de_bool_from_int",
         serialize_with = "ser_bool_to_int"
     )]
     pub auto_start_flag: bool,
-    pub lidar_mode: LidarMode,
-    pub multipurpose_io_mode: MultipurposeIoMode,
-    pub sync_pulse_in_polarity: Polarity,
+    pub sync_pulse_out_pulse_width: u64,
+    pub nmea_baud_rate: NmeaBaudRate,
     pub sync_pulse_out_angle: u64,
     pub sync_pulse_out_frequency: u64,
-    pub sync_pulse_out_polarity: Polarity,
-    pub sync_pulse_out_pulse_width: u64,
-    pub timestamp_mode: TimestampMode,
-    pub udp_ip: Ipv4Addr,
     pub udp_port_imu: u16,
     pub udp_port_lidar: u16,
-    #[serde(
-        deserialize_with = "de_bool_from_int",
-        serialize_with = "ser_bool_to_int"
-    )]
-    pub window_rejection_enable: bool,
+    pub azimuth_window: [u64; 2],
 }
 
 #[derive(Serialize, Deserialize, Derivative)]
@@ -70,10 +73,17 @@ pub struct ImuIntrinsics {
 #[derive(Serialize, Deserialize, Derivative)]
 #[derivative(Debug)]
 pub struct TimeInfo {
-    pub sync_pulse_in: SyncPulseInInfo,
-    pub nmea: NmeaInfo,
-    pub sync_pulse_out: SyncPulseOutInfo,
     pub timestamp: TimestampInfo,
+    pub sync_pulse_in: SyncPulseInInfo,
+    pub multipurpose_io: MultiPurposeIo,
+}
+
+#[derive(Serialize, Deserialize, Derivative)]
+#[derivative(Debug)]
+pub struct MultiPurposeIo {
+    pub mode: OnOffMode,
+    pub sync_pulse_out: SyncPulseOutInfo,
+    pub nmea: NmeaInfo,
 }
 
 #[derive(Serialize, Deserialize, Derivative)]
@@ -114,7 +124,6 @@ pub struct SyncPulseOutInfo {
     pub angle_deg: u64,
     pub pulse_width_ms: u64,
     pub polarity: Polarity,
-    pub mode: OnOffMode,
 }
 
 #[derive(Serialize, Deserialize, Derivative)]
