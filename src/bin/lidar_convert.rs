@@ -158,7 +158,7 @@ fn convert_vel_vlp_16<P: AsRef<Path>>(input_path: P, output_dir: P, rpm: u64) ->
     ))?;
 
     let config = VelodyneConfig::vlp_16_config();
-    let mut frame_converter = VelodyneFrameConverter::new(rpm, config)?;
+    let mut frame_converter = VelodyneFrameConverter::new(rpm, false, config)?;
 
     loop {
         let udp_packet = match cap.next() {
