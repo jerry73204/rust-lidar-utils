@@ -58,7 +58,7 @@ fn ouster_client_test() -> Fallible<()> {
     client.set_udp_ip(config.listen_addr)?;
     client.reinitialize()?;
 
-    std::thread::sleep(Duration::from_secs(5));
+    std::thread::sleep(Duration::from_secs(10));
 
     let bind_addr = SocketAddr::from((config.listen_addr, config_txt.udp_port_lidar));
     let socket = UdpSocket::bind(bind_addr)?;

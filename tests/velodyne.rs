@@ -79,7 +79,7 @@ fn velodyne_frames() -> Fallible<()> {
     use std::f64::consts::PI;
 
     let config = Config::vlp_16_config();
-    let mut converter = FrameConverter::new(300, config)?;
+    let mut converter = FrameConverter::new(300, true, config)?;
 
     let mut cap = Capture::from_file("test_files/velodyne_example.pcap")?;
     cap.filter("udp")?;
