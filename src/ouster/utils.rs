@@ -276,14 +276,21 @@ impl PointCloudConverter {
             .enumerate()
             .map(|(row_index, pixel)| {
                 let spherical = {
-                    // column.azimuth_angle() is counter-clockwise, while
-                    // beam_azimuth_angles is clockwise
-                    let azimuth_angle = column.azimuth_angle()
-                        - self.config.beam_azimuth_angles[row_index].to_radians();
+                    // add correction according to manual
+                    let lidar_azimuth_angle = column.azimuth_angle()
+                        + self.config.beam_azimuth_angles[row_index].to_radians();
+
+                    // change from clockwise to counter-clockwise
+                    let math_azimuth_angle = std::f64::consts::PI * 2.0 - lidar_azimuth_angle;
+
                     let altitude_angle = self.config.beam_altitude_angles[row_index].to_radians();
                     let distance = pixel.mm_distance() as f64;
 
-                    SphericalPoint::from_altitude_angle(distance, azimuth_angle, altitude_angle)
+                    SphericalPoint::from_altitude_angle(
+                        distance,
+                        math_azimuth_angle,
+                        altitude_angle,
+                    )
                 };
 
                 let pair = PointPair::from(spherical);

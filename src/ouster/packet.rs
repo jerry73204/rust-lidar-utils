@@ -65,13 +65,12 @@ impl Column {
         uom::si::u64::Time::new::<uom::si::time::nanosecond>(self.timestamp)
     }
 
-    /// Compute counter-clockwise azimuth angle in radian from encoder ticks.
+    /// Compute azimuth angle in radians from encoder ticks.
     pub fn azimuth_angle(&self) -> f64 {
         if self.encoder_ticks == 0 {
             0.0
         } else {
-            2.0 * std::f64::consts::PI
-                * (1.0 - self.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64)
+            2.0 * std::f64::consts::PI * self.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64
         }
     }
 
