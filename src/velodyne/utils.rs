@@ -314,11 +314,24 @@ impl PointCloudConverter {
                                 laser_time_offset,
                             ) = args;
                             let interpolate_ratio = laser_time_offset / (FIRING_PERIOD * 2.0);
-                            let azimuth_angle = interpolate(
-                                base_azimuth_angle,
-                                base_azimuth_angle + azimuth_angle_diff,
-                                interpolate_ratio,
-                            ) % (2.0 * PI);
+                            let azimuth_angle = {
+                                // time interpolation
+                                let angle = interpolate(
+                                    base_azimuth_angle,
+                                    base_azimuth_angle + azimuth_angle_diff,
+                                    interpolate_ratio,
+                                );
+
+                                // change from clockwise to counter-clockwise and
+                                // rebase the zero angle to match the Velodyne manual
+                                let angle = std::f64::consts::FRAC_PI_2 - angle;
+                                if angle < 0.0 {
+                                    angle + PI * 2.0
+                                } else {
+                                    angle
+                                };
+                                angle
+                            };
                             let distance = laser_return.mm_distance() as f64;
                             let vertical_angle = vertical_degree.to_radians();
                             let laser_timestamp = base_timestamp + laser_time_offset;
@@ -463,7 +476,7 @@ impl FrameConverter {
         if let Some(state) = &self.state_opt {
             let timestamp = packet.timestamp;
             let current_ts = timestamp as u64 * 1000;
-            let previous_ts = state.last_timestamp_ns;
+            let previous_ts = state.last_point_timestamp_ns;
 
             if self.check_timestamp {
                 ensure!(
@@ -478,38 +491,55 @@ impl FrameConverter {
         for point in points.into_iter() {
             let timestamp = point.timestamp_ns();
             let mode = point.mode();
-            let azimuth_angle = point.azimuth_angle();
+            let azimuth_angle = {
+                let angle = point.azimuth_angle();
+                // convert back to lidar's rotor angle
+                let angle = std::f64::consts::FRAC_PI_2 - angle;
+                if angle < 0.0 {
+                    angle + std::f64::consts::PI * 2.0
+                } else {
+                    angle
+                }
+            };
+
             debug_assert!(
                 timestamp as f64 <= timestamp_upper_bound,
                 "please report bug"
             );
 
             match self.state_opt.take() {
-                Some(mut state) => {
+                Some(state) => {
+                    let FrameConverterState {
+                        last_azimuth_angle,
+                        last_point_timestamp_ns: _,
+                        last_frame_timestamp_ns,
+                        mut frame_opt,
+                    } = state;
+
                     // in microseconds
-                    let timestamp_diff = timestamp - state.last_timestamp_ns;
 
                     // determine whether to complete current frame
                     let if_complete_curr_frame = {
-                        let case1 = azimuth_angle < state.last_azimuth_angle;
-                        let case2 = timestamp_diff as f64
-                            >= (self.period_per_frame_us - 3.0 * FIRING_PERIOD) * 1000.0;
+                        let case1 = azimuth_angle < last_azimuth_angle;
+                        let timestamp_diff = timestamp - last_frame_timestamp_ns;
+                        let case2 = timestamp_diff as f64 >= self.period_per_frame_us * 1000.0;
                         case1 || case2
                     };
 
                     if if_complete_curr_frame {
-                        if let Some(frame) = state.frame_opt.take() {
+                        if let Some(frame) = frame_opt.take() {
                             output_frames.push(frame);
                         }
                     }
 
-                    let new_state = match state.frame_opt.take() {
+                    let new_state = match frame_opt.take() {
                         Some(mut frame) => {
                             frame.points.push(point)?;
 
                             let new_state = FrameConverterState {
                                 last_azimuth_angle: azimuth_angle,
-                                last_timestamp_ns: timestamp,
+                                last_frame_timestamp_ns,
+                                last_point_timestamp_ns: timestamp,
                                 frame_opt: Some(frame),
                             };
                             new_state
@@ -521,7 +551,8 @@ impl FrameConverter {
                             let frame = Frame { points };
                             let new_state = FrameConverterState {
                                 last_azimuth_angle: azimuth_angle,
-                                last_timestamp_ns: timestamp,
+                                last_frame_timestamp_ns: timestamp,
+                                last_point_timestamp_ns: timestamp,
                                 frame_opt: Some(frame),
                             };
                             new_state
@@ -537,7 +568,8 @@ impl FrameConverter {
                     let frame = Frame { points };
                     let state = FrameConverterState {
                         last_azimuth_angle: azimuth_angle,
-                        last_timestamp_ns: timestamp,
+                        last_point_timestamp_ns: timestamp,
+                        last_frame_timestamp_ns: timestamp,
                         frame_opt: Some(frame),
                     };
                     self.state_opt = Some(state);
@@ -552,7 +584,8 @@ impl FrameConverter {
 #[derive(Debug, Clone)]
 struct FrameConverterState {
     pub last_azimuth_angle: f64,
-    pub last_timestamp_ns: u64,
+    pub last_point_timestamp_ns: u64,
+    pub last_frame_timestamp_ns: u64,
     pub frame_opt: Option<Frame>,
 }
 
