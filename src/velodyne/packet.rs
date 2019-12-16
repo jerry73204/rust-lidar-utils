@@ -1,6 +1,6 @@
 //! Provides `C-packed` structs for Velodyne data packets.
 
-use super::consts::{AZIMUTH_COUNT_PER_REV, CHANNEL_PER_FIRING, COLUMNS_PER_PACKET};
+use super::consts::{AZIMUTH_COUNT_PER_REV, COLUMNS_PER_PACKET};
 
 use chrono::NaiveDateTime;
 use failure::{ensure, Fallible};
@@ -41,14 +41,14 @@ pub enum ProductID {
 /// Represents a point of measurement.
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct LaserReturn {
+pub struct Channel {
     /// The raw distance of laser return.
     pub distance: u16,
     /// The intensity of laser return.
     pub intensity: u8,
 }
 
-impl LaserReturn {
+impl Channel {
     /// Compute distance in meters by raw distance times 0.002.
     pub fn meter_distance(&self) -> f64 {
         self.distance as f64 * 0.002
@@ -59,7 +59,6 @@ impl LaserReturn {
         self.distance as u32 * 2
     }
 
-    #[cfg(feature = "enable-uom")]
     pub fn uom_distance(&self) -> uom::si::u32::Length {
         uom::si::u32::Length::new::<uom::si::length::millimeter>(self.mm_distance())
     }
@@ -68,24 +67,21 @@ impl LaserReturn {
 /// Represents a sequence of measurements with meta data.
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Firing {
+pub struct Block {
     /// Represents the block that the firing belongs to.
     pub block_identifier: BlockIdentifier,
     /// Encoder count of rotation motor ranging from 0 to 36000 (inclusive).
     pub azimuth_count: u16,
-    /// Array of laser returns.
-    pub firing_former: [LaserReturn; CHANNEL_PER_FIRING],
-    /// Array of laser returns.
-    pub firing_latter: [LaserReturn; CHANNEL_PER_FIRING],
+    /// Array of channels.
+    pub channels: [Channel; 32],
 }
 
-impl Firing {
+impl Block {
     /// Compute azimuth angle in radian from encoder ticks.
     pub fn azimuth_angle(&self) -> f64 {
         2.0 * std::f64::consts::PI * self.azimuth_count as f64 / (AZIMUTH_COUNT_PER_REV - 1) as f64
     }
 
-    #[cfg(feature = "enable-uom")]
     pub fn uom_azimuth_angle(&self) -> uom::si::f64::Angle {
         uom::si::f64::Angle::new::<uom::si::angle::radian>(self.azimuth_angle())
     }
@@ -96,7 +92,7 @@ impl Firing {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Packet {
     /// Sensor data.
-    pub columns: [Firing; COLUMNS_PER_PACKET],
+    pub blocks: [Block; COLUMNS_PER_PACKET],
     /// Timestamp in microseconds.
     pub timestamp: u32,
     /// Indicates single return mode or dual return mode.
@@ -145,7 +141,6 @@ impl Packet {
         NaiveDateTime::from_timestamp(secs as i64, nsecs as u32)
     }
 
-    #[cfg(feature = "enable-uom")]
     pub fn uom_time(&self) -> uom::si::u32::Time {
         uom::si::u32::Time::new::<uom::si::time::microsecond>(self.timestamp)
     }

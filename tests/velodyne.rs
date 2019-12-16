@@ -1,3 +1,5 @@
+#![cfg(feature = "velodyne-test")]
+
 extern crate failure;
 extern crate lidar_utils;
 extern crate pcap;

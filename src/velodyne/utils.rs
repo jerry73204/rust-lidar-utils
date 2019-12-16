@@ -466,12 +466,6 @@ impl FrameConverter {
     pub fn push_packet(&mut self, packet: &Packet) -> Fallible<Vec<Frame>> {
         let mut output_frames = vec![];
         let points = self.pcd_converter.packet_to_points(packet)?;
-        let timestamp_upper_bound = {
-            let packet_timestamp = packet.timestamp;
-            (packet_timestamp as f64
-                + (COLUMNS_PER_PACKET * FIRINGS_PER_COLUMN) as f64 * FIRING_PERIOD * 2.0)
-                * 1000.0
-        };
 
         if let Some(state) = &self.state_opt {
             let timestamp = packet.timestamp;
@@ -502,11 +496,6 @@ impl FrameConverter {
                 }
             };
 
-            debug_assert!(
-                timestamp as f64 <= timestamp_upper_bound,
-                "please report bug"
-            );
-
             match self.state_opt.take() {
                 Some(state) => {
                     let FrameConverterState {
@@ -515,8 +504,6 @@ impl FrameConverter {
                         last_frame_timestamp_ns,
                         mut frame_opt,
                     } = state;
-
-                    // in microseconds
 
                     // determine whether to complete current frame
                     let if_complete_curr_frame = {

@@ -20,11 +20,12 @@ log = "~0"
 ndarray = "~0"
 derivative = "~1"
 regex = "~1"
-itertools = "~0"
+itertools = "^0.8.2"
 pcap = { version = "~0", optional = true }
 pcd-rs = { version = "~0", optional = true }
 clap = { version = "~2", features = ["yaml"], optional = true }
-uom = { version = "~0", features = ["u32", "u64", "si"], optional = true }
+uom = { version = "^0.26.0", features = ["u32", "u64", "u16", "si"] }
+num-traits = "^0.2.10"
 
 [dev-dependencies]
 pretty_env_logger = "~0"
@@ -33,9 +34,9 @@ toml = "~0"
 
 [features]
 enable-pcap = ["pcap"]
-enable-uom = ["uom"]
 build-binary = ["pcd-rs", "clap"]
 ouster-api-test = []
+velodyne-test = []
 
 [[bin]]
 name = "lidar_convert"
