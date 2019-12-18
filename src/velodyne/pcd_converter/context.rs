@@ -1,5 +1,6 @@
+use super::converter::{DualReturnPoint, DynamicPoint, SingleReturnPoint};
 use crate::velodyne::{
-    config::{Config16Channel, Config32Channel, VelodyneConfig},
+    config::{Config16Channel, Config32Channel, DynamicConfig, VelodyneConfigKind},
     marker::{DualReturn, LastReturn, ReturnTypeMarker, StrongestReturn},
     packet::Block,
 };
@@ -116,35 +117,73 @@ impl From<Config32Channel<DualReturn>> for DualReturn32ChannelContext {
 
 impl ConverterContext for DualReturn32ChannelContext {}
 
+pub enum DynamicContext {
+    StrongestReturn16Channel(SingleReturn16ChannelContext),
+    LastReturn16Channel(SingleReturn16ChannelContext),
+    DualReturn16Channel(DualReturn16ChannelContext),
+    StrongestReturn32Channel(SingleReturn32ChannelContext),
+    LastReturn32Channel(SingleReturn32ChannelContext),
+    DualReturn32Channel(DualReturn32ChannelContext),
+}
+
+impl ConverterContext for DynamicContext {}
+
+impl From<DynamicConfig> for DynamicContext {
+    fn from(orig_config: DynamicConfig) -> Self {
+        use DynamicConfig::*;
+
+        match orig_config {
+            StrongestReturn16Channel(config) => Self::StrongestReturn16Channel(config.into()),
+            LastReturn16Channel(config) => Self::LastReturn16Channel(config.into()),
+            DualReturn16Channel(config) => Self::DualReturn16Channel(config.into()),
+            StrongestReturn32Channel(config) => Self::StrongestReturn32Channel(config.into()),
+            LastReturn32Channel(config) => Self::LastReturn32Channel(config.into()),
+            DualReturn32Channel(config) => Self::DualReturn32Channel(config.into()),
+        }
+    }
+}
+
 pub trait ToConverterContext
 where
-    Self: VelodyneConfig,
+    Self: VelodyneConfigKind,
 {
     type Context;
+    type Point;
 }
 
 impl ToConverterContext for Config16Channel<StrongestReturn> {
     type Context = SingleReturn16ChannelContext;
+    type Point = SingleReturnPoint;
 }
 
 impl ToConverterContext for Config16Channel<LastReturn> {
     type Context = SingleReturn16ChannelContext;
+    type Point = SingleReturnPoint;
 }
 
 impl ToConverterContext for Config16Channel<DualReturn> {
     type Context = DualReturn16ChannelContext;
+    type Point = DualReturnPoint;
 }
 
 impl ToConverterContext for Config32Channel<StrongestReturn> {
     type Context = SingleReturn32ChannelContext;
+    type Point = SingleReturnPoint;
 }
 
 impl ToConverterContext for Config32Channel<LastReturn> {
     type Context = SingleReturn32ChannelContext;
+    type Point = SingleReturnPoint;
 }
 
 impl ToConverterContext for Config32Channel<DualReturn> {
     type Context = DualReturn32ChannelContext;
+    type Point = DualReturnPoint;
+}
+
+impl ToConverterContext for DynamicConfig {
+    type Context = DynamicContext;
+    type Point = DynamicPoint;
 }
 
 fn convert_16_channel_config<ReturnType>(

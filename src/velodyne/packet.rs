@@ -1,6 +1,6 @@
 //! Provides `C-packed` structs for Velodyne data packets.
 
-use super::consts::{AZIMUTH_COUNT_PER_REV, COLUMNS_PER_PACKET};
+use super::consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK};
 
 use chrono::NaiveDateTime;
 use failure::{ensure, Fallible};
@@ -20,7 +20,7 @@ pub enum BlockIdentifier {
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ReturnMode {
-    Strongest = 0x37,
+    StrongestReturn = 0x37,
     LastReturn = 0x38,
     DualReturn = 0x39,
 }
@@ -73,7 +73,7 @@ pub struct Block {
     /// Encoder count of rotation motor ranging from 0 to 36000 (inclusive).
     pub azimuth_count: u16,
     /// Array of channels.
-    pub channels: [Channel; 32],
+    pub channels: [Channel; CHANNELS_PER_BLOCK],
 }
 
 impl Block {
@@ -92,7 +92,7 @@ impl Block {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Packet {
     /// Sensor data.
-    pub blocks: [Block; COLUMNS_PER_PACKET],
+    pub blocks: [Block; BLOCKS_PER_PACKET],
     /// Timestamp in microseconds.
     pub timestamp: u32,
     /// Indicates single return mode or dual return mode.

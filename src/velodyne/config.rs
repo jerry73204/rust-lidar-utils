@@ -1,17 +1,147 @@
-use super::marker::ReturnTypeMarker;
-use std::{convert::TryFrom, fmt::Debug, marker::PhantomData};
-use uom::si::{
-    angle::radian,
-    f64::{Angle as F64Angle, Length as F64Length},
-    length::millimeter,
-    time::microsecond,
-    u32::Length as U32Length,
+use super::{
+    consts::{
+        PUKE_HI_RES_VERTICAL_CORRECTIONS, PUKE_HI_RES_VERTICAL_DEGREES,
+        PUKE_LITE_VERTICAL_CORRECTIONS, PUKE_LITE_VERTICAL_DEGREES, VLP_16_VERTICAL_CORRECTIONS,
+        VLP_16_VERTICAL_DEGREES,
+    },
+    marker::{DualReturn, LastReturn, ReturnTypeMarker, StrongestReturn},
+    packet::ReturnMode,
 };
+use failure::{bail, Fallible};
+use std::{fmt::Debug, marker::PhantomData};
 
-pub trait VelodyneConfig
+pub trait VelodyneConfigKind
 where
     Self: Debug + Clone,
 {
+}
+
+#[derive(Debug, Clone)]
+pub struct ConfigBuilder {
+    params: Option<Parameters>,
+    return_mode: Option<ReturnMode>,
+}
+
+impl ConfigBuilder {
+    pub fn new() -> Self {
+        Self {
+            params: None,
+            return_mode: None,
+        }
+    }
+
+    pub fn build(self) -> Fallible<DynamicConfig> {
+        use DynamicConfig::*;
+        use Parameters::*;
+        use ReturnMode::*;
+
+        let config = match (self.params, self.return_mode) {
+            (Some(Channel16(vertical_degrees, vertical_corrections)), Some(StrongestReturn)) => {
+                StrongestReturn16Channel(Config16Channel {
+                    vertical_degrees,
+                    vertical_corrections,
+                    _phantom: PhantomData,
+                })
+            }
+            (Some(Channel16(vertical_degrees, vertical_corrections)), Some(LastReturn)) => {
+                LastReturn16Channel(Config16Channel {
+                    vertical_degrees,
+                    vertical_corrections,
+                    _phantom: PhantomData,
+                })
+            }
+            (Some(Channel16(vertical_degrees, vertical_corrections)), Some(DualReturn)) => {
+                DualReturn16Channel(Config16Channel {
+                    vertical_degrees,
+                    vertical_corrections,
+                    _phantom: PhantomData,
+                })
+            }
+            (Some(Channel32(vertical_degrees, vertical_corrections)), Some(StrongestReturn)) => {
+                StrongestReturn32Channel(Config32Channel {
+                    vertical_degrees,
+                    vertical_corrections,
+                    _phantom: PhantomData,
+                })
+            }
+            (Some(Channel32(vertical_degrees, vertical_corrections)), Some(LastReturn)) => {
+                LastReturn32Channel(Config32Channel {
+                    vertical_degrees,
+                    vertical_corrections,
+                    _phantom: PhantomData,
+                })
+            }
+            (Some(Channel32(vertical_degrees, vertical_corrections)), Some(DualReturn)) => {
+                DualReturn32Channel(Config32Channel {
+                    vertical_degrees,
+                    vertical_corrections,
+                    _phantom: PhantomData,
+                })
+            }
+            _ => bail!("the builder is not correctly configured"),
+        };
+
+        Ok(config)
+    }
+
+    pub fn return_mode(mut self, return_mode: ReturnMode) -> Self {
+        self.return_mode = Some(return_mode);
+        self
+    }
+
+    pub fn vlp_16_params(mut self) -> Self {
+        self.params = Some(Parameters::Channel16(
+            VLP_16_VERTICAL_DEGREES,
+            VLP_16_VERTICAL_CORRECTIONS,
+        ));
+        self
+    }
+
+    pub fn puke_lite_params(mut self) -> Self {
+        self.params = Some(Parameters::Channel16(
+            PUKE_LITE_VERTICAL_DEGREES,
+            PUKE_LITE_VERTICAL_CORRECTIONS,
+        ));
+        self
+    }
+
+    pub fn puke_hi_res_params(mut self) -> Self {
+        self.params = Some(Parameters::Channel16(
+            PUKE_HI_RES_VERTICAL_DEGREES,
+            PUKE_HI_RES_VERTICAL_CORRECTIONS,
+        ));
+        self
+    }
+
+    pub fn channel_16_params(
+        mut self,
+        vertical_degrees: [f64; 16],
+        vertical_corrections: [f64; 16],
+    ) -> Self {
+        self.params = Some(Parameters::Channel16(
+            vertical_degrees,
+            vertical_corrections,
+        ));
+        self
+    }
+
+    pub fn channel_32_params(
+        mut self,
+        vertical_degrees: [f64; 32],
+        vertical_corrections: [f64; 32],
+    ) -> Self {
+        self.params = Some(Parameters::Channel32(
+            vertical_degrees,
+            vertical_corrections,
+        ));
+        self
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum Parameters {
+    Channel16([f64; 16], [f64; 16]),
+    Channel32([f64; 32], [f64; 32]),
 }
 
 #[derive(Debug, Clone)]
@@ -26,7 +156,10 @@ where
     _phantom: PhantomData<ReturnType>,
 }
 
-impl<ReturnType> VelodyneConfig for Config16Channel<ReturnType> where ReturnType: ReturnTypeMarker {}
+impl<ReturnType> VelodyneConfigKind for Config16Channel<ReturnType> where
+    ReturnType: ReturnTypeMarker
+{
+}
 
 impl<ReturnType> Config16Channel<ReturnType>
 where
@@ -34,42 +167,24 @@ where
 {
     pub fn vlp_16_config() -> Self {
         Self {
-            vertical_degrees: [
-                -15.0, 1.0, -13.0, 3.0, -11.0, 5.0, -9.0, 7.0, -7.0, 9.0, -5.0, 11.0, -3.0, 13.0,
-                -1.0, 15.0,
-            ],
-            vertical_corrections: [
-                11.2, -0.7, 9.7, -2.2, 8.1, -3.7, 6.6, -5.1, 5.1, -6.6, 3.7, -8.1, 2.2, -9.7, 0.7,
-                -11.2,
-            ],
+            vertical_degrees: VLP_16_VERTICAL_DEGREES,
+            vertical_corrections: VLP_16_VERTICAL_CORRECTIONS,
             _phantom: PhantomData,
         }
     }
 
     pub fn puke_lite_config() -> Self {
         Self {
-            vertical_degrees: [
-                -15.0, 1.0, -13.0, 3.0, -11.0, 5.0, -9.0, 7.0, -7.0, 9.0, -5.0, 11.0, -3.0, 13.0,
-                -1.0, 15.0,
-            ],
-            vertical_corrections: [
-                11.2, -0.7, 9.7, -2.2, 8.1, -3.7, 6.6, -5.1, 5.1, -6.6, 3.7, -8.1, 2.2, -9.7, 0.7,
-                -11.2,
-            ],
+            vertical_degrees: PUKE_LITE_VERTICAL_DEGREES,
+            vertical_corrections: PUKE_LITE_VERTICAL_CORRECTIONS,
             _phantom: PhantomData,
         }
     }
 
     pub fn puke_hi_res_config() -> Self {
         Self {
-            vertical_degrees: [
-                -10.00, 0.67, -8.67, 2.00, -7.33, 3.33, -6.00, 4.67, -4.67, 6.00, -3.33, 7.33,
-                -2.00, 8.67, -0.67, 10.00,
-            ],
-            vertical_corrections: [
-                7.4, -0.9, 6.5, -1.8, 5.5, -2.7, 4.6, -3.7, 3.7, -4.6, 2.7, -5.5, 1.8, -6.5, 0.9,
-                -7.4,
-            ],
+            vertical_degrees: PUKE_HI_RES_VERTICAL_DEGREES,
+            vertical_corrections: PUKE_HI_RES_VERTICAL_CORRECTIONS,
             _phantom: PhantomData,
         }
     }
@@ -87,4 +202,19 @@ where
     _phantom: PhantomData<ReturnType>,
 }
 
-impl<ReturnType> VelodyneConfig for Config32Channel<ReturnType> where ReturnType: ReturnTypeMarker {}
+impl<ReturnType> VelodyneConfigKind for Config32Channel<ReturnType> where
+    ReturnType: ReturnTypeMarker
+{
+}
+
+#[derive(Debug, Clone)]
+pub enum DynamicConfig {
+    StrongestReturn16Channel(Config16Channel<StrongestReturn>),
+    LastReturn16Channel(Config16Channel<LastReturn>),
+    DualReturn16Channel(Config16Channel<DualReturn>),
+    StrongestReturn32Channel(Config32Channel<StrongestReturn>),
+    LastReturn32Channel(Config32Channel<LastReturn>),
+    DualReturn32Channel(Config32Channel<DualReturn>),
+}
+
+impl VelodyneConfigKind for DynamicConfig {}
