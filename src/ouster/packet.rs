@@ -9,6 +9,12 @@ use std::{
     fmt::{Debug, Formatter, Result as FormatResult},
     mem::size_of,
 };
+use uom::si::{
+    angle::radian,
+    f64::{Angle as F64Angle, Length as F64Length, Time as F64Time},
+    length::millimeter,
+    time::nanosecond,
+};
 
 /// Represents a point of signal measurement.
 #[repr(C, packed)]
@@ -24,13 +30,12 @@ pub struct Pixel {
 
 impl Pixel {
     /// Extract distance in millimeters from raw_distance field.
-    pub fn mm_distance(&self) -> u32 {
+    pub fn distance_millimeter(&self) -> u32 {
         self.raw_distance & 0x000fffff
     }
 
-    #[cfg(feature = "enable-uom")]
-    pub fn uom_distance(&self) -> uom::si::u32::Length {
-        uom::si::u32::Length::new::<uom::si::length::millimeter>(self.mm_distance())
+    pub fn distance(&self) -> F64Length {
+        F64Length::new::<millimeter>(self.distance_millimeter() as f64)
     }
 }
 
@@ -60,23 +65,22 @@ impl Column {
         NaiveDateTime::from_timestamp(secs as i64, nsecs as u32)
     }
 
-    #[cfg(feature = "enable-uom")]
-    pub fn uom_time(&self) -> uom::si::u64::Time {
-        uom::si::u64::Time::new::<uom::si::time::nanosecond>(self.timestamp)
+    pub fn time(&self) -> F64Time {
+        F64Time::new::<nanosecond>(self.timestamp as f64)
+    }
+
+    /// Compute azimuth angle in degrees from encoder ticks.
+    pub fn azimuth_angle_degrees(&self) -> f64 {
+        360.0 * self.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64
     }
 
     /// Compute azimuth angle in radians from encoder ticks.
-    pub fn azimuth_angle(&self) -> f64 {
-        if self.encoder_ticks == 0 {
-            0.0
-        } else {
-            2.0 * std::f64::consts::PI * self.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64
-        }
+    pub fn azimuth_angle_radians(&self) -> f64 {
+        2.0 * std::f64::consts::PI * self.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64
     }
 
-    #[cfg(feature = "enable-uom")]
-    pub fn uom_azimuth_angle(&self) -> uom::si::f64::Angle {
-        uom::si::f64::Angle::new::<uom::si::angle::radian>(self.azimuth_angle())
+    pub fn azimuth_angle(&self) -> F64Angle {
+        F64Angle::new::<radian>(self.azimuth_angle_radians())
     }
 
     /// Return if this packet is marked valid.
@@ -183,5 +187,11 @@ impl Packet {
         );
         let packet = unsafe { &*(buffer.as_ptr() as *const Packet) };
         Ok(packet)
+    }
+}
+
+impl AsRef<Packet> for Packet {
+    fn as_ref(&self) -> &Packet {
+        &self
     }
 }
