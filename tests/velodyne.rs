@@ -71,5 +71,7 @@ fn velodyne_scan() -> Fallible<()> {
         }
     }
 
+    let _ = points_per_frame;
+
     Ok(())
 }

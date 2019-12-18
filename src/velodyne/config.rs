@@ -1,3 +1,5 @@
+//! Defines a set of Velodyne LiDAR configurations.
+
 use super::{
     consts::{
         PUKE_HI_RES_VERTICAL_CORRECTIONS, PUKE_HI_RES_VERTICAL_DEGREES,

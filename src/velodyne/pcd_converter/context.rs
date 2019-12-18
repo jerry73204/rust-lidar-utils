@@ -1,3 +1,6 @@
+//! The module provides context types that are used internally in
+//! [PointCloudConverter](crate::velodyne::pcd_converter::PointCloudConverter).
+
 use super::converter::{DualReturnPoint, DynamicPoint, SingleReturnPoint};
 use crate::velodyne::{
     config::{Config16Channel, Config32Channel, DynamicConfig, VelodyneConfigKind},
@@ -195,17 +198,23 @@ where
     let vertical_degrees = orig_config.vertical_degrees;
     let vertical_corrections = orig_config.vertical_corrections;
 
-    let angle_vec = vertical_degrees
-        .iter()
-        .map(|degree| F64Angle::new::<radian>(degree * std::f64::consts::PI / 180.0))
-        .collect::<Vec<_>>();
-    let altitude_angles = <[F64Angle; 16]>::try_from(angle_vec.as_slice()).unwrap();
+    let altitude_angles = {
+        let angle_vec = vertical_degrees
+            .iter()
+            .map(|degree| {
+                F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2 - degree.to_radians())
+            })
+            .collect::<Vec<_>>();
+        <[F64Angle; 16]>::try_from(angle_vec.as_slice()).unwrap()
+    };
 
-    let correction_vec = vertical_corrections
-        .iter()
-        .map(|correction| F64Length::new::<millimeter>(*correction))
-        .collect::<Vec<_>>();
-    let vertical_corrections = <[_; 16]>::try_from(correction_vec.as_slice()).unwrap();
+    let vertical_corrections = {
+        let correction_vec = vertical_corrections
+            .iter()
+            .map(|correction| F64Length::new::<millimeter>(*correction))
+            .collect::<Vec<_>>();
+        <[F64Length; 16]>::try_from(correction_vec.as_slice()).unwrap()
+    };
 
     (altitude_angles, vertical_corrections)
 }

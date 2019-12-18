@@ -1,3 +1,5 @@
+//! Marker traits and types that are mainly used by config types.
+
 use std::fmt::Debug;
 
 pub trait ReturnTypeMarker

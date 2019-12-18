@@ -16,10 +16,10 @@ use itertools::izip;
 use uom::si::{
     angle::radian,
     f64::{Angle as F64Angle, Length as F64Length, Ratio as F64Ratio, Time as F64Time},
-    length::millimeter,
     time::microsecond,
 };
 
+/// An _interface_ trait that is implemented by all variants of [PointCloudConverter]
 pub trait PointCloudConverterEx<Config>
 where
     Config: ToConverterContext,
@@ -39,6 +39,7 @@ struct FiringInfo<'a> {
     firing: &'a [Channel],
 }
 
+/// Point in strongest or last return mode.
 #[derive(Debug, Clone)]
 pub struct SingleReturnPoint {
     timestamp: F64Time,
@@ -62,6 +63,7 @@ impl SingleReturnPoint {
     }
 }
 
+/// Point in dual return mode.
 #[derive(Debug, Clone)]
 pub struct DualReturnPoint {
     strongest_return: SingleReturnPoint,
@@ -87,6 +89,7 @@ impl DualReturnPoint {
     }
 }
 
+/// A point type can be in strongest, last or dual return mode.
 #[derive(Debug, Clone)]
 pub enum DynamicPoint {
     SingleReturn(SingleReturnPoint),
@@ -572,17 +575,15 @@ where
                 let spherical_azimuth_angle =
                     F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - sensor_azimuth_angle;
 
-                let u32_distance = channel.distance();
-                let f64_distance =
-                    F64Length::new::<millimeter>(u32_distance.get::<millimeter>() as f64);
+                let distance = channel.distance();
 
                 let [x, y, mut z] =
-                    spherical_to_xyz(f64_distance, spherical_azimuth_angle, *altitude_angle);
+                    spherical_to_xyz(distance, spherical_azimuth_angle, *altitude_angle);
                 z += *vertical_correction;
 
                 SingleReturnPoint {
                     timestamp,
-                    distance: u32_distance,
+                    distance,
                     intensity: channel.intensity,
                     azimuth_angle: sensor_azimuth_angle,
                     point: [x, y, z],
@@ -593,6 +594,7 @@ where
     .collect::<Vec<_>>()
 }
 
+/// Converts UDP packets from a Velodyne LiDAR to points.
 pub struct PointCloudConverter<Config>
 where
     Config: VelodyneConfigKind + ToConverterContext,
