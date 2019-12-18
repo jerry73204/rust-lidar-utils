@@ -42,11 +42,11 @@ struct FiringInfo<'a> {
 /// Point in strongest or last return mode.
 #[derive(Debug, Clone)]
 pub struct SingleReturnPoint {
-    timestamp: F64Time,
-    azimuth_angle: F64Angle,
-    distance: F64Length,
-    intensity: u8,
-    point: [F64Length; 3],
+    pub timestamp: F64Time,
+    pub azimuth_angle: F64Angle,
+    pub distance: F64Length,
+    pub intensity: u8,
+    pub point: [F64Length; 3],
 }
 
 impl SingleReturnPoint {
@@ -66,8 +66,8 @@ impl SingleReturnPoint {
 /// Point in dual return mode.
 #[derive(Debug, Clone)]
 pub struct DualReturnPoint {
-    strongest_return: SingleReturnPoint,
-    last_return: SingleReturnPoint,
+    pub strongest_return: SingleReturnPoint,
+    pub last_return: SingleReturnPoint,
 }
 
 impl DualReturnPoint {
