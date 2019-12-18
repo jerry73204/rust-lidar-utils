@@ -36,6 +36,7 @@ toml = "~0"
 enable-pcap = ["pcap"]
 build-binary = ["pcd-rs", "clap"]
 ouster-api-test = []
+ouster-test = []
 velodyne-test = []
 
 [[bin]]

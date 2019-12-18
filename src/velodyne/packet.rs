@@ -7,6 +7,11 @@ use failure::{ensure, Fallible};
 #[cfg(feature = "enable-pcap")]
 use pcap::Packet as PcapPacket;
 use std::mem::size_of;
+use uom::si::{
+    f64::{Length as F64Length, Time as F64Time},
+    length::millimeter,
+    time::microsecond,
+};
 
 /// Represents the block index in range from 0 to 31, or from 32 to 63.
 #[repr(u16)]
@@ -50,17 +55,17 @@ pub struct Channel {
 
 impl Channel {
     /// Compute distance in meters by raw distance times 0.002.
-    pub fn meter_distance(&self) -> f64 {
+    pub fn distance_meter(&self) -> f64 {
         self.distance as f64 * 0.002
     }
 
     /// Compute distance in millimetres by raw distance times 2.
-    pub fn mm_distance(&self) -> u32 {
+    pub fn distance_millimeter(&self) -> u32 {
         self.distance as u32 * 2
     }
 
-    pub fn uom_distance(&self) -> uom::si::u32::Length {
-        uom::si::u32::Length::new::<uom::si::length::millimeter>(self.mm_distance())
+    pub fn distance(&self) -> F64Length {
+        F64Length::new::<millimeter>(self.distance_millimeter() as f64)
     }
 }
 
@@ -77,13 +82,16 @@ pub struct Block {
 }
 
 impl Block {
-    /// Compute azimuth angle in radian from encoder ticks.
-    pub fn azimuth_angle(&self) -> f64 {
+    pub fn azimuth_angle_radian(&self) -> f64 {
         2.0 * std::f64::consts::PI * self.azimuth_count as f64 / (AZIMUTH_COUNT_PER_REV - 1) as f64
     }
 
-    pub fn uom_azimuth_angle(&self) -> uom::si::f64::Angle {
-        uom::si::f64::Angle::new::<uom::si::angle::radian>(self.azimuth_angle())
+    pub fn azimuth_angle_degree(&self) -> f64 {
+        360.0 * self.azimuth_count as f64 / (AZIMUTH_COUNT_PER_REV - 1) as f64
+    }
+
+    pub fn azimuth_angle(&self) -> uom::si::f64::Angle {
+        uom::si::f64::Angle::new::<uom::si::angle::radian>(self.azimuth_angle_radian())
     }
 }
 
@@ -141,7 +149,13 @@ impl Packet {
         NaiveDateTime::from_timestamp(secs as i64, nsecs as u32)
     }
 
-    pub fn uom_time(&self) -> uom::si::u32::Time {
-        uom::si::u32::Time::new::<uom::si::time::microsecond>(self.timestamp)
+    pub fn time(&self) -> F64Time {
+        F64Time::new::<microsecond>(self.timestamp as f64)
+    }
+}
+
+impl AsRef<Packet> for Packet {
+    fn as_ref(&self) -> &Packet {
+        self
     }
 }

@@ -1,5 +1,5 @@
 use super::context::{
-    ConverterContext, DualReturn16ChannelContext, DualReturn32ChannelContext, DynamicContext,
+    DualReturn16ChannelContext, DualReturn32ChannelContext, DynamicContext,
     SingleReturn16ChannelContext, SingleReturn32ChannelContext, ToConverterContext,
 };
 use crate::{
@@ -18,7 +18,6 @@ use uom::si::{
     f64::{Angle as F64Angle, Length as F64Length, Ratio as F64Ratio, Time as F64Time},
     length::millimeter,
     time::microsecond,
-    u32::Length as U32Length,
 };
 
 pub trait PointCloudConverterEx<Config>
@@ -43,15 +42,23 @@ struct FiringInfo<'a> {
 #[derive(Debug, Clone)]
 pub struct SingleReturnPoint {
     timestamp: F64Time,
-    distance: U32Length,
-    intensity: u8,
     azimuth_angle: F64Angle,
+    distance: F64Length,
+    intensity: u8,
     point: [F64Length; 3],
 }
 
 impl SingleReturnPoint {
     pub fn to_dynamic(self) -> DynamicPoint {
         DynamicPoint::SingleReturn(self)
+    }
+
+    pub fn timestamp(&self) -> F64Time {
+        self.timestamp
+    }
+
+    pub fn azimuth_angle(&self) -> F64Angle {
+        self.azimuth_angle
     }
 }
 
@@ -65,12 +72,43 @@ impl DualReturnPoint {
     pub fn to_dynamic(self) -> DynamicPoint {
         DynamicPoint::DualReturn(self)
     }
+
+    pub fn timestamp(&self) -> F64Time {
+        assert_eq!(self.strongest_return.timestamp, self.last_return.timestamp);
+        self.strongest_return.timestamp
+    }
+
+    pub fn azimuth_angle(&self) -> F64Angle {
+        assert_eq!(
+            self.strongest_return.azimuth_angle,
+            self.last_return.azimuth_angle
+        );
+        self.strongest_return.azimuth_angle
+    }
 }
 
 #[derive(Debug, Clone)]
 pub enum DynamicPoint {
     SingleReturn(SingleReturnPoint),
     DualReturn(DualReturnPoint),
+}
+
+impl DynamicPoint {
+    pub fn timestamp(&self) -> F64Time {
+        use DynamicPoint::*;
+        match self {
+            SingleReturn(point) => point.timestamp(),
+            DualReturn(point) => point.timestamp(),
+        }
+    }
+
+    pub fn azimuth_angle(&self) -> F64Angle {
+        use DynamicPoint::*;
+        match self {
+            SingleReturn(point) => point.azimuth_angle(),
+            DualReturn(point) => point.azimuth_angle(),
+        }
+    }
 }
 
 fn convert_single_return_16_channel<P>(
@@ -88,8 +126,7 @@ where
     // consts
     let firing_period = F64Time::new::<microsecond>(FIRING_PERIOD);
     let block_period = firing_period * 2.0;
-    let packet_timestamp =
-        F64Time::new::<microsecond>(packet.uom_time().get::<microsecond>() as f64);
+    let packet_timestamp = F64Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
 
     // update last seen block
     let prev_last_block = {
@@ -128,8 +165,7 @@ where
     // consts
     let firing_period = F64Time::new::<microsecond>(FIRING_PERIOD);
     let block_period = firing_period * 2.0;
-    let packet_timestamp =
-        F64Time::new::<microsecond>(packet.uom_time().get::<microsecond>() as f64);
+    let packet_timestamp = F64Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
 
     // update last blocks
     let (prev_strongest_block, prev_last_block) = {
@@ -237,8 +273,7 @@ where
     // consts
     let firing_period = F64Time::new::<microsecond>(FIRING_PERIOD);
     let block_period = firing_period;
-    let packet_timestamp =
-        F64Time::new::<microsecond>(packet.uom_time().get::<microsecond>() as f64);
+    let packet_timestamp = F64Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
 
     let packet_blocks_iter = packet.blocks.iter().enumerate().map(|(idx, block)| {
         let block_timestamp = packet_timestamp + block_period * idx as f64;
@@ -276,8 +311,7 @@ where
     // consts
     let firing_period = F64Time::new::<microsecond>(FIRING_PERIOD);
     let block_period = firing_period;
-    let packet_timestamp =
-        F64Time::new::<microsecond>(packet.uom_time().get::<microsecond>() as f64);
+    let packet_timestamp = F64Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
 
     // update last blocks
     let (prev_strongest_block, prev_last_block) = {
@@ -389,10 +423,10 @@ where
         let mid_timestamp = prev_timestamp + firing_period;
         let ratio = compute_interpolation_ratio(prev_timestamp, mid_timestamp, curr_timestamp);
 
-        let prev_azimuth_angle = prev_block.uom_azimuth_angle();
+        let prev_azimuth_angle = prev_block.azimuth_angle();
         let curr_azimuth_angle = {
             // fix roll-over case
-            let curr_angle = curr_block.uom_azimuth_angle();
+            let curr_angle = curr_block.azimuth_angle();
             if curr_angle < prev_azimuth_angle {
                 curr_angle + F64Angle::new::<radian>(std::f64::consts::PI * 2.0)
             } else {
@@ -453,17 +487,15 @@ where
                 let spherical_azimuth_angle =
                     F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - sensor_azimuth_angle;
 
-                let u32_distance = channel.uom_distance();
-                let f64_distance =
-                    F64Length::new::<millimeter>(u32_distance.get::<millimeter>() as f64);
+                let distance = channel.distance();
 
                 let [x, y, mut z] =
-                    spherical_to_xyz(f64_distance, spherical_azimuth_angle, *altitude_angle);
+                    spherical_to_xyz(distance, spherical_azimuth_angle, *altitude_angle);
                 z += *vertical_correction;
 
                 SingleReturnPoint {
                     timestamp,
-                    distance: u32_distance,
+                    distance,
                     intensity: channel.intensity,
                     azimuth_angle: sensor_azimuth_angle,
                     point: [x, y, z],
@@ -489,9 +521,9 @@ where
         let (prev_timestamp, prev_block) = *prev_pair;
         *prev_pair = (curr_timestamp, curr_block);
 
-        let prev_azimuth_angle = prev_block.uom_azimuth_angle();
+        let prev_azimuth_angle = prev_block.azimuth_angle();
         let curr_azimuth_angle = {
-            let curr_angle = curr_block.uom_azimuth_angle();
+            let curr_angle = curr_block.azimuth_angle();
             // fix roll-over case
             if curr_angle < prev_azimuth_angle {
                 curr_angle + F64Angle::new::<radian>(std::f64::consts::PI * 2.0)
@@ -540,7 +572,7 @@ where
                 let spherical_azimuth_angle =
                     F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - sensor_azimuth_angle;
 
-                let u32_distance = channel.uom_distance();
+                let u32_distance = channel.distance();
                 let f64_distance =
                     F64Length::new::<millimeter>(u32_distance.get::<millimeter>() as f64);
 
