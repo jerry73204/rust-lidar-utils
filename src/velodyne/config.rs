@@ -2,9 +2,9 @@
 
 use super::{
     consts::{
-        PUKE_HI_RES_VERTICAL_CORRECTIONS, PUKE_HI_RES_VERTICAL_DEGREES,
-        PUKE_LITE_VERTICAL_CORRECTIONS, PUKE_LITE_VERTICAL_DEGREES, VLP_16_VERTICAL_CORRECTIONS,
-        VLP_16_VERTICAL_DEGREES,
+        PUKE_HI_RES_AZIMUTH_OFFSET, PUKE_HI_RES_ELEVAION_DEGREES, PUKE_LITE_AZIMUTH_OFFSET,
+        PUKE_LITE_ELEVAION_DEGREES, VLP_16_AZIMUTH_OFFSET, VLP_16_ELEVAION_DEGREES,
+        VLP_32C_AZIMUTH_OFFSET, VLP_32C_ELEVAION_DEGREES,
     },
     marker::{DualReturn, LastReturn, ReturnTypeMarker, StrongestReturn},
     packet::ReturnMode,
@@ -38,45 +38,45 @@ impl ConfigBuilder {
         use ReturnMode::*;
 
         let config = match (self.params, self.return_mode) {
-            (Some(Channel16(vertical_degrees, vertical_corrections)), Some(StrongestReturn)) => {
+            (Some(Channel16(elevation_degrees, azimuth_offset)), Some(StrongestReturn)) => {
                 StrongestReturn16Channel(Config16Channel {
-                    vertical_degrees,
-                    vertical_corrections,
+                    elevation_degrees,
+                    azimuth_offset,
                     _phantom: PhantomData,
                 })
             }
-            (Some(Channel16(vertical_degrees, vertical_corrections)), Some(LastReturn)) => {
+            (Some(Channel16(elevation_degrees, azimuth_offset)), Some(LastReturn)) => {
                 LastReturn16Channel(Config16Channel {
-                    vertical_degrees,
-                    vertical_corrections,
+                    elevation_degrees,
+                    azimuth_offset,
                     _phantom: PhantomData,
                 })
             }
-            (Some(Channel16(vertical_degrees, vertical_corrections)), Some(DualReturn)) => {
+            (Some(Channel16(elevation_degrees, azimuth_offset)), Some(DualReturn)) => {
                 DualReturn16Channel(Config16Channel {
-                    vertical_degrees,
-                    vertical_corrections,
+                    elevation_degrees,
+                    azimuth_offset,
                     _phantom: PhantomData,
                 })
             }
-            (Some(Channel32(vertical_degrees, vertical_corrections)), Some(StrongestReturn)) => {
+            (Some(Channel32(elevation_degrees, azimuth_offset)), Some(StrongestReturn)) => {
                 StrongestReturn32Channel(Config32Channel {
-                    vertical_degrees,
-                    vertical_corrections,
+                    elevation_degrees,
+                    azimuth_offset,
                     _phantom: PhantomData,
                 })
             }
-            (Some(Channel32(vertical_degrees, vertical_corrections)), Some(LastReturn)) => {
+            (Some(Channel32(elevation_degrees, azimuth_offset)), Some(LastReturn)) => {
                 LastReturn32Channel(Config32Channel {
-                    vertical_degrees,
-                    vertical_corrections,
+                    elevation_degrees,
+                    azimuth_offset,
                     _phantom: PhantomData,
                 })
             }
-            (Some(Channel32(vertical_degrees, vertical_corrections)), Some(DualReturn)) => {
+            (Some(Channel32(elevation_degrees, azimuth_offset)), Some(DualReturn)) => {
                 DualReturn32Channel(Config32Channel {
-                    vertical_degrees,
-                    vertical_corrections,
+                    elevation_degrees,
+                    azimuth_offset,
                     _phantom: PhantomData,
                 })
             }
@@ -93,49 +93,51 @@ impl ConfigBuilder {
 
     pub fn vlp_16_params(mut self) -> Self {
         self.params = Some(Parameters::Channel16(
-            VLP_16_VERTICAL_DEGREES,
-            VLP_16_VERTICAL_CORRECTIONS,
+            VLP_16_ELEVAION_DEGREES,
+            VLP_16_AZIMUTH_OFFSET,
         ));
         self
     }
 
     pub fn puke_lite_params(mut self) -> Self {
         self.params = Some(Parameters::Channel16(
-            PUKE_LITE_VERTICAL_DEGREES,
-            PUKE_LITE_VERTICAL_CORRECTIONS,
+            PUKE_LITE_ELEVAION_DEGREES,
+            PUKE_LITE_AZIMUTH_OFFSET,
         ));
         self
     }
 
     pub fn puke_hi_res_params(mut self) -> Self {
         self.params = Some(Parameters::Channel16(
-            PUKE_HI_RES_VERTICAL_DEGREES,
-            PUKE_HI_RES_VERTICAL_CORRECTIONS,
+            PUKE_HI_RES_ELEVAION_DEGREES,
+            PUKE_HI_RES_AZIMUTH_OFFSET,
+        ));
+        self
+    }
+
+    pub fn vlp_32c_params(mut self) -> Self {
+        self.params = Some(Parameters::Channel32(
+            VLP_32C_ELEVAION_DEGREES,
+            VLP_32C_AZIMUTH_OFFSET,
         ));
         self
     }
 
     pub fn channel_16_params(
         mut self,
-        vertical_degrees: [f64; 16],
-        vertical_corrections: [f64; 16],
+        elevation_degrees: [f64; 16],
+        azimuth_offset: [f64; 16],
     ) -> Self {
-        self.params = Some(Parameters::Channel16(
-            vertical_degrees,
-            vertical_corrections,
-        ));
+        self.params = Some(Parameters::Channel16(elevation_degrees, azimuth_offset));
         self
     }
 
     pub fn channel_32_params(
         mut self,
-        vertical_degrees: [f64; 32],
-        vertical_corrections: [f64; 32],
+        elevation_degrees: [f64; 32],
+        azimuth_offset: [f64; 32],
     ) -> Self {
-        self.params = Some(Parameters::Channel32(
-            vertical_degrees,
-            vertical_corrections,
-        ));
+        self.params = Some(Parameters::Channel32(elevation_degrees, azimuth_offset));
         self
     }
 }
@@ -152,9 +154,9 @@ where
     ReturnType: ReturnTypeMarker,
 {
     /// Vertical angles per laser in degrees.
-    pub vertical_degrees: [f64; 16],
+    pub elevation_degrees: [f64; 16],
     /// Vertical correction per laser in millimeters.
-    pub vertical_corrections: [f64; 16],
+    pub azimuth_offset: [f64; 16],
     _phantom: PhantomData<ReturnType>,
 }
 
@@ -169,24 +171,24 @@ where
 {
     pub fn vlp_16_config() -> Self {
         Self {
-            vertical_degrees: VLP_16_VERTICAL_DEGREES,
-            vertical_corrections: VLP_16_VERTICAL_CORRECTIONS,
+            elevation_degrees: VLP_16_ELEVAION_DEGREES,
+            azimuth_offset: VLP_16_AZIMUTH_OFFSET,
             _phantom: PhantomData,
         }
     }
 
     pub fn puke_lite_config() -> Self {
         Self {
-            vertical_degrees: PUKE_LITE_VERTICAL_DEGREES,
-            vertical_corrections: PUKE_LITE_VERTICAL_CORRECTIONS,
+            elevation_degrees: PUKE_LITE_ELEVAION_DEGREES,
+            azimuth_offset: PUKE_LITE_AZIMUTH_OFFSET,
             _phantom: PhantomData,
         }
     }
 
     pub fn puke_hi_res_config() -> Self {
         Self {
-            vertical_degrees: PUKE_HI_RES_VERTICAL_DEGREES,
-            vertical_corrections: PUKE_HI_RES_VERTICAL_CORRECTIONS,
+            elevation_degrees: PUKE_HI_RES_ELEVAION_DEGREES,
+            azimuth_offset: PUKE_HI_RES_AZIMUTH_OFFSET,
             _phantom: PhantomData,
         }
     }
@@ -198,9 +200,9 @@ where
     ReturnType: ReturnTypeMarker,
 {
     /// Vertical angles per laser in degrees.
-    pub vertical_degrees: [f64; 32],
+    pub elevation_degrees: [f64; 32],
     /// Vertical correction per laser in millimeters.
-    pub vertical_corrections: [f64; 32],
+    pub azimuth_offset: [f64; 32],
     _phantom: PhantomData<ReturnType>,
 }
 

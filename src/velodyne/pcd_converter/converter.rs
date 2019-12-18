@@ -149,7 +149,7 @@ where
         .chain(packet_blocks_iter);
     let points = convert_to_points_16_channel(
         &context.altitude_angles,
-        &context.vertical_corrections,
+        &context.azimuth_offset,
         &mut blocks_iter,
     );
     points
@@ -229,12 +229,12 @@ where
 
     let strongest_points = convert_to_points_16_channel(
         &context.altitude_angles,
-        &context.vertical_corrections,
+        &context.azimuth_offset,
         &mut strongest_blocks_iter,
     );
     let last_points = convert_to_points_16_channel(
         &context.altitude_angles,
-        &context.vertical_corrections,
+        &context.azimuth_offset,
         &mut last_blocks_iter,
     );
 
@@ -295,7 +295,7 @@ where
         .chain(packet_blocks_iter);
     let points = convert_to_points_32_channel(
         &context.altitude_angles,
-        &context.vertical_corrections,
+        &context.azimuth_offset,
         &mut blocks_iter,
     );
     points
@@ -375,12 +375,12 @@ where
 
     let strongest_points = convert_to_points_32_channel(
         &context.altitude_angles,
-        &context.vertical_corrections,
+        &context.azimuth_offset,
         &mut strongest_blocks_iter,
     );
     let last_points = convert_to_points_32_channel(
         &context.altitude_angles,
-        &context.vertical_corrections,
+        &context.azimuth_offset,
         &mut last_blocks_iter,
     );
 
@@ -409,7 +409,7 @@ where
 
 fn convert_to_points_16_channel<'a, I>(
     altitude_angles: &[F64Angle; 16],
-    vertical_corrections: &[F64Length; 16],
+    azimuth_offset: &[F64Length; 16],
     iter: &mut I,
 ) -> Vec<SingleReturnPoint>
 where
@@ -470,48 +470,44 @@ where
         debug_assert_eq!(firing.len(), 16);
         debug_assert!(lower_azimuth_angle <= upper_azimuth_angle);
 
-        izip!(
-            firing.iter(),
-            altitude_angles.iter(),
-            vertical_corrections.iter(),
-        )
-        .enumerate()
-        .map(
-            move |(channel_idx, (channel, altitude_angle, vertical_correction))| {
-                let timestamp = lower_timestamp + channel_period * channel_idx as f64;
-                let ratio: F64Ratio =
-                    compute_interpolation_ratio(lower_timestamp, timestamp, upper_timestamp);
+        izip!(firing.iter(), altitude_angles.iter(), azimuth_offset.iter(),)
+            .enumerate()
+            .map(
+                move |(channel_idx, (channel, altitude_angle, vertical_correction))| {
+                    let timestamp = lower_timestamp + channel_period * channel_idx as f64;
+                    let ratio: F64Ratio =
+                        compute_interpolation_ratio(lower_timestamp, timestamp, upper_timestamp);
 
-                // clockwise angle with origin points to front of sensor
-                let sensor_azimuth_angle = lower_azimuth_angle
-                    + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio);
+                    // clockwise angle with origin points to front of sensor
+                    let sensor_azimuth_angle = lower_azimuth_angle
+                        + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio);
 
-                // counter-clockwise angle with origin points to right hand side of sensor
-                let spherical_azimuth_angle =
-                    F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - sensor_azimuth_angle;
+                    // counter-clockwise angle with origin points to right hand side of sensor
+                    let spherical_azimuth_angle =
+                        F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - sensor_azimuth_angle;
 
-                let distance = channel.distance();
+                    let distance = channel.distance();
 
-                let [x, y, mut z] =
-                    spherical_to_xyz(distance, spherical_azimuth_angle, *altitude_angle);
-                z += *vertical_correction;
+                    let [x, y, mut z] =
+                        spherical_to_xyz(distance, spherical_azimuth_angle, *altitude_angle);
+                    z += *vertical_correction;
 
-                SingleReturnPoint {
-                    timestamp,
-                    distance,
-                    intensity: channel.intensity,
-                    azimuth_angle: sensor_azimuth_angle,
-                    point: [x, y, z],
-                }
-            },
-        )
+                    SingleReturnPoint {
+                        timestamp,
+                        distance,
+                        intensity: channel.intensity,
+                        azimuth_angle: sensor_azimuth_angle,
+                        point: [x, y, z],
+                    }
+                },
+            )
     })
     .collect::<Vec<_>>()
 }
 
 fn convert_to_points_32_channel<'a, I>(
     altitude_angles: &[F64Angle; 32],
-    vertical_corrections: &[F64Length; 32],
+    azimuth_offset: &[F64Length; 32],
     iter: &mut I,
 ) -> Vec<SingleReturnPoint>
 where
@@ -555,41 +551,37 @@ where
 
         debug_assert_eq!(firing.len(), 32);
 
-        izip!(
-            firing.iter(),
-            altitude_angles.iter(),
-            vertical_corrections.iter(),
-        )
-        .enumerate()
-        .map(
-            move |(channel_idx, (channel, altitude_angle, vertical_correction))| {
-                let timestamp = lower_timestamp + channel_period * (channel_idx / 2) as f64;
-                let ratio: F64Ratio =
-                    compute_interpolation_ratio(lower_timestamp, timestamp, upper_timestamp);
+        izip!(firing.iter(), altitude_angles.iter(), azimuth_offset.iter(),)
+            .enumerate()
+            .map(
+                move |(channel_idx, (channel, altitude_angle, vertical_correction))| {
+                    let timestamp = lower_timestamp + channel_period * (channel_idx / 2) as f64;
+                    let ratio: F64Ratio =
+                        compute_interpolation_ratio(lower_timestamp, timestamp, upper_timestamp);
 
-                // clockwise angle with origin points to front of sensor
-                let sensor_azimuth_angle = lower_azimuth_angle
-                    + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio);
+                    // clockwise angle with origin points to front of sensor
+                    let sensor_azimuth_angle = lower_azimuth_angle
+                        + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio);
 
-                // counter-clockwise angle with origin points to right hand side of sensor
-                let spherical_azimuth_angle =
-                    F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - sensor_azimuth_angle;
+                    // counter-clockwise angle with origin points to right hand side of sensor
+                    let spherical_azimuth_angle =
+                        F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - sensor_azimuth_angle;
 
-                let distance = channel.distance();
+                    let distance = channel.distance();
 
-                let [x, y, mut z] =
-                    spherical_to_xyz(distance, spherical_azimuth_angle, *altitude_angle);
-                z += *vertical_correction;
+                    let [x, y, mut z] =
+                        spherical_to_xyz(distance, spherical_azimuth_angle, *altitude_angle);
+                    z += *vertical_correction;
 
-                SingleReturnPoint {
-                    timestamp,
-                    distance,
-                    intensity: channel.intensity,
-                    azimuth_angle: sensor_azimuth_angle,
-                    point: [x, y, z],
-                }
-            },
-        )
+                    SingleReturnPoint {
+                        timestamp,
+                        distance,
+                        intensity: channel.intensity,
+                        azimuth_angle: sensor_azimuth_angle,
+                        point: [x, y, z],
+                    }
+                },
+            )
     })
     .collect::<Vec<_>>()
 }

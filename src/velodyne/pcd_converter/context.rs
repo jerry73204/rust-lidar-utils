@@ -18,17 +18,17 @@ pub trait ConverterContext {}
 
 pub struct SingleReturn16ChannelContext {
     pub altitude_angles: [F64Angle; 16],
-    pub vertical_corrections: [F64Length; 16],
+    pub azimuth_offset: [F64Length; 16],
     pub last_block: Option<(F64Time, Block)>,
 }
 
 impl From<Config16Channel<StrongestReturn>> for SingleReturn16ChannelContext {
     fn from(orig_config: Config16Channel<StrongestReturn>) -> Self {
-        let (altitude_angles, vertical_corrections) = convert_16_channel_config(orig_config);
+        let (altitude_angles, azimuth_offset) = convert_16_channel_config(orig_config);
 
         Self {
             altitude_angles,
-            vertical_corrections,
+            azimuth_offset,
             last_block: None,
         }
     }
@@ -36,11 +36,11 @@ impl From<Config16Channel<StrongestReturn>> for SingleReturn16ChannelContext {
 
 impl From<Config16Channel<LastReturn>> for SingleReturn16ChannelContext {
     fn from(orig_config: Config16Channel<LastReturn>) -> Self {
-        let (altitude_angles, vertical_corrections) = convert_16_channel_config(orig_config);
+        let (altitude_angles, azimuth_offset) = convert_16_channel_config(orig_config);
 
         Self {
             altitude_angles,
-            vertical_corrections,
+            azimuth_offset,
             last_block: None,
         }
     }
@@ -50,17 +50,17 @@ impl ConverterContext for SingleReturn16ChannelContext {}
 
 pub struct DualReturn16ChannelContext {
     pub altitude_angles: [F64Angle; 16],
-    pub vertical_corrections: [F64Length; 16],
+    pub azimuth_offset: [F64Length; 16],
     pub last_block: Option<(F64Time, Block, Block)>,
 }
 
 impl From<Config16Channel<DualReturn>> for DualReturn16ChannelContext {
     fn from(orig_config: Config16Channel<DualReturn>) -> Self {
-        let (altitude_angles, vertical_corrections) = convert_16_channel_config(orig_config);
+        let (altitude_angles, azimuth_offset) = convert_16_channel_config(orig_config);
 
         Self {
             altitude_angles,
-            vertical_corrections,
+            azimuth_offset,
             last_block: None,
         }
     }
@@ -70,17 +70,17 @@ impl ConverterContext for DualReturn16ChannelContext {}
 
 pub struct SingleReturn32ChannelContext {
     pub altitude_angles: [F64Angle; 32],
-    pub vertical_corrections: [F64Length; 32],
+    pub azimuth_offset: [F64Length; 32],
     pub last_block: Option<(F64Time, Block)>,
 }
 
 impl From<Config32Channel<StrongestReturn>> for SingleReturn32ChannelContext {
     fn from(orig_config: Config32Channel<StrongestReturn>) -> Self {
-        let (altitude_angles, vertical_corrections) = convert_32_channel_config(orig_config);
+        let (altitude_angles, azimuth_offset) = convert_32_channel_config(orig_config);
 
         Self {
             altitude_angles,
-            vertical_corrections,
+            azimuth_offset,
             last_block: None,
         }
     }
@@ -88,11 +88,11 @@ impl From<Config32Channel<StrongestReturn>> for SingleReturn32ChannelContext {
 
 impl From<Config32Channel<LastReturn>> for SingleReturn32ChannelContext {
     fn from(orig_config: Config32Channel<LastReturn>) -> Self {
-        let (altitude_angles, vertical_corrections) = convert_32_channel_config(orig_config);
+        let (altitude_angles, azimuth_offset) = convert_32_channel_config(orig_config);
 
         Self {
             altitude_angles,
-            vertical_corrections,
+            azimuth_offset,
             last_block: None,
         }
     }
@@ -102,17 +102,17 @@ impl ConverterContext for SingleReturn32ChannelContext {}
 
 pub struct DualReturn32ChannelContext {
     pub altitude_angles: [F64Angle; 32],
-    pub vertical_corrections: [F64Length; 32],
+    pub azimuth_offset: [F64Length; 32],
     pub last_block: Option<(F64Time, Block, Block)>,
 }
 
 impl From<Config32Channel<DualReturn>> for DualReturn32ChannelContext {
     fn from(orig_config: Config32Channel<DualReturn>) -> Self {
-        let (altitude_angles, vertical_corrections) = convert_32_channel_config(orig_config);
+        let (altitude_angles, azimuth_offset) = convert_32_channel_config(orig_config);
 
         Self {
             altitude_angles,
-            vertical_corrections,
+            azimuth_offset,
             last_block: None,
         }
     }
@@ -195,11 +195,11 @@ fn convert_16_channel_config<ReturnType>(
 where
     ReturnType: ReturnTypeMarker,
 {
-    let vertical_degrees = orig_config.vertical_degrees;
-    let vertical_corrections = orig_config.vertical_corrections;
+    let elevation_degrees = orig_config.elevation_degrees;
+    let azimuth_offset = orig_config.azimuth_offset;
 
     let altitude_angles = {
-        let angle_vec = vertical_degrees
+        let angle_vec = elevation_degrees
             .iter()
             .map(|degree| {
                 F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2 - degree.to_radians())
@@ -208,15 +208,15 @@ where
         <[F64Angle; 16]>::try_from(angle_vec.as_slice()).unwrap()
     };
 
-    let vertical_corrections = {
-        let correction_vec = vertical_corrections
+    let azimuth_offset = {
+        let correction_vec = azimuth_offset
             .iter()
             .map(|correction| F64Length::new::<millimeter>(*correction))
             .collect::<Vec<_>>();
         <[F64Length; 16]>::try_from(correction_vec.as_slice()).unwrap()
     };
 
-    (altitude_angles, vertical_corrections)
+    (altitude_angles, azimuth_offset)
 }
 
 fn convert_32_channel_config<ReturnType>(
@@ -225,20 +225,26 @@ fn convert_32_channel_config<ReturnType>(
 where
     ReturnType: ReturnTypeMarker,
 {
-    let vertical_degrees = orig_config.vertical_degrees;
-    let vertical_corrections = orig_config.vertical_corrections;
+    let elevation_degrees = orig_config.elevation_degrees;
+    let azimuth_offset = orig_config.azimuth_offset;
 
-    let angle_vec = vertical_degrees
-        .iter()
-        .map(|degree| F64Angle::new::<radian>(degree * std::f64::consts::PI / 180.0))
-        .collect::<Vec<_>>();
-    let altitude_angles = <[F64Angle; 32]>::try_from(angle_vec.as_slice()).unwrap();
+    let altitude_angles = {
+        let angle_vec = elevation_degrees
+            .iter()
+            .map(|degree| {
+                F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2 - degree.to_radians())
+            })
+            .collect::<Vec<_>>();
+        <[F64Angle; 32]>::try_from(angle_vec.as_slice()).unwrap()
+    };
 
-    let correction_vec = vertical_corrections
-        .iter()
-        .map(|correction| F64Length::new::<millimeter>(*correction))
-        .collect::<Vec<_>>();
-    let vertical_corrections = <[_; 32]>::try_from(correction_vec.as_slice()).unwrap();
+    let azimuth_offset = {
+        let correction_vec = azimuth_offset
+            .iter()
+            .map(|correction| F64Length::new::<millimeter>(*correction))
+            .collect::<Vec<_>>();
+        <[_; 32]>::try_from(correction_vec.as_slice()).unwrap()
+    };
 
-    (altitude_angles, vertical_corrections)
+    (altitude_angles, azimuth_offset)
 }
