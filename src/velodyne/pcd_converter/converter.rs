@@ -3,7 +3,7 @@ use super::context::{
     SingleReturn16ChannelContext, SingleReturn32ChannelContext, ToConverterContext,
 };
 use crate::{
-    common::{compute_interpolation_ratio, spherical_to_xyz},
+    common::spherical_to_xyz,
     velodyne::{
         config::{Config16Channel, Config32Channel, DynamicConfig, VelodyneConfigKind},
         consts::{CHANNEL_PERIOD, FIRING_PERIOD},
@@ -33,7 +33,6 @@ where
 #[derive(Debug, Clone)]
 struct FiringInfo<'a> {
     lower_timestamp: F64Time,
-    upper_timestamp: F64Time,
     lower_azimuth_angle: F64Angle,
     upper_azimuth_angle: F64Angle,
     firing: &'a [Channel],
@@ -424,7 +423,6 @@ where
         *prev_pair = (curr_timestamp, curr_block);
 
         let mid_timestamp = prev_timestamp + firing_period;
-        let ratio = compute_interpolation_ratio(prev_timestamp, mid_timestamp, curr_timestamp);
 
         let prev_azimuth_angle = prev_block.azimuth_angle();
         let curr_azimuth_angle = {
@@ -436,12 +434,10 @@ where
                 curr_angle
             }
         };
-        let mid_azimuth_angle: F64Angle =
-            prev_azimuth_angle + F64Angle::from((curr_azimuth_angle - prev_azimuth_angle) * ratio);
+        let mid_azimuth_angle: F64Angle = (prev_azimuth_angle + curr_azimuth_angle) / 2.0;
 
         let former_firing = FiringInfo {
             lower_timestamp: prev_timestamp,
-            upper_timestamp: mid_timestamp,
             lower_azimuth_angle: prev_azimuth_angle,
             upper_azimuth_angle: mid_azimuth_angle,
             firing: &prev_block.channels[0..16],
@@ -449,7 +445,6 @@ where
 
         let latter_firing = FiringInfo {
             lower_timestamp: mid_timestamp,
-            upper_timestamp: curr_timestamp,
             lower_azimuth_angle: mid_azimuth_angle,
             upper_azimuth_angle: curr_azimuth_angle,
             firing: &prev_block.channels[16..32],
@@ -461,7 +456,6 @@ where
     .flat_map(|firing_info| {
         let FiringInfo {
             lower_timestamp,
-            upper_timestamp,
             lower_azimuth_angle,
             upper_azimuth_angle,
             firing,
@@ -475,12 +469,14 @@ where
             .map(
                 move |(channel_idx, (channel, altitude_angle, vertical_correction))| {
                     let timestamp = lower_timestamp + channel_period * channel_idx as f64;
-                    let ratio: F64Ratio =
-                        compute_interpolation_ratio(lower_timestamp, timestamp, upper_timestamp);
+                    let ratio = channel_period * channel_idx as f64 / firing_period;
 
                     // clockwise angle with origin points to front of sensor
-                    let sensor_azimuth_angle = lower_azimuth_angle
+                    let mut sensor_azimuth_angle = lower_azimuth_angle
                         + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio);
+                    if sensor_azimuth_angle >= F64Angle::new::<radian>(std::f64::consts::PI * 2.0) {
+                        sensor_azimuth_angle -= F64Angle::new::<radian>(std::f64::consts::PI * 2.0);
+                    }
 
                     // counter-clockwise angle with origin points to right hand side of sensor
                     let spherical_azimuth_angle =
@@ -514,6 +510,7 @@ where
     I: Iterator<Item = (F64Time, &'a Block)>,
 {
     let channel_period = F64Time::new::<microsecond>(CHANNEL_PERIOD);
+    let firing_period = F64Time::new::<microsecond>(FIRING_PERIOD);
 
     let first_item = iter.next().unwrap();
     iter.scan(first_item, |prev_pair, (curr_timestamp, curr_block)| {
@@ -533,7 +530,6 @@ where
 
         let firing_info = FiringInfo {
             lower_timestamp: prev_timestamp,
-            upper_timestamp: curr_timestamp,
             lower_azimuth_angle: prev_azimuth_angle,
             upper_azimuth_angle: curr_azimuth_angle,
             firing: &prev_block.channels,
@@ -543,7 +539,6 @@ where
     .flat_map(|firing_info| {
         let FiringInfo {
             lower_timestamp,
-            upper_timestamp,
             lower_azimuth_angle,
             upper_azimuth_angle,
             firing,
@@ -556,12 +551,14 @@ where
             .map(
                 move |(channel_idx, (channel, altitude_angle, vertical_correction))| {
                     let timestamp = lower_timestamp + channel_period * (channel_idx / 2) as f64;
-                    let ratio: F64Ratio =
-                        compute_interpolation_ratio(lower_timestamp, timestamp, upper_timestamp);
+                    let ratio: F64Ratio = channel_period * (channel_idx / 2) as f64 / firing_period;
 
                     // clockwise angle with origin points to front of sensor
-                    let sensor_azimuth_angle = lower_azimuth_angle
+                    let mut sensor_azimuth_angle = lower_azimuth_angle
                         + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio);
+                    if sensor_azimuth_angle >= F64Angle::new::<radian>(std::f64::consts::PI * 2.0) {
+                        sensor_azimuth_angle -= F64Angle::new::<radian>(std::f64::consts::PI * 2.0);
+                    }
 
                     // counter-clockwise angle with origin points to right hand side of sensor
                     let spherical_azimuth_angle =
