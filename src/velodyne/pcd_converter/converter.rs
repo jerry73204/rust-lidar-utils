@@ -45,6 +45,7 @@ pub struct SingleReturnPoint {
     pub azimuth_angle: F64Angle,
     pub distance: F64Length,
     pub intensity: u8,
+    pub laser_id: u32,
     pub point: [F64Length; 3],
 }
 
@@ -464,39 +465,45 @@ where
         debug_assert_eq!(firing.len(), 16);
         debug_assert!(lower_azimuth_angle <= upper_azimuth_angle);
 
-        izip!(firing.iter(), altitude_angles.iter(), azimuth_offset.iter(),)
-            .enumerate()
-            .map(
-                move |(channel_idx, (channel, altitude_angle, vertical_correction))| {
-                    let timestamp = lower_timestamp + channel_period * channel_idx as f64;
-                    let ratio = channel_period * channel_idx as f64 / firing_period;
+        izip!(
+            firing.iter(),
+            altitude_angles.iter(),
+            azimuth_offset.iter(),
+            0..
+        )
+        .enumerate()
+        .map(
+            move |(channel_idx, (channel, altitude_angle, vertical_correction, laser_id))| {
+                let timestamp = lower_timestamp + channel_period * channel_idx as f64;
+                let ratio = channel_period * channel_idx as f64 / firing_period;
 
-                    // clockwise angle with origin points to front of sensor
-                    let mut sensor_azimuth_angle = lower_azimuth_angle
-                        + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio);
-                    if sensor_azimuth_angle >= F64Angle::new::<radian>(std::f64::consts::PI * 2.0) {
-                        sensor_azimuth_angle -= F64Angle::new::<radian>(std::f64::consts::PI * 2.0);
-                    }
+                // clockwise angle with origin points to front of sensor
+                let mut sensor_azimuth_angle = lower_azimuth_angle
+                    + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio);
+                if sensor_azimuth_angle >= F64Angle::new::<radian>(std::f64::consts::PI * 2.0) {
+                    sensor_azimuth_angle -= F64Angle::new::<radian>(std::f64::consts::PI * 2.0);
+                }
 
-                    // counter-clockwise angle with origin points to right hand side of sensor
-                    let spherical_azimuth_angle =
-                        F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - sensor_azimuth_angle;
+                // counter-clockwise angle with origin points to right hand side of sensor
+                let spherical_azimuth_angle =
+                    F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - sensor_azimuth_angle;
 
-                    let distance = channel.distance();
+                let distance = channel.distance();
 
-                    let [x, y, mut z] =
-                        spherical_to_xyz(distance, spherical_azimuth_angle, *altitude_angle);
-                    z += *vertical_correction;
+                let [x, y, mut z] =
+                    spherical_to_xyz(distance, spherical_azimuth_angle, *altitude_angle);
+                z += *vertical_correction;
 
-                    SingleReturnPoint {
-                        timestamp,
-                        distance,
-                        intensity: channel.intensity,
-                        azimuth_angle: sensor_azimuth_angle,
-                        point: [x, y, z],
-                    }
-                },
-            )
+                SingleReturnPoint {
+                    timestamp,
+                    distance,
+                    intensity: channel.intensity,
+                    azimuth_angle: sensor_azimuth_angle,
+                    laser_id,
+                    point: [x, y, z],
+                }
+            },
+        )
     })
     .collect::<Vec<_>>()
 }
@@ -546,39 +553,45 @@ where
 
         debug_assert_eq!(firing.len(), 32);
 
-        izip!(firing.iter(), altitude_angles.iter(), azimuth_offset.iter(),)
-            .enumerate()
-            .map(
-                move |(channel_idx, (channel, altitude_angle, vertical_correction))| {
-                    let timestamp = lower_timestamp + channel_period * (channel_idx / 2) as f64;
-                    let ratio: F64Ratio = channel_period * (channel_idx / 2) as f64 / firing_period;
+        izip!(
+            firing.iter(),
+            altitude_angles.iter(),
+            azimuth_offset.iter(),
+            0..
+        )
+        .enumerate()
+        .map(
+            move |(channel_idx, (channel, altitude_angle, vertical_correction, laser_id))| {
+                let timestamp = lower_timestamp + channel_period * (channel_idx / 2) as f64;
+                let ratio: F64Ratio = channel_period * (channel_idx / 2) as f64 / firing_period;
 
-                    // clockwise angle with origin points to front of sensor
-                    let mut sensor_azimuth_angle = lower_azimuth_angle
-                        + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio);
-                    if sensor_azimuth_angle >= F64Angle::new::<radian>(std::f64::consts::PI * 2.0) {
-                        sensor_azimuth_angle -= F64Angle::new::<radian>(std::f64::consts::PI * 2.0);
-                    }
+                // clockwise angle with origin points to front of sensor
+                let mut sensor_azimuth_angle = lower_azimuth_angle
+                    + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio);
+                if sensor_azimuth_angle >= F64Angle::new::<radian>(std::f64::consts::PI * 2.0) {
+                    sensor_azimuth_angle -= F64Angle::new::<radian>(std::f64::consts::PI * 2.0);
+                }
 
-                    // counter-clockwise angle with origin points to right hand side of sensor
-                    let spherical_azimuth_angle =
-                        F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - sensor_azimuth_angle;
+                // counter-clockwise angle with origin points to right hand side of sensor
+                let spherical_azimuth_angle =
+                    F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - sensor_azimuth_angle;
 
-                    let distance = channel.distance();
+                let distance = channel.distance();
 
-                    let [x, y, mut z] =
-                        spherical_to_xyz(distance, spherical_azimuth_angle, *altitude_angle);
-                    z += *vertical_correction;
+                let [x, y, mut z] =
+                    spherical_to_xyz(distance, spherical_azimuth_angle, *altitude_angle);
+                z += *vertical_correction;
 
-                    SingleReturnPoint {
-                        timestamp,
-                        distance,
-                        intensity: channel.intensity,
-                        azimuth_angle: sensor_azimuth_angle,
-                        point: [x, y, z],
-                    }
-                },
-            )
+                SingleReturnPoint {
+                    timestamp,
+                    distance,
+                    intensity: channel.intensity,
+                    azimuth_angle: sensor_azimuth_angle,
+                    laser_id,
+                    point: [x, y, z],
+                }
+            },
+        )
     })
     .collect::<Vec<_>>()
 }

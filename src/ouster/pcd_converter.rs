@@ -21,6 +21,7 @@ pub struct Point {
     pub reflectivity: u16,
     pub signal_photons: u16,
     pub noise_photons: u16,
+    pub laser_id: u32,
     pub point: [F64Length; 3],
 }
 
@@ -104,28 +105,32 @@ impl PointCloudConverter {
         let points = izip!(
             pixels_iter,
             self.altitude_angles.iter(),
-            self.azimuth_angle_corrections.iter()
+            self.azimuth_angle_corrections.iter(),
+            0..
         )
-        .map(|(pixel, altitude_angle, azimuth_angle_correction)| {
-            // add correction according to manual
-            let clockwise_azimuth_angle = column.azimuth_angle() + *azimuth_angle_correction;
-            let counter_clockwise_azimuth_angle =
-                F64Angle::new::<radian>(std::f64::consts::PI * 2.0) - clockwise_azimuth_angle;
-            let distance = pixel.distance();
-            let timestamp = column.time();
-            let point =
-                spherical_to_xyz(distance, counter_clockwise_azimuth_angle, *altitude_angle);
+        .map(
+            |(pixel, altitude_angle, azimuth_angle_correction, laser_id)| {
+                // add correction according to manual
+                let clockwise_azimuth_angle = column.azimuth_angle() + *azimuth_angle_correction;
+                let counter_clockwise_azimuth_angle =
+                    F64Angle::new::<radian>(std::f64::consts::PI * 2.0) - clockwise_azimuth_angle;
+                let distance = pixel.distance();
+                let timestamp = column.time();
+                let point =
+                    spherical_to_xyz(distance, counter_clockwise_azimuth_angle, *altitude_angle);
 
-            Point {
-                timestamp,
-                reflectivity: pixel.reflectivity,
-                signal_photons: pixel.signal_photons,
-                noise_photons: pixel.noise_photons,
-                azimuth_angle: clockwise_azimuth_angle,
-                distance,
-                point,
-            }
-        })
+                Point {
+                    timestamp,
+                    reflectivity: pixel.reflectivity,
+                    signal_photons: pixel.signal_photons,
+                    noise_photons: pixel.noise_photons,
+                    azimuth_angle: clockwise_azimuth_angle,
+                    distance,
+                    laser_id,
+                    point,
+                }
+            },
+        )
         .collect::<Vec<_>>();
         Ok(points)
     }
