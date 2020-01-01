@@ -1,5 +1,6 @@
 //! Useful constants for Velodyne data structures and calculations.
 
+/// Default UDP data port used by Velodyne LiDARs.
 pub const DATA_PORT: u16 = 2368;
 
 /// Number of channels in one block, where each channel represents a laser return.
