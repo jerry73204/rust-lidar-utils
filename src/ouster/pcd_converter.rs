@@ -74,7 +74,7 @@ impl PointCloudConverter {
     }
 
     /// Get lidar scene width by its mode. For example,
-    /// [Mode1024x10](LidarMode::Mode1024x10) mode results
+    /// [LidarMode](super::enums::LidarMode) mode results
     /// in 1024.
     pub fn columns_per_revolution(&self) -> u16 {
         self.columns_per_revolution
@@ -130,6 +130,7 @@ impl PointCloudConverter {
         Ok(points)
     }
 
+    /// Compute point positions from a packet.
     pub fn convert<P>(&self, packet: P) -> Fallible<Vec<Point>>
     where
         P: AsRef<Packet>,

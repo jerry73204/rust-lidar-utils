@@ -3,6 +3,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter, Result as FormatResult};
 
+/// The mode includes number of vertical scans in one revolution and rotation frequency (Hz).
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum LidarMode {
     #[serde(rename = "512x10")]
