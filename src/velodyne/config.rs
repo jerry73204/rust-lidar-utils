@@ -18,6 +18,7 @@ where
 {
 }
 
+/// LiDAR configuration builder.
 #[derive(Debug, Clone)]
 pub struct ConfigBuilder {
     params: Option<Parameters>,
@@ -32,6 +33,7 @@ impl ConfigBuilder {
         }
     }
 
+    /// Build a config instance.
     pub fn build(self) -> Fallible<DynamicConfig> {
         use DynamicConfig::*;
         use Parameters::*;
@@ -86,11 +88,15 @@ impl ConfigBuilder {
         Ok(config)
     }
 
+    /// Set return mode.
+    ///
+    /// See also: [ReturnMode](super::packet::ReturnMode)
     pub fn return_mode(mut self, return_mode: ReturnMode) -> Self {
         self.return_mode = Some(return_mode);
         self
     }
 
+    /// Use default parameters for VLP-16.
     pub fn vlp_16_params(mut self) -> Self {
         self.params = Some(Parameters::Channel16(
             VLP_16_VERTICAL_DEGREES,
@@ -99,6 +105,7 @@ impl ConfigBuilder {
         self
     }
 
+    /// Use default parameters for Puke Lite.
     pub fn puke_lite_params(mut self) -> Self {
         self.params = Some(Parameters::Channel16(
             PUKE_LITE_VERTICAL_DEGREES,
@@ -107,6 +114,7 @@ impl ConfigBuilder {
         self
     }
 
+    /// Use default parameters for Puke Hi-Res.
     pub fn puke_hi_res_params(mut self) -> Self {
         self.params = Some(Parameters::Channel16(
             PUKE_HI_RES_VERTICAL_DEGREES,
@@ -115,6 +123,7 @@ impl ConfigBuilder {
         self
     }
 
+    /// Set altitude angles and vertical corrections for 16 channels.
     pub fn channel_16_params(
         mut self,
         vertical_degrees: [f64; 16],
@@ -127,6 +136,7 @@ impl ConfigBuilder {
         self
     }
 
+    /// Set altitude angles and vertical corrections for 32 channels.
     pub fn channel_32_params(
         mut self,
         vertical_degrees: [f64; 32],
@@ -140,12 +150,16 @@ impl ConfigBuilder {
     }
 }
 
+/// It saves the runtime LiDAR parameters.
+///
+/// The type is intended to be used internally.
 #[derive(Debug, Clone)]
 pub enum Parameters {
     Channel16([f64; 16], [f64; 16]),
     Channel32([f64; 32], [f64; 32]),
 }
 
+/// Static config type for 16-channel LiDARs.
 #[derive(Debug, Clone)]
 pub struct Config16Channel<ReturnType>
 where
@@ -192,6 +206,7 @@ where
     }
 }
 
+/// Static config type for 32-channel LiDARs.
 #[derive(Debug, Clone)]
 pub struct Config32Channel<ReturnType>
 where
@@ -209,6 +224,7 @@ impl<ReturnType> VelodyneConfigKind for Config32Channel<ReturnType> where
 {
 }
 
+/// Dynamic config type created by [ConfigBuilder].
 #[derive(Debug, Clone)]
 pub enum DynamicConfig {
     StrongestReturn16Channel(Config16Channel<StrongestReturn>),
