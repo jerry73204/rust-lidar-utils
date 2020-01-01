@@ -34,11 +34,6 @@ toml = "~0"
 
 [features]
 enable-pcap = ["pcap"]
-build-binary = ["pcd-rs", "clap"]
 ouster-api-test = []
 ouster-test = []
 velodyne-test = []
-
-[[bin]]
-name = "lidar_convert"
-required-features = ["build-binary", "enable-pcap"]
