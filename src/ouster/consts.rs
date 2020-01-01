@@ -1,8 +1,15 @@
 //! Constats used by Ouster data structures and calculations.
 
+/// Number of azimuth _ticks_ in one revolution.
 pub const ENCODER_TICKS_PER_REV: u32 = 90112;
+
+/// Number of laser returns in one column.
 pub const PIXELS_PER_COLUMN: usize = 64;
+
+/// Number of columns in one packet, where each column represents a vertical scan.
 pub const COLUMNS_PER_PACKET: usize = 16;
+
+/// Altitude angles of OS-1.
 pub const OS_1_BEAM_ALTITUDE_DEGREES: [f64; 64] = [
     17.042,
     16.427,
