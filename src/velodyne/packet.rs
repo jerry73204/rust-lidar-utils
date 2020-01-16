@@ -7,11 +7,7 @@ use failure::{ensure, Fallible};
 #[cfg(feature = "enable-pcap")]
 use pcap::Packet as PcapPacket;
 use std::mem::size_of;
-use uom::si::{
-    f64::{Length as F64Length, Time as F64Time},
-    length::millimeter,
-    time::microsecond,
-};
+use uom::si::{f64::Time as F64Time, time::microsecond};
 
 /// Represents the block index in range from 0 to 31, or from 32 to 63.
 #[repr(u16)]
@@ -51,22 +47,6 @@ pub struct Channel {
     pub distance: u16,
     /// The intensity of laser return.
     pub intensity: u8,
-}
-
-impl Channel {
-    /// Compute distance in meters by raw distance times 0.002.
-    pub fn distance_meter(&self) -> f64 {
-        self.distance as f64 * 0.002
-    }
-
-    /// Compute distance in millimetres by raw distance times 2.
-    pub fn distance_millimeter(&self) -> u32 {
-        self.distance as u32 * 2
-    }
-
-    pub fn distance(&self) -> F64Length {
-        F64Length::new::<millimeter>(self.distance_millimeter() as f64)
-    }
 }
 
 /// Represents a sequence of measurements with meta data.

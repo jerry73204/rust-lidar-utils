@@ -18,36 +18,54 @@ pub const CHANNEL_PERIOD: f64 = 2.304; // microseconds
 /// Period of one vertical scan in microseconds.
 pub const FIRING_PERIOD: f64 = 55.296; // microseconds
 
+// VLP-16 parameters
+
 /// Elevaion angles of VLP-16.
 pub const VLP_16_ELEVAION_DEGREES: [f64; 16] = [
     -15.0, 1.0, -13.0, 3.0, -11.0, 5.0, -9.0, 7.0, -7.0, 9.0, -5.0, 11.0, -3.0, 13.0, -1.0, 15.0,
 ];
 
 /// The correction distance added to point position along vertical axis for VLP-16.
-pub const VLP_16_AZIMUTH_OFFSET: [f64; 16] = [
+pub const VLP_16_VERTICAL_CORRECTIONS: [f64; 16] = [
     11.2, -0.7, 9.7, -2.2, 8.1, -3.7, 6.6, -5.1, 5.1, -6.6, 3.7, -8.1, 2.2, -9.7, 0.7, -11.2,
 ];
 
-/// Elevaion angles of Puke Lite.
-pub const PUKE_LITE_ELEVAION_DEGREES: [f64; 16] = [
+pub const VLP_16_AZIMUTH_OFFSETS: [f64; 16] = [
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+];
+
+// Puck-Lite parameters
+
+/// Elevaion angles of Puck Lite.
+pub const PUCK_LITE_ELEVAION_DEGREES: [f64; 16] = [
     -15.0, 1.0, -13.0, 3.0, -11.0, 5.0, -9.0, 7.0, -7.0, 9.0, -5.0, 11.0, -3.0, 13.0, -1.0, 15.0,
 ];
 
-/// The correction distance added to point position along vertical axis for Puke Lite.
-pub const PUKE_LITE_AZIMUTH_OFFSET: [f64; 16] = [
+/// The correction distance added to point position along vertical axis for Puck Lite.
+pub const PUCK_LITE_VERTICAL_CORRECTIONS: [f64; 16] = [
     11.2, -0.7, 9.7, -2.2, 8.1, -3.7, 6.6, -5.1, 5.1, -6.6, 3.7, -8.1, 2.2, -9.7, 0.7, -11.2,
 ];
+pub const PUCK_LITE_AZIMUTH_OFFSETS: [f64; 16] = [
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+];
 
-/// Elevaion angles of Puke Hi-Res.
-pub const PUKE_HI_RES_ELEVAION_DEGREES: [f64; 16] = [
+// Puck Hi-Res parameters
+
+/// Elevaion angles of Puck Hi-Res.
+pub const PUCK_HIRES_ELEVAION_DEGREES: [f64; 16] = [
     -10.00, 0.67, -8.67, 2.00, -7.33, 3.33, -6.00, 4.67, -4.67, 6.00, -3.33, 7.33, -2.00, 8.67,
     -0.67, 10.00,
 ];
 
-/// The correction distance added to point position along vertical axis for Puke Hi-Res.
-pub const PUKE_HI_RES_AZIMUTH_OFFSET: [f64; 16] = [
+/// The correction distance added to point position along vertical axis for Puck Hi-Res.
+pub const PUCK_HIRES_VERTICAL_CORRECTIONS: [f64; 16] = [
     7.4, -0.9, 6.5, -1.8, 5.5, -2.7, 4.6, -3.7, 3.7, -4.6, 2.7, -5.5, 1.8, -6.5, 0.9, -7.4,
 ];
+pub const PUCK_HIRES_AZIMUTH_OFFSETS: [f64; 16] = [
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+];
+
+// VLP-32C parameters
 
 /// Elevaion angles of VLP-32C.
 pub const VLP_32C_ELEVAION_DEGREES: [f64; 32] = [
@@ -57,7 +75,11 @@ pub const VLP_32C_ELEVAION_DEGREES: [f64; 32] = [
 ];
 
 /// The correction distance added to point position along vertical axis for VLP-32C.
-pub const VLP_32C_AZIMUTH_OFFSET: [f64; 32] = [
+pub const VLP_32C_VERTICAL_CORRECTIONS: [f64; 32] = [
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+];
+pub const VLP_32C_AZIMUTH_OFFSETS: [f64; 32] = [
     1.4, -4.2, 1.4, -1.4, 1.4, -1.4, 4.2, -1.4, 1.4, -4.2, 1.4, -1.4, 4.2, -1.4, 4.2, -1.4, 1.4,
     -4.2, 1.4, -4.2, 4.2, -1.4, 1.4, -1.4, 1.4, -1.4, 1.4, -4.2, 4.2, -1.4, 1.4, -1.4,
 ];

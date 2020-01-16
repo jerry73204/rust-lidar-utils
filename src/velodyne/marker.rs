@@ -22,3 +22,12 @@ impl ReturnTypeMarker for LastReturn {}
 pub struct DualReturn;
 
 impl ReturnTypeMarker for DualReturn {}
+
+#[derive(Debug, Clone, Copy)]
+pub enum DynamicReturn {
+    LastReturn,
+    DualReturn,
+    StrongestReturn,
+}
+
+impl ReturnTypeMarker for DynamicReturn {}
