@@ -1,5 +1,6 @@
 //! Marker traits and types that are mainly used by config types.
 
+use super::packet::ReturnMode;
 use std::fmt::Debug;
 
 pub trait ReturnTypeMarker
@@ -31,3 +32,13 @@ pub enum DynamicReturn {
 }
 
 impl ReturnTypeMarker for DynamicReturn {}
+
+impl From<ReturnMode> for DynamicReturn {
+    fn from(mode: ReturnMode) -> DynamicReturn {
+        match mode {
+            ReturnMode::LastReturn => DynamicReturn::LastReturn,
+            ReturnMode::StrongestReturn => DynamicReturn::StrongestReturn,
+            ReturnMode::DualReturn => DynamicReturn::DualReturn,
+        }
+    }
+}

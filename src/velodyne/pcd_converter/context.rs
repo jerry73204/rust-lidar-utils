@@ -1,10 +1,10 @@
 //! The module provides context types that are used internally in
 //! [PointCloudConverter](crate::velodyne::pcd_converter::PointCloudConverter).
 
-use super::data::{DualReturnPoint, SingleReturnPoint};
+use super::data::{DualReturnPoint, DynamicReturnPoint, SingleReturnPoint};
 use crate::velodyne::{
     config::{Config, LaserParameter},
-    marker::{DualReturn, LastReturn, ReturnTypeMarker, StrongestReturn},
+    marker::{DualReturn, DynamicReturn, LastReturn, ReturnTypeMarker, StrongestReturn},
     packet::Block,
 };
 use generic_array::{ArrayLength, GenericArray};
@@ -116,6 +116,54 @@ where
     type OutputPoint = DualReturnPoint;
 }
 
+impl<Size> From<Config<Size, DynamicReturn>> for DynamicReturnContext<Size, DynamicReturn>
+where
+    Size: ArrayLength<LaserParameter>,
+{
+    fn from(config: Config<Size, DynamicReturn>) -> Self {
+        let Config {
+            lasers,
+            distance_resolution,
+            return_type,
+        } = config;
+
+        match return_type {
+            DynamicReturn::LastReturn | DynamicReturn::StrongestReturn => {
+                DynamicReturnContext::SingleReturn(SingleReturnContext {
+                    lasers,
+                    distance_resolution,
+                    last_block: None,
+                    _phantom: PhantomData,
+                })
+            }
+            DynamicReturn::DualReturn => DynamicReturnContext::DualReturn(DualReturnContext {
+                lasers,
+                distance_resolution,
+                last_block: None,
+                _phantom: PhantomData,
+            }),
+        }
+    }
+}
+
+/// Context for dynamically configured return mode.
+pub enum DynamicReturnContext<Size, ReturnType>
+where
+    Size: ArrayLength<LaserParameter>,
+    ReturnType: ReturnTypeMarker,
+{
+    SingleReturn(SingleReturnContext<Size, ReturnType>),
+    DualReturn(DualReturnContext<Size, ReturnType>),
+}
+
+impl<Size, ReturnType> ConverterContext for DynamicReturnContext<Size, ReturnType>
+where
+    Size: ArrayLength<LaserParameter>,
+    ReturnType: ReturnTypeMarker,
+{
+    type OutputPoint = DynamicReturnPoint;
+}
+
 pub trait ToConverterContext
 where
     Self::Context: ConverterContext,
@@ -142,4 +190,11 @@ where
     Size: ArrayLength<LaserParameter>,
 {
     type Context = DualReturnContext<Size, DualReturn>;
+}
+
+impl<Size> ToConverterContext for Config<Size, DynamicReturn>
+where
+    Size: ArrayLength<LaserParameter>,
+{
+    type Context = DynamicReturnContext<Size, DynamicReturn>;
 }

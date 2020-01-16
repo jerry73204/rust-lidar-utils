@@ -45,14 +45,14 @@ impl DualReturnPoint {
 
 /// A point type can be in strongest, last or dual return mode.
 #[derive(Debug, Clone)]
-pub enum DynamicPoint {
+pub enum DynamicReturnPoint {
     SingleReturn(SingleReturnPoint),
     DualReturn(DualReturnPoint),
 }
 
-impl DynamicPoint {
+impl DynamicReturnPoint {
     pub fn timestamp(&self) -> F64Time {
-        use DynamicPoint::*;
+        use DynamicReturnPoint::*;
         match self {
             SingleReturn(point) => point.timestamp(),
             DualReturn(point) => point.timestamp(),
@@ -60,10 +60,22 @@ impl DynamicPoint {
     }
 
     pub fn azimuth_angle(&self) -> F64Angle {
-        use DynamicPoint::*;
+        use DynamicReturnPoint::*;
         match self {
             SingleReturn(point) => point.azimuth_angle(),
             DualReturn(point) => point.azimuth_angle(),
         }
+    }
+}
+
+impl From<SingleReturnPoint> for DynamicReturnPoint {
+    fn from(point: SingleReturnPoint) -> Self {
+        Self::SingleReturn(point)
+    }
+}
+
+impl From<DualReturnPoint> for DynamicReturnPoint {
+    fn from(point: DualReturnPoint) -> Self {
+        Self::DualReturn(point)
     }
 }

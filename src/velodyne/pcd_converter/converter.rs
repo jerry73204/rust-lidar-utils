@@ -1,10 +1,10 @@
 use super::{
-    context::{ConverterContext, ToConverterContext},
-    data::{DualReturnPoint, SingleReturnPoint},
+    context::{ConverterContext, DynamicReturnContext, ToConverterContext},
+    data::{DualReturnPoint, DynamicReturnPoint, SingleReturnPoint},
 };
 use crate::velodyne::{
     config::Config,
-    marker::{DualReturn, LastReturn, StrongestReturn},
+    marker::{DualReturn, DynamicReturn, LastReturn, StrongestReturn},
     packet::{Packet, ReturnMode},
 };
 use failure::{ensure, Fallible};
@@ -97,6 +97,38 @@ impl PointCloudConverterInterface<Config<U16, DualReturn>>
     }
 }
 
+impl PointCloudConverterInterface<Config<U16, DynamicReturn>>
+    for PointCloudConverter<Config<U16, DynamicReturn>>
+{
+    fn from_config(config: Config<U16, DynamicReturn>) -> Self {
+        Self {
+            context: config.into(),
+        }
+    }
+
+    fn convert<P>(&mut self, packet: P) -> Fallible<Vec<DynamicReturnPoint>>
+    where
+        P: AsRef<Packet>,
+    {
+        let points = match &mut self.context {
+            DynamicReturnContext::SingleReturn(context) => {
+                super::impls::convert_single_return_16_channel(context, packet)
+                    .into_iter()
+                    .map(|point| DynamicReturnPoint::from(point))
+                    .collect::<Vec<_>>()
+            }
+            DynamicReturnContext::DualReturn(context) => {
+                super::impls::convert_dual_return_16_channel(context, packet)
+                    .into_iter()
+                    .map(|point| DynamicReturnPoint::from(point))
+                    .collect::<Vec<_>>()
+            }
+        };
+
+        Ok(points)
+    }
+}
+
 impl PointCloudConverterInterface<Config<U32, StrongestReturn>>
     for PointCloudConverter<Config<U32, StrongestReturn>>
 {
@@ -159,5 +191,37 @@ impl PointCloudConverterInterface<Config<U32, DualReturn>>
             &mut self.context,
             packet,
         ))
+    }
+}
+
+impl PointCloudConverterInterface<Config<U32, DynamicReturn>>
+    for PointCloudConverter<Config<U32, DynamicReturn>>
+{
+    fn from_config(config: Config<U32, DynamicReturn>) -> Self {
+        Self {
+            context: config.into(),
+        }
+    }
+
+    fn convert<P>(&mut self, packet: P) -> Fallible<Vec<DynamicReturnPoint>>
+    where
+        P: AsRef<Packet>,
+    {
+        let points = match &mut self.context {
+            DynamicReturnContext::SingleReturn(context) => {
+                super::impls::convert_single_return_32_channel(context, packet)
+                    .into_iter()
+                    .map(|point| DynamicReturnPoint::from(point))
+                    .collect::<Vec<_>>()
+            }
+            DynamicReturnContext::DualReturn(context) => {
+                super::impls::convert_dual_return_32_channel(context, packet)
+                    .into_iter()
+                    .map(|point| DynamicReturnPoint::from(point))
+                    .collect::<Vec<_>>()
+            }
+        };
+
+        Ok(points)
     }
 }
