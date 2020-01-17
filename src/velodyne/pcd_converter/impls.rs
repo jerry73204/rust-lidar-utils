@@ -382,7 +382,8 @@ where
                 let LaserParameter {
                     elevation_angle,
                     azimuth_offset,
-                    vertical_correction,
+                    vertical_offset,
+                    horizontal_offset,
                 } = laser_params;
                 let altitude_angle =
                     F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - *elevation_angle;
@@ -404,17 +405,13 @@ where
                     }
                     azimuth
                 };
-
-                // counter-clockwise angle with origin points to right hand side of sensor
-                let spherical_azimuth_angle =
-                    F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - corrected_azimuth_angle;
-
                 let distance = distance_resolution * channel.distance as f64;
-
-                let position = crate::common::spherical_to_xyz(
+                let position = compute_position(
                     distance,
-                    spherical_azimuth_angle,
-                    altitude_angle,
+                    *elevation_angle,
+                    corrected_azimuth_angle,
+                    *vertical_offset,
+                    *horizontal_offset,
                 );
 
                 SingleReturnPoint {
@@ -487,10 +484,9 @@ where
                 let LaserParameter {
                     elevation_angle,
                     azimuth_offset,
-                    vertical_correction,
+                    vertical_offset,
+                    horizontal_offset,
                 } = laser_params;
-                let altitude_angle =
-                    F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - *elevation_angle;
 
                 // clockwise angle with origin points to front of sensor
                 let original_azimuth_angle = {
@@ -508,17 +504,13 @@ where
                     }
                     azimuth
                 };
-
-                // counter-clockwise angle with origin points to right hand side of sensor
-                let spherical_azimuth_angle =
-                    F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - corrected_azimuth_angle;
-
                 let distance = distance_resolution * channel.distance as f64;
-
-                let position = crate::common::spherical_to_xyz(
+                let position = compute_position(
                     distance,
-                    spherical_azimuth_angle,
-                    altitude_angle,
+                    *elevation_angle,
+                    corrected_azimuth_angle,
+                    *vertical_offset,
+                    *horizontal_offset,
                 );
 
                 SingleReturnPoint {
@@ -535,4 +527,21 @@ where
             })
     })
     .collect::<Vec<_>>()
+}
+
+fn compute_position(
+    distance: F64Length,
+    elevation_angle: F64Angle,
+    azimuth_angle: F64Angle,
+    vertical_offset: F64Length,
+    horizontal_offset: F64Length,
+) -> [F64Length; 3] {
+    // The origin of elevaion_angle lies on xy plane.
+    // The azimuth angle starts from y-axis, rotates clockwise.
+
+    let distance_plane = distance * elevation_angle.cos() - vertical_offset * elevation_angle.sin();
+    let x = distance_plane * azimuth_angle.sin() - horizontal_offset * azimuth_angle.cos();
+    let y = distance_plane * azimuth_angle.cos() + horizontal_offset * azimuth_angle.sin();
+    let z = distance * elevation_angle.sin() + vertical_offset * elevation_angle.cos();
+    [x, y, z]
 }

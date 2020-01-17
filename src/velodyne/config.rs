@@ -2,10 +2,12 @@
 
 use super::{
     consts::{
-        PUCK_HIRES_AZIMUTH_OFFSETS, PUCK_HIRES_ELEVAION_DEGREES, PUCK_HIRES_VERTICAL_CORRECTIONS,
-        PUCK_LITE_AZIMUTH_OFFSETS, PUCK_LITE_ELEVAION_DEGREES, PUCK_LITE_VERTICAL_CORRECTIONS,
-        VLP_16_AZIMUTH_OFFSETS, VLP_16_ELEVAION_DEGREES, VLP_16_VERTICAL_CORRECTIONS,
-        VLP_32C_AZIMUTH_OFFSETS, VLP_32C_ELEVAION_DEGREES, VLP_32C_VERTICAL_CORRECTIONS,
+        PUCK_HIRES_AZIMUTH_OFFSETS, PUCK_HIRES_ELEVAION_DEGREES, PUCK_HIRES_HORIZONTAL_OFFSETS,
+        PUCK_HIRES_VERTICAL_OFFSETS, PUCK_LITE_AZIMUTH_OFFSETS, PUCK_LITE_ELEVAION_DEGREES,
+        PUCK_LITE_HORIZONTAL_OFFSETS, PUCK_LITE_VERTICAL_OFFSETS, VLP_16_AZIMUTH_OFFSETS,
+        VLP_16_ELEVAION_DEGREES, VLP_16_HORIZONTAL_OFFSETS, VLP_16_VERTICAL_OFFSETS,
+        VLP_32C_AZIMUTH_OFFSETS, VLP_32C_ELEVAION_DEGREES, VLP_32C_HORIZONTAL_OFFSETS,
+        VLP_32C_VERTICAL_OFFSETS,
     },
     marker::{DualReturn, DynamicReturn, LastReturn, ReturnTypeMarker, StrongestReturn},
     packet::ReturnMode,
@@ -35,7 +37,8 @@ where
 pub struct LaserParameter {
     pub elevation_angle: F64Angle,
     pub azimuth_offset: F64Angle,
-    pub vertical_correction: F64Length,
+    pub vertical_offset: F64Length,
+    pub horizontal_offset: F64Length,
 }
 
 /// Config builder that builds [Config](Config) type.
@@ -46,14 +49,18 @@ impl ConfigBuilder {
     fn vlp_16_laser_params() -> GenericArray<LaserParameter, U16> {
         izip!(
             VLP_16_ELEVAION_DEGREES.iter(),
-            VLP_16_VERTICAL_CORRECTIONS.iter(),
+            VLP_16_VERTICAL_OFFSETS.iter(),
+            VLP_16_HORIZONTAL_OFFSETS.iter(),
             VLP_16_AZIMUTH_OFFSETS.iter(),
         )
         .map(
-            |(elevation_angle, vertical_correction, azimuth_offset)| LaserParameter {
-                elevation_angle: F64Angle::new::<degree>(*elevation_angle),
-                vertical_correction: F64Length::new::<millimeter>(*vertical_correction),
-                azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
+            |(elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
+                LaserParameter {
+                    elevation_angle: F64Angle::new::<degree>(*elevation_angle),
+                    vertical_offset: F64Length::new::<millimeter>(*vertical_offset),
+                    horizontal_offset: F64Length::new::<millimeter>(*horizontal_offset),
+                    azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
+                }
             },
         )
         .collect()
@@ -62,14 +69,18 @@ impl ConfigBuilder {
     fn puck_hires_laser_params() -> GenericArray<LaserParameter, U16> {
         izip!(
             PUCK_HIRES_ELEVAION_DEGREES.iter(),
-            PUCK_HIRES_VERTICAL_CORRECTIONS.iter(),
+            PUCK_HIRES_VERTICAL_OFFSETS.iter(),
+            PUCK_HIRES_HORIZONTAL_OFFSETS.iter(),
             PUCK_HIRES_AZIMUTH_OFFSETS.iter(),
         )
         .map(
-            |(elevation_angle, vertical_correction, azimuth_offset)| LaserParameter {
-                elevation_angle: F64Angle::new::<degree>(*elevation_angle),
-                vertical_correction: F64Length::new::<millimeter>(*vertical_correction),
-                azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
+            |(elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
+                LaserParameter {
+                    elevation_angle: F64Angle::new::<degree>(*elevation_angle),
+                    vertical_offset: F64Length::new::<millimeter>(*vertical_offset),
+                    horizontal_offset: F64Length::new::<millimeter>(*horizontal_offset),
+                    azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
+                }
             },
         )
         .collect()
@@ -78,14 +89,18 @@ impl ConfigBuilder {
     fn puck_lite_laser_params() -> GenericArray<LaserParameter, U16> {
         izip!(
             PUCK_LITE_ELEVAION_DEGREES.iter(),
-            PUCK_LITE_VERTICAL_CORRECTIONS.iter(),
+            PUCK_LITE_VERTICAL_OFFSETS.iter(),
+            PUCK_LITE_HORIZONTAL_OFFSETS.iter(),
             PUCK_LITE_AZIMUTH_OFFSETS.iter(),
         )
         .map(
-            |(elevation_angle, vertical_correction, azimuth_offset)| LaserParameter {
-                elevation_angle: F64Angle::new::<degree>(*elevation_angle),
-                vertical_correction: F64Length::new::<millimeter>(*vertical_correction),
-                azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
+            |(elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
+                LaserParameter {
+                    elevation_angle: F64Angle::new::<degree>(*elevation_angle),
+                    vertical_offset: F64Length::new::<millimeter>(*vertical_offset),
+                    horizontal_offset: F64Length::new::<millimeter>(*horizontal_offset),
+                    azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
+                }
             },
         )
         .collect()
@@ -94,14 +109,18 @@ impl ConfigBuilder {
     fn vlp_32c_laser_params() -> GenericArray<LaserParameter, U32> {
         izip!(
             VLP_32C_ELEVAION_DEGREES.iter(),
-            VLP_32C_VERTICAL_CORRECTIONS.iter(),
+            VLP_32C_VERTICAL_OFFSETS.iter(),
+            VLP_32C_HORIZONTAL_OFFSETS.iter(),
             VLP_32C_AZIMUTH_OFFSETS.iter(),
         )
         .map(
-            |(elevation_angle, vertical_correction, azimuth_offset)| LaserParameter {
-                elevation_angle: F64Angle::new::<degree>(*elevation_angle),
-                vertical_correction: F64Length::new::<millimeter>(*vertical_correction),
-                azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
+            |(elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
+                LaserParameter {
+                    elevation_angle: F64Angle::new::<degree>(*elevation_angle),
+                    vertical_offset: F64Length::new::<millimeter>(*vertical_offset),
+                    horizontal_offset: F64Length::new::<millimeter>(*horizontal_offset),
+                    azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
+                }
             },
         )
         .collect()

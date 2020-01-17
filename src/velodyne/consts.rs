@@ -26,11 +26,15 @@ pub const VLP_16_ELEVAION_DEGREES: [f64; 16] = [
 ];
 
 /// The correction distance added to point position along vertical axis for VLP-16.
-pub const VLP_16_VERTICAL_CORRECTIONS: [f64; 16] = [
+pub const VLP_16_VERTICAL_OFFSETS: [f64; 16] = [
     11.2, -0.7, 9.7, -2.2, 8.1, -3.7, 6.6, -5.1, 5.1, -6.6, 3.7, -8.1, 2.2, -9.7, 0.7, -11.2,
 ];
 
 pub const VLP_16_AZIMUTH_OFFSETS: [f64; 16] = [
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+];
+
+pub const VLP_16_HORIZONTAL_OFFSETS: [f64; 16] = [
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 ];
 
@@ -42,10 +46,14 @@ pub const PUCK_LITE_ELEVAION_DEGREES: [f64; 16] = [
 ];
 
 /// The correction distance added to point position along vertical axis for Puck Lite.
-pub const PUCK_LITE_VERTICAL_CORRECTIONS: [f64; 16] = [
+pub const PUCK_LITE_VERTICAL_OFFSETS: [f64; 16] = [
     11.2, -0.7, 9.7, -2.2, 8.1, -3.7, 6.6, -5.1, 5.1, -6.6, 3.7, -8.1, 2.2, -9.7, 0.7, -11.2,
 ];
 pub const PUCK_LITE_AZIMUTH_OFFSETS: [f64; 16] = [
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+];
+
+pub const PUCK_LITE_HORIZONTAL_OFFSETS: [f64; 16] = [
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 ];
 
@@ -58,10 +66,14 @@ pub const PUCK_HIRES_ELEVAION_DEGREES: [f64; 16] = [
 ];
 
 /// The correction distance added to point position along vertical axis for Puck Hi-Res.
-pub const PUCK_HIRES_VERTICAL_CORRECTIONS: [f64; 16] = [
+pub const PUCK_HIRES_VERTICAL_OFFSETS: [f64; 16] = [
     7.4, -0.9, 6.5, -1.8, 5.5, -2.7, 4.6, -3.7, 3.7, -4.6, 2.7, -5.5, 1.8, -6.5, 0.9, -7.4,
 ];
 pub const PUCK_HIRES_AZIMUTH_OFFSETS: [f64; 16] = [
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+];
+
+pub const PUCK_HIRES_HORIZONTAL_OFFSETS: [f64; 16] = [
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 ];
 
@@ -75,11 +87,17 @@ pub const VLP_32C_ELEVAION_DEGREES: [f64; 32] = [
 ];
 
 /// The correction distance added to point position along vertical axis for VLP-32C.
-pub const VLP_32C_VERTICAL_CORRECTIONS: [f64; 32] = [
+pub const VLP_32C_VERTICAL_OFFSETS: [f64; 32] = [
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 ];
+
 pub const VLP_32C_AZIMUTH_OFFSETS: [f64; 32] = [
     1.4, -4.2, 1.4, -1.4, 1.4, -1.4, 4.2, -1.4, 1.4, -4.2, 1.4, -1.4, 4.2, -1.4, 4.2, -1.4, 1.4,
     -4.2, 1.4, -4.2, 4.2, -1.4, 1.4, -1.4, 1.4, -1.4, 1.4, -4.2, 4.2, -1.4, 1.4, -1.4,
+];
+
+pub const VLP_32C_HORIZONTAL_OFFSETS: [f64; 32] = [
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 ];
