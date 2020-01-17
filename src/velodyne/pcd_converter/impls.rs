@@ -385,8 +385,6 @@ where
                     vertical_offset,
                     horizontal_offset,
                 } = laser_params;
-                let altitude_angle =
-                    F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - *elevation_angle;
 
                 // clockwise angle with origin points to front of sensor
                 let original_azimuth_angle = {

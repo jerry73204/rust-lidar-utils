@@ -12,8 +12,15 @@ use super::{
     marker::{DualReturn, DynamicReturn, LastReturn, ReturnTypeMarker, StrongestReturn},
     packet::ReturnMode,
 };
+use failure::{ensure, Fallible};
 use generic_array::{ArrayLength, GenericArray};
 use itertools::izip;
+use serde::{Deserialize, Serialize};
+use std::{
+    fs::File,
+    io::{prelude::*, BufReader},
+    path::Path,
+};
 use typenum::{U16, U32};
 use uom::si::{
     angle::degree,
@@ -255,6 +262,62 @@ impl ConfigBuilder {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ParamsConfig {
+    lasers: Vec<LaserConfig>,
+    num_lasers: usize,
+    distance_resolution: f64,
+}
+
+impl ParamsConfig {
+    pub fn load<P>(path: P) -> Fallible<Self>
+    where
+        P: AsRef<Path>,
+    {
+        let mut reader = BufReader::new(File::open(path)?);
+        let config = Self::from_reader(&mut reader)?;
+        Ok(config)
+    }
+
+    pub fn from_reader<R>(reader: &mut R) -> Fallible<Self>
+    where
+        R: Read,
+    {
+        let mut text = String::new();
+        reader.read_to_string(&mut text)?;
+        let config = Self::from_str(&text)?;
+        Ok(config)
+    }
+
+    pub fn from_str(text: &str) -> Fallible<Self> {
+        let config: Self = serde_yaml::from_str(text)?;
+        ensure!(config.distance_resolution > 0.0);
+        ensure!(config.num_lasers == config.lasers.len());
+        ensure!({
+            config
+                .lasers
+                .iter()
+                .enumerate()
+                .all(|(idx, params)| idx == params.laser_id)
+        });
+        Ok(config)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LaserConfig {
+    pub dist_correction: f64,
+    pub dist_correction_x: f64,
+    pub dist_correction_y: f64,
+    pub focal_distance: f64,
+    pub focal_slope: f64,
+    pub horiz_offset_correction: Option<f64>,
+    pub laser_id: usize,
+    pub rot_correction: f64,
+    pub vert_correction: f64,
+    pub vert_offset_correction: f64,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -278,6 +341,18 @@ mod tests {
         let _: Config<U32, StrongestReturn> = ConfigBuilder::vlp_32c_strongest_return();
         let _: Config<U32, DualReturn> = ConfigBuilder::vlp_32c_dual_return();
 
+        Ok(())
+    }
+
+    #[test]
+    fn load_yaml_params_test() -> Fallible<()> {
+        ParamsConfig::from_str(include_str!("params/32db.yaml"))?;
+        ParamsConfig::from_str(include_str!("params/64e_s2.1-sztaki.yaml"))?;
+        ParamsConfig::from_str(include_str!("params/64e_s3-xiesc.yaml"))?;
+        ParamsConfig::from_str(include_str!("params/64e_utexas.yaml"))?;
+        ParamsConfig::from_str(include_str!("params/VeloView-VLP-32C.yaml"))?;
+        ParamsConfig::from_str(include_str!("params/VLP16db.yaml"))?;
+        ParamsConfig::from_str(include_str!("params/VLP16_hires_db.yaml"))?;
         Ok(())
     }
 }
