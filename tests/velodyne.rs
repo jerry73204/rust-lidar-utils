@@ -4,7 +4,7 @@ use failure::{ensure, Fallible};
 use lidar_utils::velodyne::{
     config::ConfigBuilder,
     packet::{Packet as VelodynePacket, ReturnMode},
-    pcd_converter::{PointCloudConverter, PointCloudConverterEx},
+    pcd_converter::{PointCloudConverter, PointCloudConverterInterface},
 };
 use pcap::Capture;
 
@@ -38,10 +38,7 @@ fn velodyne_vlp_16_pcap_file() -> Fallible<()> {
 #[test]
 #[cfg(feature = "enable-pcap")]
 fn velodyne_vlp_16_scan() -> Fallible<()> {
-    let config = ConfigBuilder::new()
-        .vlp_16_params()
-        .return_mode(ReturnMode::LastReturn)
-        .build()?;
+    let config = ConfigBuilder::vlp_16_last_return();
     let mut converter = PointCloudConverter::from_config(config);
 
     let mut cap = Capture::from_file("test_files/velodyne_example.pcap")?;
@@ -108,11 +105,8 @@ fn velodyne_vlp_32_pcap_file() -> Fallible<()> {
 
 #[test]
 #[cfg(feature = "enable-pcap")]
-fn velodyne_vlp_32_scan() -> Fallible<()> {
-    let config = ConfigBuilder::new()
-        .vlp_32c_params()
-        .return_mode(ReturnMode::LastReturn)
-        .build()?;
+fn velodyne_vlp_32c_scan() -> Fallible<()> {
+    let config = ConfigBuilder::vlp_32c_last_return();
     let mut converter = PointCloudConverter::from_config(config);
 
     let mut cap = Capture::from_file("test_files/HDL32-V2_Tunnel.pcap")?;
