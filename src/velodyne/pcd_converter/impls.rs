@@ -1,7 +1,6 @@
 use super::{
     context::{DualReturnContext, SingleReturnContext},
-    data::SingleReturnPoint,
-    DualReturnPoint,
+    data::{DualReturnPoint, PointData, SingleReturnPoint},
 };
 use crate::velodyne::{
     config::LaserParameter,
@@ -165,12 +164,8 @@ where
     let points = strongest_points
         .into_iter()
         .zip(last_points.into_iter())
-        .map(|(strongest_point, last_point)| {
-            // TODO: verify time and azimuth angle
-            DualReturnPoint {
-                strongest_return: strongest_point,
-                last_return: last_point,
-            }
+        .map(|(strongest_return_point, last_return_point)| {
+            DualReturnPoint::try_from_pair(strongest_return_point, last_return_point).unwrap()
         })
         .collect::<Vec<_>>();
     points
@@ -313,12 +308,8 @@ where
     let points = strongest_points
         .into_iter()
         .zip(last_points.into_iter())
-        .map(|(strongest_point, last_point)| {
-            // TODO: verify time and azimuth angle
-            DualReturnPoint {
-                strongest_return: strongest_point,
-                last_return: last_point,
-            }
+        .map(|(strongest_return_point, last_return_point)| {
+            DualReturnPoint::try_from_pair(strongest_return_point, last_return_point).unwrap()
         })
         .collect::<Vec<_>>();
     points
@@ -397,32 +388,45 @@ where
                     F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - *elevation_angle;
 
                 // clockwise angle with origin points to front of sensor
-                let mut sensor_azimuth_angle = lower_azimuth_angle
-                    + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio)
-                    + *azimuth_offset;
-                if sensor_azimuth_angle >= F64Angle::new::<radian>(std::f64::consts::PI * 2.0) {
-                    sensor_azimuth_angle -= F64Angle::new::<radian>(std::f64::consts::PI * 2.0);
-                }
+                let original_azimuth_angle = {
+                    let mut azimuth = lower_azimuth_angle
+                        + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio)
+                        + *azimuth_offset;
+                    if azimuth >= F64Angle::new::<radian>(std::f64::consts::PI * 2.0) {
+                        azimuth -= F64Angle::new::<radian>(std::f64::consts::PI * 2.0);
+                    }
+                    azimuth
+                };
+                let corrected_azimuth_angle = {
+                    let mut azimuth = original_azimuth_angle + *azimuth_offset;
+                    if azimuth >= F64Angle::new::<radian>(std::f64::consts::PI * 2.0) {
+                        azimuth -= F64Angle::new::<radian>(std::f64::consts::PI * 2.0);
+                    }
+                    azimuth
+                };
 
                 // counter-clockwise angle with origin points to right hand side of sensor
                 let spherical_azimuth_angle =
-                    F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - sensor_azimuth_angle;
+                    F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - corrected_azimuth_angle;
 
                 let distance = distance_resolution * channel.distance as f64;
 
-                let point = crate::common::spherical_to_xyz(
+                let position = crate::common::spherical_to_xyz(
                     distance,
                     spherical_azimuth_angle,
                     altitude_angle,
                 );
 
                 SingleReturnPoint {
-                    timestamp,
-                    distance,
-                    intensity: channel.intensity,
-                    azimuth_angle: sensor_azimuth_angle,
                     laser_id,
-                    point,
+                    timestamp,
+                    original_azimuth_angle,
+                    corrected_azimuth_angle,
+                    data: PointData {
+                        distance,
+                        intensity: channel.intensity,
+                        position,
+                    },
                 }
             })
     })
@@ -489,10 +493,16 @@ where
                     F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - *elevation_angle;
 
                 // clockwise angle with origin points to front of sensor
-                let sensor_azimuth_angle = {
+                let original_azimuth_angle = {
                     let mut azimuth = lower_azimuth_angle
-                        + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio)
-                        + *azimuth_offset;
+                        + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio);
+                    if azimuth >= F64Angle::new::<radian>(std::f64::consts::PI * 2.0) {
+                        azimuth -= F64Angle::new::<radian>(std::f64::consts::PI * 2.0);
+                    }
+                    azimuth
+                };
+                let corrected_azimuth_angle = {
+                    let mut azimuth = original_azimuth_angle + *azimuth_offset;
                     if azimuth >= F64Angle::new::<radian>(std::f64::consts::PI * 2.0) {
                         azimuth -= F64Angle::new::<radian>(std::f64::consts::PI * 2.0);
                     }
@@ -501,23 +511,26 @@ where
 
                 // counter-clockwise angle with origin points to right hand side of sensor
                 let spherical_azimuth_angle =
-                    F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - sensor_azimuth_angle;
+                    F64Angle::new::<radian>(std::f64::consts::FRAC_PI_2) - corrected_azimuth_angle;
 
                 let distance = distance_resolution * channel.distance as f64;
 
-                let point = crate::common::spherical_to_xyz(
+                let position = crate::common::spherical_to_xyz(
                     distance,
                     spherical_azimuth_angle,
                     altitude_angle,
                 );
 
                 SingleReturnPoint {
-                    timestamp,
-                    distance,
-                    intensity: channel.intensity,
-                    azimuth_angle: sensor_azimuth_angle,
                     laser_id,
-                    point,
+                    timestamp,
+                    original_azimuth_angle,
+                    corrected_azimuth_angle,
+                    data: PointData {
+                        distance,
+                        intensity: channel.intensity,
+                        position,
+                    },
                 }
             })
     })

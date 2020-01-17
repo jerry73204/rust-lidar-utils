@@ -45,8 +45,7 @@ impl PointCloudConverterInterface<Config<U16, StrongestReturn>>
     where
         P: AsRef<Packet>,
     {
-        ensure!([ReturnMode::StrongestReturn, ReturnMode::LastReturn]
-            .contains(&packet.as_ref().return_mode));
+        ensure!(packet.as_ref().return_mode == ReturnMode::StrongestReturn);
         Ok(super::impls::convert_single_return_16_channel(
             &mut self.context,
             packet,
@@ -67,8 +66,7 @@ impl PointCloudConverterInterface<Config<U16, LastReturn>>
     where
         P: AsRef<Packet>,
     {
-        ensure!([ReturnMode::StrongestReturn, ReturnMode::LastReturn]
-            .contains(&packet.as_ref().return_mode));
+        ensure!(packet.as_ref().return_mode == ReturnMode::LastReturn);
         Ok(super::impls::convert_single_return_16_channel(
             &mut self.context,
             packet,
@@ -142,8 +140,7 @@ impl PointCloudConverterInterface<Config<U32, StrongestReturn>>
     where
         P: AsRef<Packet>,
     {
-        ensure!([ReturnMode::StrongestReturn, ReturnMode::LastReturn]
-            .contains(&packet.as_ref().return_mode));
+        ensure!(packet.as_ref().return_mode == ReturnMode::StrongestReturn);
         Ok(super::impls::convert_single_return_32_channel(
             &mut self.context,
             packet,
@@ -164,8 +161,7 @@ impl PointCloudConverterInterface<Config<U32, LastReturn>>
     where
         P: AsRef<Packet>,
     {
-        ensure!([ReturnMode::StrongestReturn, ReturnMode::LastReturn]
-            .contains(&packet.as_ref().return_mode));
+        ensure!(packet.as_ref().return_mode == ReturnMode::LastReturn);
         Ok(super::impls::convert_single_return_32_channel(
             &mut self.context,
             packet,

@@ -3,8 +3,8 @@
 use failure::{ensure, Fallible};
 use lidar_utils::velodyne::{
     config::ConfigBuilder,
-    packet::{Packet as VelodynePacket, ReturnMode},
-    pcd_converter::{PointCloudConverter, PointCloudConverterInterface},
+    packet::Packet as VelodynePacket,
+    pcd_converter::{PointCloudConverter, PointCloudConverterInterface, PointInterface},
 };
 use pcap::Capture;
 
@@ -38,7 +38,7 @@ fn velodyne_vlp_16_pcap_file() -> Fallible<()> {
 #[test]
 #[cfg(feature = "enable-pcap")]
 fn velodyne_vlp_16_scan() -> Fallible<()> {
-    let config = ConfigBuilder::vlp_16_last_return();
+    let config = ConfigBuilder::vlp_16_strongest_return();
     let mut converter = PointCloudConverter::from_config(config);
 
     let mut cap = Capture::from_file("test_files/velodyne_example.pcap")?;
@@ -58,7 +58,7 @@ fn velodyne_vlp_16_scan() -> Fallible<()> {
             }
             prev_timestamp = Some(curr_timestamp);
 
-            let curr_azimuth_angle = point.azimuth_angle();
+            let curr_azimuth_angle = point.original_azimuth_angle();
             if let Some(true) = prev_azimuth_angle.map(|prev| curr_azimuth_angle >= prev) {
                 points_per_frame += 1;
             } else {
@@ -106,7 +106,7 @@ fn velodyne_vlp_32_pcap_file() -> Fallible<()> {
 #[test]
 #[cfg(feature = "enable-pcap")]
 fn velodyne_vlp_32c_scan() -> Fallible<()> {
-    let config = ConfigBuilder::vlp_32c_last_return();
+    let config = ConfigBuilder::vlp_32c_strongest_return();
     let mut converter = PointCloudConverter::from_config(config);
 
     let mut cap = Capture::from_file("test_files/HDL32-V2_Tunnel.pcap")?;
@@ -123,7 +123,7 @@ fn velodyne_vlp_32c_scan() -> Fallible<()> {
         };
 
         for point in converter.convert(lidar_packet)?.into_iter() {
-            let curr_azimuth_angle = point.azimuth_angle();
+            let curr_azimuth_angle = point.original_azimuth_angle();
             if let Some(true) = prev_azimuth_angle.map(|prev| curr_azimuth_angle >= prev) {
                 points_per_frame += 1;
             } else {
