@@ -256,7 +256,7 @@ impl ConfigBuilder {
     pub fn vlp_32c_dynamic_return(return_mode: ReturnMode) -> Config<U32, DynamicReturn> {
         Config {
             lasers: Self::vlp_32c_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(2.0),
+            distance_resolution: F64Length::new::<millimeter>(4.0),
             return_type: DynamicReturn::from(return_mode),
         }
     }
