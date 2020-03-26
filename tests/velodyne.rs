@@ -79,7 +79,7 @@ fn velodyne_vlp_16_scan() -> Fallible<()> {
 fn velodyne_vlp_32_pcap_file() -> Fallible<()> {
     let mut packets = vec![];
 
-    let mut cap = Capture::from_file("test_files/HDL32-V2_Tunnel.pcap")?;
+    let mut cap = Capture::from_file("test_files/hdl32_example.pcap")?;
     cap.filter("udp")?;
 
     while let Ok(packet) = cap.next() {
@@ -109,7 +109,7 @@ fn velodyne_vlp_32c_scan() -> Fallible<()> {
     let config = ConfigBuilder::vlp_32c_strongest_return();
     let mut converter = PointCloudConverter::from_config(config);
 
-    let mut cap = Capture::from_file("test_files/HDL32-V2_Tunnel.pcap")?;
+    let mut cap = Capture::from_file("test_files/hdl32_example.pcap")?;
     cap.filter("udp")?;
 
     // let mut prev_timestamp = None;
