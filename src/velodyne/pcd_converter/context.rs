@@ -3,13 +3,12 @@
 
 use super::data::{DualReturnPoint, DynamicReturnPoint, SingleReturnPoint};
 use crate::velodyne::{
-    config::{Config, LaserParameter},
+    config::Config,
     marker::{
         DualReturn, DynamicReturn, LastReturn, ModelMarker, ReturnTypeMarker, StrongestReturn,
     },
     packet::Block,
 };
-use generic_array::GenericArray;
 use std::marker::PhantomData;
 use uom::si::f64::{Length as F64Length, Time as F64Time};
 
@@ -24,7 +23,7 @@ where
     Model: ModelMarker,
     ReturnType: ReturnTypeMarker,
 {
-    pub lasers: GenericArray<LaserParameter, Model::ParamSize>,
+    pub lasers: Model::ParamArray,
     pub distance_resolution: F64Length,
     pub last_block: Option<(F64Time, Block)>,
     _phantom: PhantomData<ReturnType>,
@@ -84,7 +83,7 @@ where
     Model: ModelMarker,
     ReturnType: ReturnTypeMarker,
 {
-    pub lasers: GenericArray<LaserParameter, Model::ParamSize>,
+    pub lasers: Model::ParamArray,
     pub distance_resolution: F64Length,
     pub last_block: Option<(F64Time, Block, Block)>,
     _phantom: PhantomData<ReturnType>,

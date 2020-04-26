@@ -8,10 +8,7 @@ use crate::velodyne::{
     marker::{ReturnTypeMarker, Vlp16, Vlp32},
     packet::{Block, Channel, Packet, ReturnMode},
 };
-use generic_array::GenericArray;
 use itertools::izip;
-use std::borrow::Borrow;
-use typenum::{U16, U32};
 use uom::si::{
     angle::radian,
     f64::{Angle as F64Angle, Length as F64Length, Ratio as F64Ratio, Time as F64Time},
@@ -315,13 +312,12 @@ where
     points
 }
 
-pub(crate) fn convert_to_points_16_channel<'a, A, I>(
-    lasers: A,
+pub(crate) fn convert_to_points_16_channel<'a, I>(
+    lasers: &[LaserParameter; 16],
     distance_resolution: F64Length,
     iter: &mut I,
 ) -> Vec<SingleReturnPoint>
 where
-    A: Borrow<GenericArray<LaserParameter, U16>>,
     I: Iterator<Item = (F64Time, &'a Block)>,
 {
     let channel_period = F64Time::new::<microsecond>(CHANNEL_PERIOD);
@@ -374,9 +370,8 @@ where
         debug_assert_eq!(firing.len(), 16);
         debug_assert!(lower_azimuth_angle <= upper_azimuth_angle);
 
-        izip!(firing.iter(), lasers.borrow().iter(), 0..)
-            .enumerate()
-            .map(move |(channel_idx, (channel, laser_params, laser_id))| {
+        izip!(firing.iter(), lasers.iter(), 0..).enumerate().map(
+            move |(channel_idx, (channel, laser_params, laser_id))| {
                 let timestamp = lower_timestamp + channel_period * channel_idx as f64;
                 let ratio = channel_period * channel_idx as f64 / firing_period;
                 let LaserParameter {
@@ -423,18 +418,18 @@ where
                         position,
                     },
                 }
-            })
+            },
+        )
     })
     .collect::<Vec<_>>()
 }
 
-pub(crate) fn convert_to_points_32_channel<'a, I, A>(
-    lasers: A,
+pub(crate) fn convert_to_points_32_channel<'a, I>(
+    lasers: &[LaserParameter; 32],
     distance_resolution: F64Length,
     iter: &mut I,
 ) -> Vec<SingleReturnPoint>
 where
-    A: Borrow<GenericArray<LaserParameter, U32>>,
     I: Iterator<Item = (F64Time, &'a Block)>,
 {
     let channel_period = F64Time::new::<microsecond>(CHANNEL_PERIOD);
@@ -474,9 +469,8 @@ where
 
         debug_assert_eq!(firing.len(), 32);
 
-        izip!(firing.iter(), lasers.borrow().iter(), 0..)
-            .enumerate()
-            .map(move |(channel_idx, (channel, laser_params, laser_id))| {
+        izip!(firing.iter(), lasers.iter(), 0..).enumerate().map(
+            move |(channel_idx, (channel, laser_params, laser_id))| {
                 let timestamp = lower_timestamp + channel_period * (channel_idx / 2) as f64;
                 let ratio: F64Ratio = channel_period * (channel_idx / 2) as f64 / firing_period;
                 let LaserParameter {
@@ -522,7 +516,8 @@ where
                         position,
                     },
                 }
-            })
+            },
+        )
     })
     .collect::<Vec<_>>()
 }

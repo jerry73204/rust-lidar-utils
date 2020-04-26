@@ -16,15 +16,14 @@ use super::{
     packet::ReturnMode,
 };
 use failure::{ensure, Fallible};
-use generic_array::GenericArray;
 use itertools::izip;
 use serde::{Deserialize, Serialize};
 use std::{
     fs::File,
     io::{prelude::*, BufReader},
+    mem::MaybeUninit,
     path::Path,
 };
-use typenum::{U16, U32};
 use uom::si::{
     angle::degree,
     f64::{Angle as F64Angle, Length as F64Length},
@@ -38,7 +37,7 @@ where
     Model: ModelMarker,
     ReturnType: ReturnTypeMarker,
 {
-    pub lasers: GenericArray<LaserParameter, Model::ParamSize>,
+    pub lasers: Model::ParamArray,
     pub return_type: ReturnType,
     pub distance_resolution: F64Length,
 }
@@ -56,84 +55,100 @@ pub struct LaserParameter {
 pub struct ConfigBuilder {}
 
 impl ConfigBuilder {
-    fn vlp_16_laser_params() -> GenericArray<LaserParameter, U16> {
+    fn vlp_16_laser_params() -> [LaserParameter; 16] {
+        let mut params: [MaybeUninit<LaserParameter>; 16] =
+            unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
+            params.iter_mut(),
             VLP_16_ELEVAION_DEGREES.iter(),
             VLP_16_VERTICAL_OFFSETS.iter(),
             VLP_16_HORIZONTAL_OFFSETS.iter(),
             VLP_16_AZIMUTH_OFFSETS.iter(),
         )
-        .map(
-            |(elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
-                LaserParameter {
+        .for_each(
+            |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
+                *param = MaybeUninit::new(LaserParameter {
                     elevation_angle: F64Angle::new::<degree>(*elevation_angle),
                     vertical_offset: F64Length::new::<millimeter>(*vertical_offset),
                     horizontal_offset: F64Length::new::<millimeter>(*horizontal_offset),
                     azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
-                }
+                });
             },
-        )
-        .collect()
+        );
+
+        unsafe { std::mem::transmute::<_, [LaserParameter; 16]>(params) }
     }
 
-    fn puck_hires_laser_params() -> GenericArray<LaserParameter, U16> {
+    fn puck_hires_laser_params() -> [LaserParameter; 16] {
+        let mut params: [MaybeUninit<LaserParameter>; 16] =
+            unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
+            params.iter_mut(),
             PUCK_HIRES_ELEVAION_DEGREES.iter(),
             PUCK_HIRES_VERTICAL_OFFSETS.iter(),
             PUCK_HIRES_HORIZONTAL_OFFSETS.iter(),
             PUCK_HIRES_AZIMUTH_OFFSETS.iter(),
         )
-        .map(
-            |(elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
-                LaserParameter {
+        .for_each(
+            |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
+                *param = MaybeUninit::new(LaserParameter {
                     elevation_angle: F64Angle::new::<degree>(*elevation_angle),
                     vertical_offset: F64Length::new::<millimeter>(*vertical_offset),
                     horizontal_offset: F64Length::new::<millimeter>(*horizontal_offset),
                     azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
-                }
+                });
             },
-        )
-        .collect()
+        );
+
+        unsafe { std::mem::transmute::<_, [LaserParameter; 16]>(params) }
     }
 
-    fn puck_lite_laser_params() -> GenericArray<LaserParameter, U16> {
+    fn puck_lite_laser_params() -> [LaserParameter; 16] {
+        let mut params: [MaybeUninit<LaserParameter>; 16] =
+            unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
+            params.iter_mut(),
             PUCK_LITE_ELEVAION_DEGREES.iter(),
             PUCK_LITE_VERTICAL_OFFSETS.iter(),
             PUCK_LITE_HORIZONTAL_OFFSETS.iter(),
             PUCK_LITE_AZIMUTH_OFFSETS.iter(),
         )
-        .map(
-            |(elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
-                LaserParameter {
+        .for_each(
+            |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
+                *param = MaybeUninit::new(LaserParameter {
                     elevation_angle: F64Angle::new::<degree>(*elevation_angle),
                     vertical_offset: F64Length::new::<millimeter>(*vertical_offset),
                     horizontal_offset: F64Length::new::<millimeter>(*horizontal_offset),
                     azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
-                }
+                });
             },
-        )
-        .collect()
+        );
+
+        unsafe { std::mem::transmute::<_, [LaserParameter; 16]>(params) }
     }
 
-    fn vlp_32c_laser_params() -> GenericArray<LaserParameter, U32> {
+    fn vlp_32c_laser_params() -> [LaserParameter; 32] {
+        let mut params: [MaybeUninit<LaserParameter>; 32] =
+            unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
+            params.iter_mut(),
             VLP_32C_ELEVAION_DEGREES.iter(),
             VLP_32C_VERTICAL_OFFSETS.iter(),
             VLP_32C_HORIZONTAL_OFFSETS.iter(),
             VLP_32C_AZIMUTH_OFFSETS.iter(),
         )
-        .map(
-            |(elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
-                LaserParameter {
+        .for_each(
+            |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
+                *param = MaybeUninit::new(LaserParameter {
                     elevation_angle: F64Angle::new::<degree>(*elevation_angle),
                     vertical_offset: F64Length::new::<millimeter>(*vertical_offset),
                     horizontal_offset: F64Length::new::<millimeter>(*horizontal_offset),
                     azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
-                }
+                });
             },
-        )
-        .collect()
+        );
+
+        unsafe { std::mem::transmute::<_, [LaserParameter; 32]>(params) }
     }
 
     pub fn vlp_16_last_return() -> Config<Vlp16, LastReturn> {
