@@ -30,6 +30,9 @@ use uom::si::{
     length::millimeter,
 };
 
+pub type Vlp16Config<ReturnType> = Config<Vlp16, ReturnType>;
+pub type Vlp32Config<ReturnType> = Config<Vlp32, ReturnType>;
+
 /// Config type for Velodyne LiDARs.
 #[derive(Debug, Clone)]
 pub struct Config<Model, ReturnType>

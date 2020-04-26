@@ -1,6 +1,6 @@
 //! It provides the point cloud converter along with utility types.
 
-mod context;
+pub mod context;
 mod converter;
 mod data;
 mod impls;
