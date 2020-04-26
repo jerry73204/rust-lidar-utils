@@ -33,7 +33,7 @@ pcap = "^0.7.0"
 toml = "^0.5.5"
 
 [features]
-enable-pcap = ["pcap"]
+with-pcap = ["pcap"]
 ouster-api-test = []
 ouster-test = []
 velodyne-test = []

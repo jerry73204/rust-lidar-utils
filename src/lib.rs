@@ -6,7 +6,7 @@
 //! - Velodyne Puke Lite
 //! - Velodyne Puke Hi-Res
 
-#[cfg(feature = "enable-pcap")]
+#[cfg(feature = "with-pcap")]
 extern crate pcap;
 
 mod common;

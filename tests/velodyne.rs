@@ -9,7 +9,7 @@ use lidar_utils::velodyne::{
 use pcap::Capture;
 
 #[test]
-#[cfg(feature = "enable-pcap")]
+#[cfg(feature = "with-pcap")]
 fn velodyne_vlp_16_pcap_file() -> Fallible<()> {
     let mut packets = vec![];
 
@@ -36,7 +36,7 @@ fn velodyne_vlp_16_pcap_file() -> Fallible<()> {
 }
 
 #[test]
-#[cfg(feature = "enable-pcap")]
+#[cfg(feature = "with-pcap")]
 fn velodyne_vlp_16_scan() -> Fallible<()> {
     let config = ConfigBuilder::vlp_16_strongest_return();
     let mut converter = PointCloudConverter::from_config(config);
@@ -75,7 +75,7 @@ fn velodyne_vlp_16_scan() -> Fallible<()> {
 }
 
 #[test]
-#[cfg(feature = "enable-pcap")]
+#[cfg(feature = "with-pcap")]
 fn velodyne_vlp_32_pcap_file() -> Fallible<()> {
     let mut packets = vec![];
 
@@ -104,7 +104,7 @@ fn velodyne_vlp_32_pcap_file() -> Fallible<()> {
 }
 
 #[test]
-#[cfg(feature = "enable-pcap")]
+#[cfg(feature = "with-pcap")]
 fn velodyne_vlp_32c_scan() -> Fallible<()> {
     let config = ConfigBuilder::vlp_32c_strongest_return();
     let mut converter = PointCloudConverter::from_config(config);
