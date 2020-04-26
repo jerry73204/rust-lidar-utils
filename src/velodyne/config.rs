@@ -9,11 +9,14 @@ use super::{
         VLP_32C_AZIMUTH_OFFSETS, VLP_32C_ELEVAION_DEGREES, VLP_32C_HORIZONTAL_OFFSETS,
         VLP_32C_VERTICAL_OFFSETS,
     },
-    marker::{DualReturn, DynamicReturn, LastReturn, ReturnTypeMarker, StrongestReturn},
+    marker::{
+        DualReturn, DynamicReturn, LastReturn, ModelMarker, ReturnTypeMarker, StrongestReturn,
+        Vlp16, Vlp32,
+    },
     packet::ReturnMode,
 };
 use failure::{ensure, Fallible};
-use generic_array::{ArrayLength, GenericArray};
+use generic_array::GenericArray;
 use itertools::izip;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -30,12 +33,12 @@ use uom::si::{
 
 /// Config type for Velodyne LiDARs.
 #[derive(Debug, Clone)]
-pub struct Config<Size, ReturnType>
+pub struct Config<Model, ReturnType>
 where
-    Size: ArrayLength<LaserParameter>,
+    Model: ModelMarker,
     ReturnType: ReturnTypeMarker,
 {
-    pub lasers: GenericArray<LaserParameter, Size>,
+    pub lasers: GenericArray<LaserParameter, Model::ParamSize>,
     pub return_type: ReturnType,
     pub distance_resolution: F64Length,
 }
@@ -133,7 +136,7 @@ impl ConfigBuilder {
         .collect()
     }
 
-    pub fn vlp_16_last_return() -> Config<U16, LastReturn> {
+    pub fn vlp_16_last_return() -> Config<Vlp16, LastReturn> {
         Config {
             lasers: Self::vlp_16_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(2.0),
@@ -141,7 +144,7 @@ impl ConfigBuilder {
         }
     }
 
-    pub fn vlp_16_strongest_return() -> Config<U16, StrongestReturn> {
+    pub fn vlp_16_strongest_return() -> Config<Vlp16, StrongestReturn> {
         Config {
             lasers: Self::vlp_16_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(2.0),
@@ -149,7 +152,7 @@ impl ConfigBuilder {
         }
     }
 
-    pub fn vlp_16_dual_return() -> Config<U16, DualReturn> {
+    pub fn vlp_16_dual_return() -> Config<Vlp16, DualReturn> {
         Config {
             lasers: Self::vlp_16_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(2.0),
@@ -157,7 +160,7 @@ impl ConfigBuilder {
         }
     }
 
-    pub fn vlp_16_dynamic_return(return_mode: ReturnMode) -> Config<U16, DynamicReturn> {
+    pub fn vlp_16_dynamic_return(return_mode: ReturnMode) -> Config<Vlp16, DynamicReturn> {
         Config {
             lasers: Self::vlp_16_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(2.0),
@@ -165,7 +168,7 @@ impl ConfigBuilder {
         }
     }
 
-    pub fn puck_hires_last_return() -> Config<U16, LastReturn> {
+    pub fn puck_hires_last_return() -> Config<Vlp16, LastReturn> {
         Config {
             lasers: Self::puck_hires_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(2.0),
@@ -173,7 +176,7 @@ impl ConfigBuilder {
         }
     }
 
-    pub fn puck_hires_strongest_return() -> Config<U16, StrongestReturn> {
+    pub fn puck_hires_strongest_return() -> Config<Vlp16, StrongestReturn> {
         Config {
             lasers: Self::puck_hires_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(2.0),
@@ -181,7 +184,7 @@ impl ConfigBuilder {
         }
     }
 
-    pub fn puck_hires_dual_return() -> Config<U16, DualReturn> {
+    pub fn puck_hires_dual_return() -> Config<Vlp16, DualReturn> {
         Config {
             lasers: Self::puck_hires_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(2.0),
@@ -189,7 +192,7 @@ impl ConfigBuilder {
         }
     }
 
-    pub fn puck_hires_dynamic_return(return_mode: ReturnMode) -> Config<U16, DynamicReturn> {
+    pub fn puck_hires_dynamic_return(return_mode: ReturnMode) -> Config<Vlp16, DynamicReturn> {
         Config {
             lasers: Self::puck_hires_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(2.0),
@@ -197,7 +200,7 @@ impl ConfigBuilder {
         }
     }
 
-    pub fn puck_lite_last_return() -> Config<U16, LastReturn> {
+    pub fn puck_lite_last_return() -> Config<Vlp16, LastReturn> {
         Config {
             lasers: Self::puck_lite_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(2.0),
@@ -205,7 +208,7 @@ impl ConfigBuilder {
         }
     }
 
-    pub fn puck_lite_strongest_return() -> Config<U16, StrongestReturn> {
+    pub fn puck_lite_strongest_return() -> Config<Vlp16, StrongestReturn> {
         Config {
             lasers: Self::puck_lite_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(2.0),
@@ -213,7 +216,7 @@ impl ConfigBuilder {
         }
     }
 
-    pub fn puck_lite_dual_return() -> Config<U16, DualReturn> {
+    pub fn puck_lite_dual_return() -> Config<Vlp16, DualReturn> {
         Config {
             lasers: Self::puck_lite_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(2.0),
@@ -221,7 +224,7 @@ impl ConfigBuilder {
         }
     }
 
-    pub fn puck_lite_dynamic_return(return_mode: ReturnMode) -> Config<U16, DynamicReturn> {
+    pub fn puck_lite_dynamic_return(return_mode: ReturnMode) -> Config<Vlp16, DynamicReturn> {
         Config {
             lasers: Self::puck_lite_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(2.0),
@@ -229,7 +232,7 @@ impl ConfigBuilder {
         }
     }
 
-    pub fn vlp_32c_last_return() -> Config<U32, LastReturn> {
+    pub fn vlp_32c_last_return() -> Config<Vlp32, LastReturn> {
         Config {
             lasers: Self::vlp_32c_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(4.0),
@@ -237,7 +240,7 @@ impl ConfigBuilder {
         }
     }
 
-    pub fn vlp_32c_strongest_return() -> Config<U32, StrongestReturn> {
+    pub fn vlp_32c_strongest_return() -> Config<Vlp32, StrongestReturn> {
         Config {
             lasers: Self::vlp_32c_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(4.0),
@@ -245,7 +248,7 @@ impl ConfigBuilder {
         }
     }
 
-    pub fn vlp_32c_dual_return() -> Config<U32, DualReturn> {
+    pub fn vlp_32c_dual_return() -> Config<Vlp32, DualReturn> {
         Config {
             lasers: Self::vlp_32c_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(4.0),
@@ -253,7 +256,7 @@ impl ConfigBuilder {
         }
     }
 
-    pub fn vlp_32c_dynamic_return(return_mode: ReturnMode) -> Config<U32, DynamicReturn> {
+    pub fn vlp_32c_dynamic_return(return_mode: ReturnMode) -> Config<Vlp32, DynamicReturn> {
         Config {
             lasers: Self::vlp_32c_laser_params(),
             distance_resolution: F64Length::new::<millimeter>(4.0),
@@ -325,21 +328,21 @@ mod tests {
 
     #[test]
     fn buildin_config_test() -> Fallible<()> {
-        let _: Config<U16, LastReturn> = ConfigBuilder::vlp_16_last_return();
-        let _: Config<U16, StrongestReturn> = ConfigBuilder::vlp_16_strongest_return();
-        let _: Config<U16, DualReturn> = ConfigBuilder::vlp_16_dual_return();
+        let _: Config<Vlp16, LastReturn> = ConfigBuilder::vlp_16_last_return();
+        let _: Config<Vlp16, StrongestReturn> = ConfigBuilder::vlp_16_strongest_return();
+        let _: Config<Vlp16, DualReturn> = ConfigBuilder::vlp_16_dual_return();
 
-        let _: Config<U16, LastReturn> = ConfigBuilder::puck_hires_last_return();
-        let _: Config<U16, StrongestReturn> = ConfigBuilder::puck_hires_strongest_return();
-        let _: Config<U16, DualReturn> = ConfigBuilder::puck_hires_dual_return();
+        let _: Config<Vlp16, LastReturn> = ConfigBuilder::puck_hires_last_return();
+        let _: Config<Vlp16, StrongestReturn> = ConfigBuilder::puck_hires_strongest_return();
+        let _: Config<Vlp16, DualReturn> = ConfigBuilder::puck_hires_dual_return();
 
-        let _: Config<U16, LastReturn> = ConfigBuilder::puck_lite_last_return();
-        let _: Config<U16, StrongestReturn> = ConfigBuilder::puck_lite_strongest_return();
-        let _: Config<U16, DualReturn> = ConfigBuilder::puck_lite_dual_return();
+        let _: Config<Vlp16, LastReturn> = ConfigBuilder::puck_lite_last_return();
+        let _: Config<Vlp16, StrongestReturn> = ConfigBuilder::puck_lite_strongest_return();
+        let _: Config<Vlp16, DualReturn> = ConfigBuilder::puck_lite_dual_return();
 
-        let _: Config<U32, LastReturn> = ConfigBuilder::vlp_32c_last_return();
-        let _: Config<U32, StrongestReturn> = ConfigBuilder::vlp_32c_strongest_return();
-        let _: Config<U32, DualReturn> = ConfigBuilder::vlp_32c_dual_return();
+        let _: Config<Vlp32, LastReturn> = ConfigBuilder::vlp_32c_last_return();
+        let _: Config<Vlp32, StrongestReturn> = ConfigBuilder::vlp_32c_strongest_return();
+        let _: Config<Vlp32, DualReturn> = ConfigBuilder::vlp_32c_dual_return();
 
         Ok(())
     }

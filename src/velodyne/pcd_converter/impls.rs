@@ -5,7 +5,7 @@ use super::{
 use crate::velodyne::{
     config::LaserParameter,
     consts::{CHANNEL_PERIOD, FIRING_PERIOD},
-    marker::ReturnTypeMarker,
+    marker::{ReturnTypeMarker, Vlp16, Vlp32},
     packet::{Block, Channel, Packet, ReturnMode},
 };
 use generic_array::GenericArray;
@@ -27,7 +27,7 @@ struct FiringInfo<'a> {
 }
 
 pub(crate) fn convert_single_return_16_channel<PacketType, ReturnType>(
-    context: &mut SingleReturnContext<U16, ReturnType>,
+    context: &mut SingleReturnContext<Vlp16, ReturnType>,
     packet: PacketType,
 ) -> Vec<SingleReturnPoint>
 where
@@ -69,7 +69,7 @@ where
 }
 
 pub(crate) fn convert_dual_return_16_channel<PacketType, ReturnType>(
-    context: &mut DualReturnContext<U16, ReturnType>,
+    context: &mut DualReturnContext<Vlp16, ReturnType>,
     packet: PacketType,
 ) -> Vec<DualReturnPoint>
 where
@@ -172,7 +172,7 @@ where
 }
 
 pub(crate) fn convert_single_return_32_channel<PacketType, ReturnType>(
-    context: &mut SingleReturnContext<U32, ReturnType>,
+    context: &mut SingleReturnContext<Vlp32, ReturnType>,
     packet: PacketType,
 ) -> Vec<SingleReturnPoint>
 where
@@ -213,7 +213,7 @@ where
 }
 
 pub(crate) fn convert_dual_return_32_channel<PacketType, ReturnType>(
-    context: &mut DualReturnContext<U32, ReturnType>,
+    context: &mut DualReturnContext<Vlp32, ReturnType>,
     packet: PacketType,
 ) -> Vec<DualReturnPoint>
 where

@@ -1,7 +1,9 @@
 //! Marker traits and types that are mainly used by config types.
 
-use super::packet::ReturnMode;
+use super::{config::LaserParameter, packet::ReturnMode};
+use generic_array::ArrayLength;
 use std::fmt::Debug;
+use typenum::{U16, U32};
 
 pub trait ReturnTypeMarker
 where
@@ -41,4 +43,25 @@ impl From<ReturnMode> for DynamicReturn {
             ReturnMode::DualReturn => DynamicReturn::DualReturn,
         }
     }
+}
+
+pub trait ModelMarker
+where
+    Self::ParamSize: ArrayLength<LaserParameter>,
+{
+    type ParamSize;
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Vlp16;
+
+impl ModelMarker for Vlp16 {
+    type ParamSize = U16;
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Vlp32;
+
+impl ModelMarker for Vlp32 {
+    type ParamSize = U32;
 }

@@ -4,10 +4,12 @@
 use super::data::{DualReturnPoint, DynamicReturnPoint, SingleReturnPoint};
 use crate::velodyne::{
     config::{Config, LaserParameter},
-    marker::{DualReturn, DynamicReturn, LastReturn, ReturnTypeMarker, StrongestReturn},
+    marker::{
+        DualReturn, DynamicReturn, LastReturn, ModelMarker, ReturnTypeMarker, StrongestReturn,
+    },
     packet::Block,
 };
-use generic_array::{ArrayLength, GenericArray};
+use generic_array::GenericArray;
 use std::marker::PhantomData;
 use uom::si::f64::{Length as F64Length, Time as F64Time};
 
@@ -17,22 +19,22 @@ pub trait ConverterContext {
 }
 
 /// Context for last or strongest return mode.
-pub struct SingleReturnContext<Size, ReturnType>
+pub struct SingleReturnContext<Model, ReturnType>
 where
-    Size: ArrayLength<LaserParameter>,
+    Model: ModelMarker,
     ReturnType: ReturnTypeMarker,
 {
-    pub lasers: GenericArray<LaserParameter, Size>,
+    pub lasers: GenericArray<LaserParameter, Model::ParamSize>,
     pub distance_resolution: F64Length,
     pub last_block: Option<(F64Time, Block)>,
     _phantom: PhantomData<ReturnType>,
 }
 
-impl<Size> From<Config<Size, LastReturn>> for SingleReturnContext<Size, LastReturn>
+impl<Model> From<Config<Model, LastReturn>> for SingleReturnContext<Model, LastReturn>
 where
-    Size: ArrayLength<LaserParameter>,
+    Model: ModelMarker,
 {
-    fn from(config: Config<Size, LastReturn>) -> Self {
+    fn from(config: Config<Model, LastReturn>) -> Self {
         let Config {
             lasers,
             distance_resolution,
@@ -48,11 +50,11 @@ where
     }
 }
 
-impl<Size> From<Config<Size, StrongestReturn>> for SingleReturnContext<Size, StrongestReturn>
+impl<Model> From<Config<Model, StrongestReturn>> for SingleReturnContext<Model, StrongestReturn>
 where
-    Size: ArrayLength<LaserParameter>,
+    Model: ModelMarker,
 {
-    fn from(config: Config<Size, StrongestReturn>) -> Self {
+    fn from(config: Config<Model, StrongestReturn>) -> Self {
         let Config {
             lasers,
             distance_resolution,
@@ -68,31 +70,31 @@ where
     }
 }
 
-impl<Size, ReturnType> ConverterContext for SingleReturnContext<Size, ReturnType>
+impl<Model, ReturnType> ConverterContext for SingleReturnContext<Model, ReturnType>
 where
-    Size: ArrayLength<LaserParameter>,
+    Model: ModelMarker,
     ReturnType: ReturnTypeMarker,
 {
     type OutputPoint = SingleReturnPoint;
 }
 
 /// Context for dual return mode.
-pub struct DualReturnContext<Size, ReturnType>
+pub struct DualReturnContext<Model, ReturnType>
 where
-    Size: ArrayLength<LaserParameter>,
+    Model: ModelMarker,
     ReturnType: ReturnTypeMarker,
 {
-    pub lasers: GenericArray<LaserParameter, Size>,
+    pub lasers: GenericArray<LaserParameter, Model::ParamSize>,
     pub distance_resolution: F64Length,
     pub last_block: Option<(F64Time, Block, Block)>,
     _phantom: PhantomData<ReturnType>,
 }
 
-impl<Size> From<Config<Size, DualReturn>> for DualReturnContext<Size, DualReturn>
+impl<Model> From<Config<Model, DualReturn>> for DualReturnContext<Model, DualReturn>
 where
-    Size: ArrayLength<LaserParameter>,
+    Model: ModelMarker,
 {
-    fn from(config: Config<Size, DualReturn>) -> Self {
+    fn from(config: Config<Model, DualReturn>) -> Self {
         let Config {
             lasers,
             distance_resolution,
@@ -108,19 +110,19 @@ where
     }
 }
 
-impl<Size, ReturnType> ConverterContext for DualReturnContext<Size, ReturnType>
+impl<Model, ReturnType> ConverterContext for DualReturnContext<Model, ReturnType>
 where
-    Size: ArrayLength<LaserParameter>,
+    Model: ModelMarker,
     ReturnType: ReturnTypeMarker,
 {
     type OutputPoint = DualReturnPoint;
 }
 
-impl<Size> From<Config<Size, DynamicReturn>> for DynamicReturnContext<Size, DynamicReturn>
+impl<Model> From<Config<Model, DynamicReturn>> for DynamicReturnContext<Model, DynamicReturn>
 where
-    Size: ArrayLength<LaserParameter>,
+    Model: ModelMarker,
 {
-    fn from(config: Config<Size, DynamicReturn>) -> Self {
+    fn from(config: Config<Model, DynamicReturn>) -> Self {
         let Config {
             lasers,
             distance_resolution,
@@ -147,18 +149,18 @@ where
 }
 
 /// Context for dynamically configured return mode.
-pub enum DynamicReturnContext<Size, ReturnType>
+pub enum DynamicReturnContext<Model, ReturnType>
 where
-    Size: ArrayLength<LaserParameter>,
+    Model: ModelMarker,
     ReturnType: ReturnTypeMarker,
 {
-    SingleReturn(SingleReturnContext<Size, ReturnType>),
-    DualReturn(DualReturnContext<Size, ReturnType>),
+    SingleReturn(SingleReturnContext<Model, ReturnType>),
+    DualReturn(DualReturnContext<Model, ReturnType>),
 }
 
-impl<Size, ReturnType> ConverterContext for DynamicReturnContext<Size, ReturnType>
+impl<Model, ReturnType> ConverterContext for DynamicReturnContext<Model, ReturnType>
 where
-    Size: ArrayLength<LaserParameter>,
+    Model: ModelMarker,
     ReturnType: ReturnTypeMarker,
 {
     type OutputPoint = DynamicReturnPoint;
@@ -171,30 +173,30 @@ where
     type Context;
 }
 
-impl<Size> ToConverterContext for Config<Size, LastReturn>
+impl<Model> ToConverterContext for Config<Model, LastReturn>
 where
-    Size: ArrayLength<LaserParameter>,
+    Model: ModelMarker,
 {
-    type Context = SingleReturnContext<Size, LastReturn>;
+    type Context = SingleReturnContext<Model, LastReturn>;
 }
 
-impl<Size> ToConverterContext for Config<Size, StrongestReturn>
+impl<Model> ToConverterContext for Config<Model, StrongestReturn>
 where
-    Size: ArrayLength<LaserParameter>,
+    Model: ModelMarker,
 {
-    type Context = SingleReturnContext<Size, StrongestReturn>;
+    type Context = SingleReturnContext<Model, StrongestReturn>;
 }
 
-impl<Size> ToConverterContext for Config<Size, DualReturn>
+impl<Model> ToConverterContext for Config<Model, DualReturn>
 where
-    Size: ArrayLength<LaserParameter>,
+    Model: ModelMarker,
 {
-    type Context = DualReturnContext<Size, DualReturn>;
+    type Context = DualReturnContext<Model, DualReturn>;
 }
 
-impl<Size> ToConverterContext for Config<Size, DynamicReturn>
+impl<Model> ToConverterContext for Config<Model, DynamicReturn>
 where
-    Size: ArrayLength<LaserParameter>,
+    Model: ModelMarker,
 {
-    type Context = DynamicReturnContext<Size, DynamicReturn>;
+    type Context = DynamicReturnContext<Model, DynamicReturn>;
 }
