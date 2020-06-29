@@ -3,7 +3,7 @@
 use super::consts::{COLUMNS_PER_PACKET, ENCODER_TICKS_PER_REV, PIXELS_PER_COLUMN};
 use chrono::NaiveDateTime;
 use failure::{ensure, Fallible};
-#[cfg(feature = "enable-pcap")]
+#[cfg(feature = "pcap")]
 use pcap::Packet as PcapPacket;
 use std::{
     fmt::{Debug, Formatter, Result as FormatResult},
@@ -158,7 +158,7 @@ pub struct Packet {
 
 impl Packet {
     /// Construct packet from [pcap's Packet](pcap::Packet).
-    #[cfg(feature = "enable-pcap")]
+    #[cfg(feature = "pcap")]
     pub fn from_pcap(packet: &PcapPacket) -> Fallible<Packet> {
         let packet_header_size = 42;
 

@@ -8,7 +8,7 @@ use lidar_utils::ouster::{
 use pcap::Capture;
 
 #[test]
-#[cfg(feature = "enable-pcap")]
+#[cfg(feature = "pcap")]
 fn ouster_create_packet() -> Fallible<()> {
     let mut packets = vec![];
 
@@ -34,7 +34,7 @@ fn ouster_create_packet() -> Fallible<()> {
 }
 
 #[test]
-#[cfg(feature = "enable-pcap")]
+#[cfg(feature = "pcap")]
 fn ouster_pcd_converter() -> Fallible<()> {
     // Load config
     let config = Config::from_path("test_files/ouster_example.json")?;
@@ -54,7 +54,7 @@ fn ouster_pcd_converter() -> Fallible<()> {
 }
 
 #[test]
-#[cfg(feature = "enable-pcap")]
+#[cfg(feature = "pcap")]
 fn ouster_frame_converter() -> Fallible<()> {
     // Load config
     let config = Config::from_path("test_files/ouster_example.json")?;
