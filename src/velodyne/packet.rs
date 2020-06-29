@@ -4,7 +4,7 @@ use super::consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK
 
 use chrono::NaiveDateTime;
 use failure::{ensure, Fallible};
-#[cfg(feature = "with-pcap")]
+#[cfg(feature = "pcap")]
 use pcap::Packet as PcapPacket;
 use std::mem::size_of;
 use uom::si::{f64::Time as F64Time, time::microsecond};
@@ -91,7 +91,7 @@ pub struct Packet {
 
 impl Packet {
     /// Construct packet from [pcap::Packet](pcap::Packet).
-    #[cfg(feature = "with-pcap")]
+    #[cfg(feature = "pcap")]
     pub fn from_pcap(packet: &PcapPacket) -> Fallible<Packet> {
         let packet_header_size = 42;
 
