@@ -23,7 +23,6 @@ itertools = "0.8"
 pcap = { version = "0.7", optional = true }
 uom = { version = "0.26", features = ["u32", "u64", "u16", "si"] }
 num-traits = "0.2"
-typenum = "1.11"
 generic-array = "0.13"
 
 [dev-dependencies]

@@ -11,7 +11,6 @@ use crate::velodyne::{
     packet::{Packet, ReturnMode},
 };
 use anyhow::{ensure, Result};
-use typenum::{U16, U32};
 
 /// An _interface_ trait that is implemented by all variants of [PointCloudConverter]
 pub trait PointCloudConverterInterface<Model, ReturnType>
