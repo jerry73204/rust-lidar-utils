@@ -7,7 +7,7 @@ use crate::velodyne::{
     marker::{DualReturn, DynamicReturn, LastReturn, StrongestReturn},
     packet::{Packet, ReturnMode},
 };
-use failure::{ensure, Fallible};
+use anyhow::{ensure, Result};
 use typenum::{U16, U32};
 
 /// An _interface_ trait that is implemented by all variants of [PointCloudConverter]
@@ -19,7 +19,7 @@ where
     fn convert<P>(
         &mut self,
         packet: P,
-    ) -> Fallible<Vec<<ConfigType::Context as ConverterContext>::OutputPoint>>
+    ) -> Result<Vec<<ConfigType::Context as ConverterContext>::OutputPoint>>
     where
         P: AsRef<Packet>;
 }
@@ -41,11 +41,14 @@ impl PointCloudConverterInterface<Config<U16, StrongestReturn>>
         }
     }
 
-    fn convert<P>(&mut self, packet: P) -> Fallible<Vec<SingleReturnPoint>>
+    fn convert<P>(&mut self, packet: P) -> Result<Vec<SingleReturnPoint>>
     where
         P: AsRef<Packet>,
     {
-        ensure!(packet.as_ref().return_mode == ReturnMode::StrongestReturn);
+        ensure!(
+            packet.as_ref().return_mode == ReturnMode::StrongestReturn,
+            "return mode does not match"
+        );
         Ok(super::impls::convert_single_return_16_channel(
             &mut self.context,
             packet,
@@ -62,11 +65,14 @@ impl PointCloudConverterInterface<Config<U16, LastReturn>>
         }
     }
 
-    fn convert<P>(&mut self, packet: P) -> Fallible<Vec<SingleReturnPoint>>
+    fn convert<P>(&mut self, packet: P) -> Result<Vec<SingleReturnPoint>>
     where
         P: AsRef<Packet>,
     {
-        ensure!(packet.as_ref().return_mode == ReturnMode::LastReturn);
+        ensure!(
+            packet.as_ref().return_mode == ReturnMode::LastReturn,
+            "return mode does not match"
+        );
         Ok(super::impls::convert_single_return_16_channel(
             &mut self.context,
             packet,
@@ -83,11 +89,14 @@ impl PointCloudConverterInterface<Config<U16, DualReturn>>
         }
     }
 
-    fn convert<P>(&mut self, packet: P) -> Fallible<Vec<DualReturnPoint>>
+    fn convert<P>(&mut self, packet: P) -> Result<Vec<DualReturnPoint>>
     where
         P: AsRef<Packet>,
     {
-        ensure!(packet.as_ref().return_mode == ReturnMode::DualReturn);
+        ensure!(
+            packet.as_ref().return_mode == ReturnMode::DualReturn,
+            "return mode does not match"
+        );
         Ok(super::impls::convert_dual_return_16_channel(
             &mut self.context,
             packet,
@@ -104,7 +113,7 @@ impl PointCloudConverterInterface<Config<U16, DynamicReturn>>
         }
     }
 
-    fn convert<P>(&mut self, packet: P) -> Fallible<Vec<DynamicReturnPoint>>
+    fn convert<P>(&mut self, packet: P) -> Result<Vec<DynamicReturnPoint>>
     where
         P: AsRef<Packet>,
     {
@@ -136,11 +145,14 @@ impl PointCloudConverterInterface<Config<U32, StrongestReturn>>
         }
     }
 
-    fn convert<P>(&mut self, packet: P) -> Fallible<Vec<SingleReturnPoint>>
+    fn convert<P>(&mut self, packet: P) -> Result<Vec<SingleReturnPoint>>
     where
         P: AsRef<Packet>,
     {
-        ensure!(packet.as_ref().return_mode == ReturnMode::StrongestReturn);
+        ensure!(
+            packet.as_ref().return_mode == ReturnMode::StrongestReturn,
+            "return mode does not match"
+        );
         Ok(super::impls::convert_single_return_32_channel(
             &mut self.context,
             packet,
@@ -157,11 +169,14 @@ impl PointCloudConverterInterface<Config<U32, LastReturn>>
         }
     }
 
-    fn convert<P>(&mut self, packet: P) -> Fallible<Vec<SingleReturnPoint>>
+    fn convert<P>(&mut self, packet: P) -> Result<Vec<SingleReturnPoint>>
     where
         P: AsRef<Packet>,
     {
-        ensure!(packet.as_ref().return_mode == ReturnMode::LastReturn);
+        ensure!(
+            packet.as_ref().return_mode == ReturnMode::LastReturn,
+            "return mode does not match"
+        );
         Ok(super::impls::convert_single_return_32_channel(
             &mut self.context,
             packet,
@@ -178,11 +193,14 @@ impl PointCloudConverterInterface<Config<U32, DualReturn>>
         }
     }
 
-    fn convert<P>(&mut self, packet: P) -> Fallible<Vec<DualReturnPoint>>
+    fn convert<P>(&mut self, packet: P) -> Result<Vec<DualReturnPoint>>
     where
         P: AsRef<Packet>,
     {
-        ensure!(packet.as_ref().return_mode == ReturnMode::DualReturn);
+        ensure!(
+            packet.as_ref().return_mode == ReturnMode::DualReturn,
+            "return mode does not match"
+        );
         Ok(super::impls::convert_dual_return_32_channel(
             &mut self.context,
             packet,
@@ -199,7 +217,7 @@ impl PointCloudConverterInterface<Config<U32, DynamicReturn>>
         }
     }
 
-    fn convert<P>(&mut self, packet: P) -> Fallible<Vec<DynamicReturnPoint>>
+    fn convert<P>(&mut self, packet: P) -> Result<Vec<DynamicReturnPoint>>
     where
         P: AsRef<Packet>,
     {

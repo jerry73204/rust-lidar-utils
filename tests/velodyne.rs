@@ -1,6 +1,6 @@
 #![cfg(feature = "velodyne-test")]
 
-use failure::{ensure, Fallible};
+use anyhow::Result;
 use lidar_utils::velodyne::{
     config::ConfigBuilder,
     packet::Packet as VelodynePacket,
@@ -10,7 +10,7 @@ use pcap::Capture;
 
 #[test]
 #[cfg(feature = "pcap")]
-fn velodyne_vlp_16_pcap_file() -> Fallible<()> {
+fn velodyne_vlp_16_pcap_file() -> Result<()> {
     let mut packets = vec![];
 
     let mut cap = Capture::from_file("test_files/velodyne_example.pcap")?;
@@ -37,7 +37,7 @@ fn velodyne_vlp_16_pcap_file() -> Fallible<()> {
 
 #[test]
 #[cfg(feature = "pcap")]
-fn velodyne_vlp_16_scan() -> Fallible<()> {
+fn velodyne_vlp_16_scan() -> Result<()> {
     let config = ConfigBuilder::vlp_16_strongest_return();
     let mut converter = PointCloudConverter::from_config(config);
 
@@ -54,7 +54,7 @@ fn velodyne_vlp_16_scan() -> Fallible<()> {
         for point in converter.convert(lidar_packet)?.into_iter() {
             let curr_timestamp = point.timestamp();
             if let Some(prev) = prev_timestamp {
-                ensure!(curr_timestamp > prev, "Points are not ordered by timestamp");
+                assert!(curr_timestamp > prev, "Points are not ordered by timestamp");
             }
             prev_timestamp = Some(curr_timestamp);
 
@@ -76,7 +76,7 @@ fn velodyne_vlp_16_scan() -> Fallible<()> {
 
 #[test]
 #[cfg(feature = "pcap")]
-fn velodyne_vlp_32_pcap_file() -> Fallible<()> {
+fn velodyne_vlp_32_pcap_file() -> Result<()> {
     let mut packets = vec![];
 
     let mut cap = Capture::from_file("test_files/hdl32_example.pcap")?;
@@ -105,7 +105,7 @@ fn velodyne_vlp_32_pcap_file() -> Fallible<()> {
 
 #[test]
 #[cfg(feature = "pcap")]
-fn velodyne_vlp_32c_scan() -> Fallible<()> {
+fn velodyne_vlp_32c_scan() -> Result<()> {
     let config = ConfigBuilder::vlp_32c_strongest_return();
     let mut converter = PointCloudConverter::from_config(config);
 

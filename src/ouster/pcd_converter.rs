@@ -6,7 +6,7 @@ use super::{
     packet::{Column, Packet},
 };
 use crate::common::spherical_to_xyz;
-use failure::{ensure, Fallible};
+use anyhow::{ensure, Result};
 use itertools::izip;
 use uom::si::{
     angle::radian,
@@ -85,7 +85,7 @@ impl PointCloudConverter {
     ///
     /// The method takes [Column.measurement_id](Column.measurement_id) as column index.
     /// It returns error if the index is out of bound.
-    pub(crate) fn column_to_points(&self, column: &Column) -> Fallible<Vec<Point>> {
+    pub(crate) fn column_to_points(&self, column: &Column) -> Result<Vec<Point>> {
         // sanity check
         let col_index = column.measurement_id;
         ensure!(
@@ -136,7 +136,7 @@ impl PointCloudConverter {
     }
 
     /// Compute point positions from a packet.
-    pub fn convert<P>(&self, packet: P) -> Fallible<Vec<Point>>
+    pub fn convert<P>(&self, packet: P) -> Result<Vec<Point>>
     where
         P: AsRef<Packet>,
     {
@@ -145,7 +145,7 @@ impl PointCloudConverter {
             .columns
             .iter()
             .map(|col| self.column_to_points(col))
-            .collect::<Fallible<Vec<_>>>()?
+            .collect::<Result<Vec<_>>>()?
             .into_iter()
             .flat_map(|points| points)
             .collect::<Vec<_>>();

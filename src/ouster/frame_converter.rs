@@ -6,7 +6,7 @@ use super::{
     packet::{Column, Packet},
     pcd_converter::{Point, PointCloudConverter},
 };
-use failure::{format_err, Fallible};
+use anyhow::{format_err, Result};
 use std::{cmp::Ordering, ops::Range};
 
 /// A frame is a collection of points gathered in one
@@ -58,7 +58,7 @@ impl FrameConverter {
     }
 
     /// Pushes new [Column] to converter.
-    pub fn push_column(&mut self, column: &Column) -> Fallible<Vec<Frame>> {
+    pub fn push_column(&mut self, column: &Column) -> Result<Vec<Frame>> {
         let curr_fid = column.frame_id;
         let curr_mid = column.measurement_id;
         let curr_ts = column.timestamp;
@@ -212,7 +212,7 @@ impl FrameConverter {
     }
 
     /// Pushes new [Packet] to converter.
-    pub fn push_packet<P>(&mut self, packet: P) -> Fallible<Vec<Frame>>
+    pub fn push_packet<P>(&mut self, packet: P) -> Result<Vec<Frame>>
     where
         P: AsRef<Packet>,
     {

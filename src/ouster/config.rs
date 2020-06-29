@@ -4,8 +4,8 @@ use super::{
     consts::{OS_1_BEAM_ALTITUDE_DEGREES, OS_1_BEAM_AZIMUTH_DEGREE_CORRECTIONS, PIXELS_PER_COLUMN},
     enums::LidarMode,
 };
+use anyhow::Result;
 use derivative::Derivative;
-use failure::Fallible;
 use serde::{Deserialize, Serialize};
 use serde_big_array::big_array;
 use std::{
@@ -47,20 +47,20 @@ impl Config {
     }
 
     /// Loads config JSON file from path.
-    pub fn from_path<P: AsRef<Path>>(path: P) -> Fallible<Config> {
+    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Config> {
         let file = File::open(path.as_ref())?;
         let ret = Self::from_reader(file)?;
         Ok(ret)
     }
 
     /// Loads config JSON data from reader with [Read](std::io::Read) trait.
-    pub fn from_reader<R: Read>(reader: R) -> Fallible<Config> {
+    pub fn from_reader<R: Read>(reader: R) -> Result<Config> {
         let ret = serde_json::de::from_reader(reader)?;
         Ok(ret)
     }
 
     /// Parses from JSON string.
-    pub fn from_json_str(data: &str) -> Fallible<Config> {
+    pub fn from_json_str(data: &str) -> Result<Config> {
         let ret = serde_json::from_str(data)?;
         Ok(ret)
     }
