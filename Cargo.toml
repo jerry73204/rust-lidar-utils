@@ -1,6 +1,6 @@
 [package]
 name = "lidar-utils"
-version = "0.6.0"
+version = "0.6.1"
 authors = ["jerry73204 <jerry73204@gmail.com>"]
 edition = "2018"
 description = "Utilities for Velodyne and Ouster LIDARs"
