@@ -4,8 +4,8 @@ use super::{
     consts::PIXELS_PER_COLUMN,
     enums::{LidarMode, MultipurposeIoMode, NmeaBaudRate, OnOffMode, Polarity, TimestampMode},
 };
+use anyhow::{ensure, format_err, Result};
 use derivative::Derivative;
-use failure::{ensure, format_err, Fallible};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_big_array::big_array;
 use std::{
@@ -185,7 +185,7 @@ pub struct CommandClient {
 }
 
 impl CommandClient {
-    pub fn connect<A>(address: A, timeout: Option<Duration>) -> Fallible<CommandClient>
+    pub fn connect<A>(address: A, timeout: Option<Duration>) -> Result<CommandClient>
     where
         A: ToSocketAddrs,
     {
@@ -199,7 +199,7 @@ impl CommandClient {
         Ok(client)
     }
 
-    pub fn get_config_txt(&mut self) -> Fallible<ConfigText> {
+    pub fn get_config_txt(&mut self) -> Result<ConfigText> {
         self.writer.write_all(b"get_config_txt\n")?;
         let line = self
             .reader
@@ -209,7 +209,7 @@ impl CommandClient {
         Ok(config)
     }
 
-    pub fn get_time_info(&mut self) -> Fallible<TimeInfo> {
+    pub fn get_time_info(&mut self) -> Result<TimeInfo> {
         self.writer.write_all(b"get_time_info\n")?;
         let line = self
             .reader
@@ -219,7 +219,7 @@ impl CommandClient {
         Ok(config)
     }
 
-    pub fn get_lidar_intrinsics(&mut self) -> Fallible<LidarIntrinsics> {
+    pub fn get_lidar_intrinsics(&mut self) -> Result<LidarIntrinsics> {
         self.writer.write_all(b"get_lidar_intrinsics\n")?;
         let line = self
             .reader
@@ -229,7 +229,7 @@ impl CommandClient {
         Ok(config)
     }
 
-    pub fn get_imu_intrinsics(&mut self) -> Fallible<ImuIntrinsics> {
+    pub fn get_imu_intrinsics(&mut self) -> Result<ImuIntrinsics> {
         self.writer.write_all(b"get_imu_intrinsics\n")?;
         let line = self
             .reader
@@ -239,7 +239,7 @@ impl CommandClient {
         Ok(config)
     }
 
-    pub fn get_beam_intrinsics(&mut self) -> Fallible<BeamIntrinsics> {
+    pub fn get_beam_intrinsics(&mut self) -> Result<BeamIntrinsics> {
         self.writer.write_all(b"get_beam_intrinsics\n")?;
         let line = self
             .reader
@@ -249,7 +249,7 @@ impl CommandClient {
         Ok(config)
     }
 
-    pub fn reinitialize(mut self) -> Fallible<()> {
+    pub fn reinitialize(mut self) -> Result<()> {
         self.writer.write_all(b"reinitialize\n")?;
         let line = self
             .reader
@@ -259,7 +259,7 @@ impl CommandClient {
         Ok(())
     }
 
-    pub fn write_config_txt(&mut self) -> Fallible<()> {
+    pub fn write_config_txt(&mut self) -> Result<()> {
         self.writer.write_all(b"write_config_txt\n")?;
         let line = self
             .reader
@@ -269,42 +269,42 @@ impl CommandClient {
         Ok(())
     }
 
-    pub fn set_udp_ip(&mut self, ip: Ipv4Addr) -> Fallible<()> {
+    pub fn set_udp_ip(&mut self, ip: Ipv4Addr) -> Result<()> {
         self.set_config_param("udp_ip", ip)?;
         Ok(())
     }
 
-    pub fn set_udp_port_lidar(&mut self, port: u16) -> Fallible<()> {
+    pub fn set_udp_port_lidar(&mut self, port: u16) -> Result<()> {
         self.set_config_param("udp_port_lidar", port)?;
         Ok(())
     }
 
-    pub fn set_udp_port_imu(&mut self, port: u16) -> Fallible<()> {
+    pub fn set_udp_port_imu(&mut self, port: u16) -> Result<()> {
         self.set_config_param("udp_port_imu", port)?;
         Ok(())
     }
 
-    pub fn set_lidar_mode(&mut self, mode: LidarMode) -> Fallible<()> {
+    pub fn set_lidar_mode(&mut self, mode: LidarMode) -> Result<()> {
         self.set_config_param("lidar_mode", mode)?;
         Ok(())
     }
 
-    pub fn set_timestamp_mode(&mut self, mode: TimestampMode) -> Fallible<()> {
+    pub fn set_timestamp_mode(&mut self, mode: TimestampMode) -> Result<()> {
         self.set_config_param("timestamp_mode", mode)?;
         Ok(())
     }
 
-    pub fn set_sync_pulse_in_polarity(&mut self, polarity: Polarity) -> Fallible<()> {
+    pub fn set_sync_pulse_in_polarity(&mut self, polarity: Polarity) -> Result<()> {
         self.set_config_param("sync_pulse_in_polarity", polarity)?;
         Ok(())
     }
 
-    pub fn set_nmea_in_polarity(&mut self, polarity: Polarity) -> Fallible<()> {
+    pub fn set_nmea_in_polarity(&mut self, polarity: Polarity) -> Result<()> {
         self.set_config_param("nmea_in_polarity", polarity)?;
         Ok(())
     }
 
-    fn set_config_param<T: Display>(&mut self, param: &str, arg: T) -> Fallible<()> {
+    fn set_config_param<T: Display>(&mut self, param: &str, arg: T) -> Result<()> {
         let command = format!("set_config_param {} {}\n", param, arg);
         self.writer.write_all(command.as_bytes())?;
         let line = self

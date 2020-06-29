@@ -2,8 +2,8 @@
 
 use super::consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK};
 
+use anyhow::{ensure, Result};
 use chrono::NaiveDateTime;
-use failure::{ensure, Fallible};
 #[cfg(feature = "pcap")]
 use pcap::Packet as PcapPacket;
 use std::mem::size_of;
@@ -92,7 +92,7 @@ pub struct Packet {
 impl Packet {
     /// Construct packet from [pcap::Packet](pcap::Packet).
     #[cfg(feature = "pcap")]
-    pub fn from_pcap(packet: &PcapPacket) -> Fallible<Packet> {
+    pub fn from_pcap(packet: &PcapPacket) -> Result<Packet> {
         let packet_header_size = 42;
 
         ensure!(
@@ -111,7 +111,7 @@ impl Packet {
     }
 
     /// Construct packet from slice of bytes. Fail if the slice size is not correct.
-    pub fn from_slice<'a>(buffer: &'a [u8]) -> Fallible<&'a Packet> {
+    pub fn from_slice<'a>(buffer: &'a [u8]) -> Result<&'a Packet> {
         ensure!(
             buffer.len() == size_of::<Packet>(),
             "Requre the slice length to be {}, but get {}",

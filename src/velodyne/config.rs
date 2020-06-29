@@ -15,7 +15,7 @@ use super::{
     },
     packet::ReturnMode,
 };
-use failure::{ensure, Fallible};
+use anyhow::{ensure, Result};
 use itertools::izip;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -291,7 +291,7 @@ pub struct ParamsConfig {
 }
 
 impl ParamsConfig {
-    pub fn load<P>(path: P) -> Fallible<Self>
+    pub fn load<P>(path: P) -> Result<Self>
     where
         P: AsRef<Path>,
     {
@@ -300,7 +300,7 @@ impl ParamsConfig {
         Ok(config)
     }
 
-    pub fn from_reader<R>(reader: &mut R) -> Fallible<Self>
+    pub fn from_reader<R>(reader: &mut R) -> Result<Self>
     where
         R: Read,
     {
@@ -310,17 +310,26 @@ impl ParamsConfig {
         Ok(config)
     }
 
-    pub fn from_str(text: &str) -> Fallible<Self> {
+    pub fn from_str(text: &str) -> Result<Self> {
         let config: Self = serde_yaml::from_str(text)?;
-        ensure!(config.distance_resolution > 0.0);
-        ensure!(config.num_lasers == config.lasers.len());
-        ensure!({
-            config
-                .lasers
-                .iter()
-                .enumerate()
-                .all(|(idx, params)| idx == params.laser_id)
-        });
+        ensure!(
+            config.distance_resolution > 0.0,
+            "distance_resolution must be positive"
+        );
+        ensure!(
+            config.num_lasers == config.lasers.len(),
+            "the number of element in lasers field does not match num_layers"
+        );
+        ensure!(
+            {
+                config
+                    .lasers
+                    .iter()
+                    .enumerate()
+                    .all(|(idx, params)| idx == params.laser_id)
+            },
+            "the laser_id in lasers field must be consecutively counted from 1"
+        );
         Ok(config)
     }
 }
@@ -342,10 +351,10 @@ pub struct LaserConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use failure::Fallible;
+    use anyhow::Result;
 
     #[test]
-    fn buildin_config_test() -> Fallible<()> {
+    fn buildin_config_test() -> Result<()> {
         let _: Config<Vlp16, LastReturn> = ConfigBuilder::vlp_16_last_return();
         let _: Config<Vlp16, StrongestReturn> = ConfigBuilder::vlp_16_strongest_return();
         let _: Config<Vlp16, DualReturn> = ConfigBuilder::vlp_16_dual_return();
@@ -366,7 +375,7 @@ mod tests {
     }
 
     #[test]
-    fn load_yaml_params_test() -> Fallible<()> {
+    fn load_yaml_params_test() -> Result<()> {
         ParamsConfig::from_str(include_str!("params/32db.yaml"))?;
         ParamsConfig::from_str(include_str!("params/64e_s2.1-sztaki.yaml"))?;
         ParamsConfig::from_str(include_str!("params/64e_s3-xiesc.yaml"))?;

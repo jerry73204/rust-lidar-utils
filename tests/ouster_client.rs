@@ -1,9 +1,6 @@
 #![cfg(feature = "ouster-api-test")]
 
-extern crate failure;
-extern crate lidar_utils;
-
-use failure::Fallible;
+use anyhow::Result;
 use lidar_utils::ouster::{client::CommandClient, packet::Packet as OusterPacket};
 use log::warn;
 use serde::Deserialize;
@@ -26,7 +23,7 @@ struct OusterClientTestConfig {
 
 // Uncomment to enable test
 #[test]
-fn ouster_client_test() -> Fallible<()> {
+fn ouster_client_test() -> Result<()> {
     let config: OusterClientTestConfig = {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("test_files")

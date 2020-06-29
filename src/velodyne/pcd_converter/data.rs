@@ -1,4 +1,4 @@
-use failure::{ensure, Fallible};
+use anyhow::{ensure, Result};
 use uom::si::f64::{Angle as F64Angle, Length as F64Length, Time as F64Time};
 
 pub trait PointInterface {
@@ -59,7 +59,7 @@ impl DualReturnPoint {
     pub fn try_from_pair(
         strongest_return_point: SingleReturnPoint,
         last_return_point: SingleReturnPoint,
-    ) -> Fallible<Self> {
+    ) -> Result<Self> {
         let SingleReturnPoint {
             laser_id: laser_id_strongest,
             timestamp: timestamp_strongest,
@@ -76,10 +76,22 @@ impl DualReturnPoint {
             data: last_return_data,
         } = last_return_point;
 
-        ensure!(laser_id_strongest == laser_id_last);
-        ensure!(timestamp_strongest == timestamp_last);
-        ensure!(original_azimuth_angle_strongest == original_azimuth_angle_last);
-        ensure!(corrected_azimuth_angle_strongest == corrected_azimuth_angle_last);
+        ensure!(
+            laser_id_strongest == laser_id_last,
+            "laser ID does not match"
+        );
+        ensure!(
+            timestamp_strongest == timestamp_last,
+            "timestamp does not match"
+        );
+        ensure!(
+            original_azimuth_angle_strongest == original_azimuth_angle_last,
+            "original azimuth angle does not match"
+        );
+        ensure!(
+            corrected_azimuth_angle_strongest == corrected_azimuth_angle_last,
+            "corrected azimuth angle does not match"
+        );
 
         let dual_return_point = DualReturnPoint {
             laser_id: laser_id_strongest,
