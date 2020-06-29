@@ -36,3 +36,7 @@ toml = "0.5"
 ouster-api-test = []
 ouster-test = []
 velodyne-test = []
+
+[package.metadata.docs.rs]
+features = ["pcap"]
+no-default-features = true
