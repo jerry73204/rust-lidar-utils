@@ -1,17 +1,17 @@
 # lidar-utils
 
-The crate provides utilities for Velodyne and Ouster LIDAR devices. It features:
+The crate lets you parse data from Velodyne and Ouster LiDARs. It provides the following functionalities.
 
-- Packet encoding and decoding
-- Raw sensor data to point cloud and frame conversion
-- Ouster's command API tools
+- Raw packet encoding and decoding
+- Raw data to point cloud conversion
+- Ouster LiDAR command API client
 
 ## Usage
 
-Put this line to include this crate to your project.
+Add this line to your `Cargo.toml`.
 
 ```toml
-lidar-utils = "*"
+lidar-utils = "0.6"
 ```
 
 ## Documentation
@@ -24,4 +24,4 @@ Check out [Velodyne example](tests/velodyne.rs) and [Ouster example](tests/ouste
 
 ## License
 
-MIT
+MIT license. See [LICENSE](LICENSE) file.
