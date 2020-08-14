@@ -15,20 +15,7 @@ use super::{
     },
     packet::ReturnMode,
 };
-use anyhow::{ensure, Result};
-use itertools::izip;
-use serde::{Deserialize, Serialize};
-use std::{
-    fs::File,
-    io::{prelude::*, BufReader},
-    mem::MaybeUninit,
-    path::Path,
-};
-use uom::si::{
-    angle::degree,
-    f64::{Angle as F64Angle, Length as F64Length},
-    length::millimeter,
-};
+use crate::common::*;
 
 pub type Vlp16Config<ReturnType> = Config<Vlp16, ReturnType>;
 pub type Vlp32Config<ReturnType> = Config<Vlp32, ReturnType>;
@@ -42,15 +29,15 @@ where
 {
     pub lasers: Model::ParamArray,
     pub return_type: ReturnType,
-    pub distance_resolution: F64Length,
+    pub distance_resolution: Length,
 }
 
 #[derive(Debug, Clone)]
 pub struct LaserParameter {
-    pub elevation_angle: F64Angle,
-    pub azimuth_offset: F64Angle,
-    pub vertical_offset: F64Length,
-    pub horizontal_offset: F64Length,
+    pub elevation_angle: Angle,
+    pub azimuth_offset: Angle,
+    pub vertical_offset: Length,
+    pub horizontal_offset: Length,
 }
 
 /// Config builder that builds [Config](Config) type.
@@ -71,10 +58,10 @@ impl ConfigBuilder {
         .for_each(
             |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
                 *param = MaybeUninit::new(LaserParameter {
-                    elevation_angle: F64Angle::new::<degree>(*elevation_angle),
-                    vertical_offset: F64Length::new::<millimeter>(*vertical_offset),
-                    horizontal_offset: F64Length::new::<millimeter>(*horizontal_offset),
-                    azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
+                    elevation_angle: Angle::new::<degree>(*elevation_angle),
+                    vertical_offset: Length::new::<millimeter>(*vertical_offset),
+                    horizontal_offset: Length::new::<millimeter>(*horizontal_offset),
+                    azimuth_offset: Angle::new::<degree>(*azimuth_offset),
                 });
             },
         );
@@ -95,10 +82,10 @@ impl ConfigBuilder {
         .for_each(
             |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
                 *param = MaybeUninit::new(LaserParameter {
-                    elevation_angle: F64Angle::new::<degree>(*elevation_angle),
-                    vertical_offset: F64Length::new::<millimeter>(*vertical_offset),
-                    horizontal_offset: F64Length::new::<millimeter>(*horizontal_offset),
-                    azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
+                    elevation_angle: Angle::new::<degree>(*elevation_angle),
+                    vertical_offset: Length::new::<millimeter>(*vertical_offset),
+                    horizontal_offset: Length::new::<millimeter>(*horizontal_offset),
+                    azimuth_offset: Angle::new::<degree>(*azimuth_offset),
                 });
             },
         );
@@ -119,10 +106,10 @@ impl ConfigBuilder {
         .for_each(
             |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
                 *param = MaybeUninit::new(LaserParameter {
-                    elevation_angle: F64Angle::new::<degree>(*elevation_angle),
-                    vertical_offset: F64Length::new::<millimeter>(*vertical_offset),
-                    horizontal_offset: F64Length::new::<millimeter>(*horizontal_offset),
-                    azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
+                    elevation_angle: Angle::new::<degree>(*elevation_angle),
+                    vertical_offset: Length::new::<millimeter>(*vertical_offset),
+                    horizontal_offset: Length::new::<millimeter>(*horizontal_offset),
+                    azimuth_offset: Angle::new::<degree>(*azimuth_offset),
                 });
             },
         );
@@ -143,10 +130,10 @@ impl ConfigBuilder {
         .for_each(
             |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
                 *param = MaybeUninit::new(LaserParameter {
-                    elevation_angle: F64Angle::new::<degree>(*elevation_angle),
-                    vertical_offset: F64Length::new::<millimeter>(*vertical_offset),
-                    horizontal_offset: F64Length::new::<millimeter>(*horizontal_offset),
-                    azimuth_offset: F64Angle::new::<degree>(*azimuth_offset),
+                    elevation_angle: Angle::new::<degree>(*elevation_angle),
+                    vertical_offset: Length::new::<millimeter>(*vertical_offset),
+                    horizontal_offset: Length::new::<millimeter>(*horizontal_offset),
+                    azimuth_offset: Angle::new::<degree>(*azimuth_offset),
                 });
             },
         );
@@ -157,7 +144,7 @@ impl ConfigBuilder {
     pub fn vlp_16_last_return() -> Config<Vlp16, LastReturn> {
         Config {
             lasers: Self::vlp_16_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(2.0),
+            distance_resolution: Length::new::<millimeter>(2.0),
             return_type: LastReturn,
         }
     }
@@ -165,7 +152,7 @@ impl ConfigBuilder {
     pub fn vlp_16_strongest_return() -> Config<Vlp16, StrongestReturn> {
         Config {
             lasers: Self::vlp_16_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(2.0),
+            distance_resolution: Length::new::<millimeter>(2.0),
             return_type: StrongestReturn,
         }
     }
@@ -173,7 +160,7 @@ impl ConfigBuilder {
     pub fn vlp_16_dual_return() -> Config<Vlp16, DualReturn> {
         Config {
             lasers: Self::vlp_16_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(2.0),
+            distance_resolution: Length::new::<millimeter>(2.0),
             return_type: DualReturn,
         }
     }
@@ -181,7 +168,7 @@ impl ConfigBuilder {
     pub fn vlp_16_dynamic_return(return_mode: ReturnMode) -> Config<Vlp16, DynamicReturn> {
         Config {
             lasers: Self::vlp_16_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(2.0),
+            distance_resolution: Length::new::<millimeter>(2.0),
             return_type: DynamicReturn::from(return_mode),
         }
     }
@@ -189,7 +176,7 @@ impl ConfigBuilder {
     pub fn puck_hires_last_return() -> Config<Vlp16, LastReturn> {
         Config {
             lasers: Self::puck_hires_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(2.0),
+            distance_resolution: Length::new::<millimeter>(2.0),
             return_type: LastReturn,
         }
     }
@@ -197,7 +184,7 @@ impl ConfigBuilder {
     pub fn puck_hires_strongest_return() -> Config<Vlp16, StrongestReturn> {
         Config {
             lasers: Self::puck_hires_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(2.0),
+            distance_resolution: Length::new::<millimeter>(2.0),
             return_type: StrongestReturn,
         }
     }
@@ -205,7 +192,7 @@ impl ConfigBuilder {
     pub fn puck_hires_dual_return() -> Config<Vlp16, DualReturn> {
         Config {
             lasers: Self::puck_hires_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(2.0),
+            distance_resolution: Length::new::<millimeter>(2.0),
             return_type: DualReturn,
         }
     }
@@ -213,7 +200,7 @@ impl ConfigBuilder {
     pub fn puck_hires_dynamic_return(return_mode: ReturnMode) -> Config<Vlp16, DynamicReturn> {
         Config {
             lasers: Self::puck_hires_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(2.0),
+            distance_resolution: Length::new::<millimeter>(2.0),
             return_type: DynamicReturn::from(return_mode),
         }
     }
@@ -221,7 +208,7 @@ impl ConfigBuilder {
     pub fn puck_lite_last_return() -> Config<Vlp16, LastReturn> {
         Config {
             lasers: Self::puck_lite_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(2.0),
+            distance_resolution: Length::new::<millimeter>(2.0),
             return_type: LastReturn,
         }
     }
@@ -229,7 +216,7 @@ impl ConfigBuilder {
     pub fn puck_lite_strongest_return() -> Config<Vlp16, StrongestReturn> {
         Config {
             lasers: Self::puck_lite_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(2.0),
+            distance_resolution: Length::new::<millimeter>(2.0),
             return_type: StrongestReturn,
         }
     }
@@ -237,7 +224,7 @@ impl ConfigBuilder {
     pub fn puck_lite_dual_return() -> Config<Vlp16, DualReturn> {
         Config {
             lasers: Self::puck_lite_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(2.0),
+            distance_resolution: Length::new::<millimeter>(2.0),
             return_type: DualReturn,
         }
     }
@@ -245,7 +232,7 @@ impl ConfigBuilder {
     pub fn puck_lite_dynamic_return(return_mode: ReturnMode) -> Config<Vlp16, DynamicReturn> {
         Config {
             lasers: Self::puck_lite_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(2.0),
+            distance_resolution: Length::new::<millimeter>(2.0),
             return_type: DynamicReturn::from(return_mode),
         }
     }
@@ -253,7 +240,7 @@ impl ConfigBuilder {
     pub fn vlp_32c_last_return() -> Config<Vlp32, LastReturn> {
         Config {
             lasers: Self::vlp_32c_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(4.0),
+            distance_resolution: Length::new::<millimeter>(4.0),
             return_type: LastReturn,
         }
     }
@@ -261,7 +248,7 @@ impl ConfigBuilder {
     pub fn vlp_32c_strongest_return() -> Config<Vlp32, StrongestReturn> {
         Config {
             lasers: Self::vlp_32c_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(4.0),
+            distance_resolution: Length::new::<millimeter>(4.0),
             return_type: StrongestReturn,
         }
     }
@@ -269,7 +256,7 @@ impl ConfigBuilder {
     pub fn vlp_32c_dual_return() -> Config<Vlp32, DualReturn> {
         Config {
             lasers: Self::vlp_32c_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(4.0),
+            distance_resolution: Length::new::<millimeter>(4.0),
             return_type: DualReturn,
         }
     }
@@ -277,7 +264,7 @@ impl ConfigBuilder {
     pub fn vlp_32c_dynamic_return(return_mode: ReturnMode) -> Config<Vlp32, DynamicReturn> {
         Config {
             lasers: Self::vlp_32c_laser_params(),
-            distance_resolution: F64Length::new::<millimeter>(4.0),
+            distance_resolution: Length::new::<millimeter>(4.0),
             return_type: DynamicReturn::from(return_mode),
         }
     }

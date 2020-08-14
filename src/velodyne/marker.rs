@@ -1,7 +1,7 @@
 //! Marker traits and types that are mainly used by config types.
 
 use super::{config::LaserParameter, packet::ReturnMode};
-use std::fmt::Debug;
+use crate::common::*;
 
 pub trait ReturnTypeMarker
 where

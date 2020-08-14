@@ -4,22 +4,13 @@ use super::{
     consts::PIXELS_PER_COLUMN,
     enums::{LidarMode, MultipurposeIoMode, NmeaBaudRate, OnOffMode, Polarity, TimestampMode},
 };
-use anyhow::{ensure, format_err, Result};
-use derivative::Derivative;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde_big_array::big_array;
-use std::{
-    fmt::{Debug, Display, Error as FormatError, Formatter},
-    io::{prelude::*, BufReader, LineWriter, Lines},
-    net::{Ipv4Addr, TcpStream, ToSocketAddrs},
-    time::Duration,
-};
+use crate::common::*;
 
 // TODO: This workaround handles large array for serde.
 //       We'll remove is it once the const generics is introduced.
 big_array! { BigArray; }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ConfigText {
     pub timestamp_mode: TimestampMode,
     pub multipurpose_io_mode: MultipurposeIoMode,
@@ -28,15 +19,9 @@ pub struct ConfigText {
     pub nmea_in_polarity: Polarity,
     pub sync_pulse_out_polarity: Polarity,
     pub udp_ip: Ipv4Addr,
-    #[serde(
-        deserialize_with = "de_bool_from_int",
-        serialize_with = "ser_bool_to_int"
-    )]
+    #[serde(with = "serde_bool_to_int")]
     pub nmea_ignore_valid_char: bool,
-    #[serde(
-        deserialize_with = "de_bool_from_int",
-        serialize_with = "ser_bool_to_int"
-    )]
+    #[serde(with = "serde_bool_to_int")]
     pub auto_start_flag: bool,
     pub sync_pulse_out_pulse_width: u64,
     pub nmea_baud_rate: NmeaBaudRate,
@@ -47,7 +32,7 @@ pub struct ConfigText {
     pub azimuth_window: [u64; 2],
 }
 
-#[derive(Serialize, Deserialize, Derivative)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Derivative)]
 #[derivative(Debug)]
 pub struct BeamIntrinsics {
     #[serde(with = "BigArray")]
@@ -58,67 +43,51 @@ pub struct BeamIntrinsics {
     pub beam_azimuth_angles: [f64; PIXELS_PER_COLUMN],
 }
 
-#[derive(Serialize, Deserialize, Derivative)]
-#[derivative(Debug)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LidarIntrinsics {
     pub lidar_to_sensor_transform: [f64; 16],
 }
 
-#[derive(Serialize, Deserialize, Derivative)]
-#[derivative(Debug)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImuIntrinsics {
     pub imu_to_sensor_transform: [f64; 16],
 }
 
-#[derive(Serialize, Deserialize, Derivative)]
-#[derivative(Debug)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TimeInfo {
     pub timestamp: TimestampInfo,
     pub sync_pulse_in: SyncPulseInInfo,
     pub multipurpose_io: MultiPurposeIo,
 }
 
-#[derive(Serialize, Deserialize, Derivative)]
-#[derivative(Debug)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MultiPurposeIo {
     pub mode: OnOffMode,
     pub sync_pulse_out: SyncPulseOutInfo,
     pub nmea: NmeaInfo,
 }
 
-#[derive(Serialize, Deserialize, Derivative)]
-#[derivative(Debug)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SyncPulseInInfo {
     pub diagnostics: SyncPulseInDiagnosticsInfo,
     pub polarity: Polarity,
-    #[serde(
-        deserialize_with = "de_bool_from_int",
-        serialize_with = "ser_bool_to_int"
-    )]
+    #[serde(with = "serde_bool_to_int")]
     pub locked: bool,
 }
 
-#[derive(Serialize, Deserialize, Derivative)]
-#[derivative(Debug)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct NmeaInfo {
     pub polarity: Polarity,
     pub baud_rate: NmeaBaudRate,
     pub diagnostics: NmeaDiagnosticsInfo,
     pub leap_seconds: u64,
-    #[serde(
-        deserialize_with = "de_bool_from_int",
-        serialize_with = "ser_bool_to_int"
-    )]
+    #[serde(with = "serde_bool_to_int")]
     pub ignore_valid_char: bool,
-    #[serde(
-        deserialize_with = "de_bool_from_int",
-        serialize_with = "ser_bool_to_int"
-    )]
+    #[serde(with = "serde_bool_to_int")]
     pub locked: bool,
 }
 
-#[derive(Serialize, Deserialize, Derivative)]
-#[derivative(Debug)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SyncPulseOutInfo {
     pub frequency_hz: u64,
     pub angle_deg: u64,
@@ -126,43 +95,35 @@ pub struct SyncPulseOutInfo {
     pub polarity: Polarity,
 }
 
-#[derive(Serialize, Deserialize, Derivative)]
-#[derivative(Debug)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TimestampInfo {
     pub time_options: TimeOptionsInfo,
     pub mode: TimestampMode,
     pub time: f64,
 }
 
-#[derive(Serialize, Deserialize, Derivative)]
-#[derivative(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SyncPulseInDiagnosticsInfo {
     pub count_unfiltered: u64,
     pub last_period_nsec: u64,
     pub count: u64,
 }
 
-#[derive(Serialize, Deserialize, Derivative)]
-#[derivative(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct NmeaDiagnosticsInfo {
     pub io_checks: NmeaIoChecksInfo,
     pub decoding: NmeaDecodingInfo,
 }
 
-#[derive(Serialize, Deserialize, Derivative)]
-#[derivative(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TimeOptionsInfo {
     pub ptp_1588: u64,
-    #[serde(
-        deserialize_with = "de_bool_from_int",
-        serialize_with = "ser_bool_to_int"
-    )]
+    #[serde(with = "serde_bool_to_int")]
     pub sync_pulse_in: bool,
     pub internal_osc: u64,
 }
 
-#[derive(Serialize, Deserialize, Derivative)]
-#[derivative(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct NmeaIoChecksInfo {
     pub bit_count: u64,
     pub start_char_count: u64,
@@ -170,8 +131,7 @@ pub struct NmeaIoChecksInfo {
     pub char_count: u64,
 }
 
-#[derive(Serialize, Deserialize, Derivative)]
-#[derivative(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct NmeaDecodingInfo {
     pub not_valid_count: u64,
     pub last_read_message: String,
@@ -179,6 +139,7 @@ pub struct NmeaDecodingInfo {
     pub date_decoded_count: u64,
 }
 
+#[derive(Debug)]
 pub struct CommandClient {
     reader: Lines<BufReader<TcpStream>>,
     writer: LineWriter<TcpStream>,
@@ -204,7 +165,7 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or(format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
         let config = serde_json::from_str(&line)?;
         Ok(config)
     }
@@ -214,7 +175,7 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or(format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
         let config = serde_json::from_str(&line)?;
         Ok(config)
     }
@@ -224,7 +185,7 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or(format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
         let config = serde_json::from_str(&line)?;
         Ok(config)
     }
@@ -234,7 +195,7 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or(format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
         let config = serde_json::from_str(&line)?;
         Ok(config)
     }
@@ -244,7 +205,7 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or(format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
         let config = serde_json::from_str(&line)?;
         Ok(config)
     }
@@ -254,7 +215,7 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or(format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
         ensure!(line == "reinitialize", "Unexpected response {:?}", line);
         Ok(())
     }
@@ -264,7 +225,7 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or(format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
         ensure!(line == "write_config_txt", "Unexpected response {:?}", line);
         Ok(())
     }
@@ -310,33 +271,37 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or(format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
         ensure!(line == "set_config_param", "Unexpected response {:?}", line);
         Ok(())
     }
 }
 
-fn ser_bool_to_int<S>(value: &bool, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    match value {
-        true => serializer.serialize_u64(1),
-        false => serializer.serialize_u64(0),
-    }
-}
+mod serde_bool_to_int {
+    use super::*;
 
-fn de_bool_from_int<'de, D>(deserializer: D) -> Result<bool, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    match u64::deserialize(deserializer)? {
-        1 => Ok(true),
-        0 => Ok(false),
-        other => {
-            use serde::de::{Error, Unexpected};
-            let error = Error::invalid_value(Unexpected::Unsigned(other), &"Expect 0 or 1");
-            Err(error)
+    pub fn serialize<S>(value: &bool, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match value {
+            true => serializer.serialize_u64(1),
+            false => serializer.serialize_u64(0),
+        }
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<bool, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        match u64::deserialize(deserializer)? {
+            1 => Ok(true),
+            0 => Ok(false),
+            other => {
+                use serde::de::{Error, Unexpected};
+                let error = Error::invalid_value(Unexpected::Unsigned(other), &"Expect 0 or 1");
+                Err(error)
+            }
         }
     }
 }
@@ -344,6 +309,6 @@ where
 fn large_array_fmt<T: Debug>(
     array: &[T; PIXELS_PER_COLUMN],
     formatter: &mut Formatter,
-) -> Result<(), FormatError> {
-    write!(formatter, "{:?}", array as &[_])
+) -> Result<(), fmt::Error> {
+    write!(formatter, "{:?}", &array[..])
 }

@@ -1,4 +1,4 @@
-#![cfg(feature = "ouster-api-test")]
+#![cfg(feature = "ouster-client-test")]
 
 use anyhow::Result;
 use lidar_utils::ouster::{client::CommandClient, packet::Packet as OusterPacket};

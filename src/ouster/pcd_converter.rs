@@ -5,32 +5,33 @@ use super::{
     consts::PIXELS_PER_COLUMN,
     packet::{Column, Packet},
 };
-use crate::common::spherical_to_xyz;
-use anyhow::{ensure, Result};
-use itertools::izip;
-use uom::si::{
-    angle::radian,
-    f64::{Angle as F64Angle, Length as F64Length, Time as F64Time},
-};
+use crate::common::*;
+
+fn spherical_to_xyz(range: Length, azimuth_angle: Angle, altitude_angle: Angle) -> [Length; 3] {
+    let x = range * altitude_angle.sin() * azimuth_angle.cos();
+    let y = range * altitude_angle.sin() * azimuth_angle.sin();
+    let z = range * altitude_angle.cos();
+    [x, y, z]
+}
 
 #[derive(Clone, Debug)]
 pub struct Point {
-    pub timestamp: F64Time,
-    pub azimuth_angle: F64Angle,
-    pub distance: F64Length,
+    pub timestamp: Time,
+    pub azimuth_angle: Angle,
+    pub distance: Length,
     pub reflectivity: u16,
     pub signal_photons: u16,
     pub noise_photons: u16,
     pub laser_id: u32,
-    pub point: [F64Length; 3],
+    pub point: [Length; 3],
 }
 
 /// A conversion tool that transforms [Column](Column) raw sensor data
 /// into point clouds.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct PointCloudConverter {
-    altitude_angles: [F64Angle; PIXELS_PER_COLUMN],
-    azimuth_angle_corrections: [F64Angle; PIXELS_PER_COLUMN],
+    altitude_angles: [Angle; PIXELS_PER_COLUMN],
+    azimuth_angle_corrections: [Angle; PIXELS_PER_COLUMN],
     columns_per_revolution: u16,
 }
 
@@ -44,23 +45,23 @@ impl PointCloudConverter {
         } = config;
 
         let altitude_angles = {
-            let mut array = [F64Angle::new::<radian>(0.0); PIXELS_PER_COLUMN];
+            let mut array = [Angle::new::<radian>(0.0); PIXELS_PER_COLUMN];
             debug_assert_eq!(array.len(), beam_altitude_angles.len());
 
             for idx in 0..(array.len()) {
                 let angle = std::f64::consts::FRAC_PI_2 - beam_altitude_angles[idx].to_radians();
-                array[idx] = F64Angle::new::<radian>(angle);
+                array[idx] = Angle::new::<radian>(angle);
             }
             array
         };
 
         let azimuth_angle_corrections = {
-            let mut array = [F64Angle::new::<radian>(0.0); PIXELS_PER_COLUMN];
+            let mut array = [Angle::new::<radian>(0.0); PIXELS_PER_COLUMN];
             debug_assert_eq!(array.len(), beam_azimuth_angle_corrections.len());
 
             for idx in 0..(array.len()) {
                 let angle = beam_azimuth_angle_corrections[idx].to_radians();
-                array[idx] = F64Angle::new::<radian>(angle);
+                array[idx] = Angle::new::<radian>(angle);
             }
             array
         };
@@ -113,7 +114,7 @@ impl PointCloudConverter {
                 // add correction according to manual
                 let clockwise_azimuth_angle = column.azimuth_angle() + *azimuth_angle_correction;
                 let counter_clockwise_azimuth_angle =
-                    F64Angle::new::<radian>(std::f64::consts::PI * 2.0) - clockwise_azimuth_angle;
+                    Angle::new::<radian>(std::f64::consts::PI * 2.0) - clockwise_azimuth_angle;
                 let distance = pixel.distance();
                 let timestamp = column.time();
                 let point =
@@ -140,15 +141,15 @@ impl PointCloudConverter {
     where
         P: AsRef<Packet>,
     {
-        let points = packet
+        let points: Vec<_> = packet
             .as_ref()
             .columns
             .iter()
             .map(|col| self.column_to_points(col))
             .collect::<Result<Vec<_>>>()?
             .into_iter()
-            .flat_map(|points| points)
-            .collect::<Vec<_>>();
+            .flatten()
+            .collect();
         Ok(points)
     }
 }

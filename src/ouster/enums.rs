@@ -1,7 +1,6 @@
 //! Useful enums for Ouster sensors.
 
-use serde::{Deserialize, Serialize};
-use std::fmt::{Debug, Display, Formatter, Result as FormatResult};
+use crate::common::*;
 
 /// The mode includes number of vertical scans in one revolution and rotation frequency (Hz).
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -30,7 +29,7 @@ impl LidarMode {
 }
 
 impl Display for LidarMode {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> FormatResult {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         use LidarMode::*;
         let text = match self {
             Mode512x10 => "512x10",
@@ -56,7 +55,7 @@ pub enum MultipurposeIoMode {
 }
 
 impl Display for MultipurposeIoMode {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> FormatResult {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         use MultipurposeIoMode::*;
         let text = match self {
             OutputFromInternalOsc => "OUTPUT_FROM_INTERNAL_OSC",
@@ -79,7 +78,7 @@ pub enum TimestampMode {
 }
 
 impl Display for TimestampMode {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> FormatResult {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         use TimestampMode::*;
         let text = match self {
             TimeFromInternalOsc => "TIME_FROM_INTERNAL_OSC",
@@ -99,7 +98,7 @@ pub enum Polarity {
 }
 
 impl Display for Polarity {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> FormatResult {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         use Polarity::*;
         let text = match self {
             ActiveHigh => "ACTIVE_HIGH",
@@ -118,7 +117,7 @@ pub enum OnOffMode {
 }
 
 impl Display for OnOffMode {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> FormatResult {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         use OnOffMode::*;
         let text = match self {
             On => "ON",
@@ -137,7 +136,7 @@ pub enum NmeaBaudRate {
 }
 
 impl Display for NmeaBaudRate {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> FormatResult {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         use NmeaBaudRate::*;
         let text = match self {
             Baud9600 => "BAUD_9600",

@@ -2,12 +2,7 @@
 
 use super::consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK};
 
-use anyhow::{ensure, Result};
-use chrono::NaiveDateTime;
-#[cfg(feature = "pcap")]
-use pcap::Packet as PcapPacket;
-use std::mem::size_of;
-use uom::si::{f64::Time as F64Time, time::microsecond};
+use crate::common::*;
 
 /// Represents the block index in range from 0 to 31, or from 32 to 63.
 #[repr(u16)]
@@ -96,26 +91,26 @@ impl Packet {
         let packet_header_size = 42;
 
         ensure!(
-            packet.header.len as usize - packet_header_size == size_of::<Packet>(),
+            packet.header.len as usize - packet_header_size == mem::size_of::<Packet>(),
             "Input pcap packet is not a valid Velodyne Lidar packet",
         );
 
-        let mut buffer = Box::new([0u8; size_of::<Packet>()]);
+        let mut buffer = Box::new([0u8; mem::size_of::<Packet>()]);
         buffer.copy_from_slice(&packet.data[packet_header_size..]);
         Ok(Self::from_buffer(*buffer))
     }
 
     /// Construct packet from binary buffer.
-    pub fn from_buffer(buffer: [u8; size_of::<Packet>()]) -> Packet {
-        unsafe { std::mem::transmute::<_, Packet>(buffer) }
+    pub fn from_buffer(buffer: [u8; mem::size_of::<Packet>()]) -> Packet {
+        unsafe { mem::transmute::<_, Packet>(buffer) }
     }
 
     /// Construct packet from slice of bytes. Fail if the slice size is not correct.
     pub fn from_slice<'a>(buffer: &'a [u8]) -> Result<&'a Packet> {
         ensure!(
-            buffer.len() == size_of::<Packet>(),
+            buffer.len() == mem::size_of::<Packet>(),
             "Requre the slice length to be {}, but get {}",
-            size_of::<Packet>(),
+            mem::size_of::<Packet>(),
             buffer.len(),
         );
         let packet = unsafe { &*(buffer.as_ptr() as *const Packet) };
@@ -129,8 +124,8 @@ impl Packet {
         NaiveDateTime::from_timestamp(secs as i64, nsecs as u32)
     }
 
-    pub fn time(&self) -> F64Time {
-        F64Time::new::<microsecond>(self.timestamp as f64)
+    pub fn time(&self) -> Time {
+        Time::new::<microsecond>(self.timestamp as f64)
     }
 }
 

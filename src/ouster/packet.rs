@@ -1,20 +1,7 @@
 //! Provides a set of _C-packed_ structs for Ouster packets.
 
 use super::consts::{COLUMNS_PER_PACKET, ENCODER_TICKS_PER_REV, PIXELS_PER_COLUMN};
-use anyhow::{ensure, Result};
-use chrono::NaiveDateTime;
-#[cfg(feature = "pcap")]
-use pcap::Packet as PcapPacket;
-use std::{
-    fmt::{Debug, Formatter, Result as FormatResult},
-    mem::size_of,
-};
-use uom::si::{
-    angle::radian,
-    f64::{Angle as F64Angle, Length as F64Length, Time as F64Time},
-    length::millimeter,
-    time::nanosecond,
-};
+use crate::common::*;
 
 /// Represents a point of signal measurement.
 #[repr(C, packed)]
@@ -34,8 +21,8 @@ impl Pixel {
         self.raw_distance & 0x000fffff
     }
 
-    pub fn distance(&self) -> F64Length {
-        F64Length::new::<millimeter>(self.distance_millimeter() as f64)
+    pub fn distance(&self) -> Length {
+        Length::new::<millimeter>(self.distance_millimeter() as f64)
     }
 }
 
@@ -65,8 +52,8 @@ impl Column {
         NaiveDateTime::from_timestamp(secs as i64, nsecs as u32)
     }
 
-    pub fn time(&self) -> F64Time {
-        F64Time::new::<nanosecond>(self.timestamp as f64)
+    pub fn time(&self) -> Time {
+        Time::new::<nanosecond>(self.timestamp as f64)
     }
 
     /// Compute azimuth angle in degrees from encoder ticks.
@@ -79,8 +66,8 @@ impl Column {
         2.0 * std::f64::consts::PI * self.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64
     }
 
-    pub fn azimuth_angle(&self) -> F64Angle {
-        F64Angle::new::<radian>(self.azimuth_angle_radians())
+    pub fn azimuth_angle(&self) -> Angle {
+        Angle::new::<radian>(self.azimuth_angle_radians())
     }
 
     /// Return if this packet is marked valid.
@@ -98,7 +85,7 @@ impl PartialEq for Column {
             encoder_ticks: encoder_ticks_lhs,
             raw_valid: raw_valid_lhs,
             pixels: pixels_lhs,
-        } = self.clone();
+        } = *self;
 
         let Self {
             timestamp: timestamp_rhs,
@@ -107,7 +94,7 @@ impl PartialEq for Column {
             encoder_ticks: encoder_ticks_rhs,
             raw_valid: raw_valid_rhs,
             pixels: pixels_rhs,
-        } = other.clone();
+        } = *other;
 
         timestamp_lhs == timestamp_rhs
             && measurement_id_lhs == measurement_id_rhs
@@ -124,7 +111,7 @@ impl PartialEq for Column {
 impl Eq for Column {}
 
 impl Debug for Column {
-    fn fmt(&self, formatter: &mut Formatter) -> FormatResult {
+    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
         let Self {
             timestamp,
             measurement_id,
@@ -132,20 +119,17 @@ impl Debug for Column {
             encoder_ticks,
             raw_valid,
             pixels,
-        } = self.clone();
+        } = *self;
 
-        write!(
-            formatter,
-            "Column {{ \
-             timestamp: {}, \
-             measurement_id: {}, \
-             frame_id: {}, \
-             encoder_ticks: {}, \
-             pixels: {:?}, \
-             raw_valid: 0x{:x} \
-             }}",
-            timestamp, measurement_id, frame_id, encoder_ticks, &pixels as &[_], raw_valid
-        )
+        formatter
+            .debug_struct(std::any::type_name::<Self>())
+            .field("timestamp", &timestamp)
+            .field("measurement_id", &measurement_id)
+            .field("frame_id", &frame_id)
+            .field("encoder_ticks", &encoder_ticks)
+            .field("raw_valid", &raw_valid)
+            .field("pixels", &pixels)
+            .finish()
     }
 }
 
@@ -163,26 +147,26 @@ impl Packet {
         let packet_header_size = 42;
 
         ensure!(
-            packet.header.len as usize - packet_header_size == size_of::<Packet>(),
+            packet.header.len as usize - packet_header_size == mem::size_of::<Packet>(),
             "Input pcap packet is not a valid Ouster Lidar packet",
         );
 
-        let mut buffer = Box::new([0u8; size_of::<Packet>()]);
+        let mut buffer = Box::new([0u8; mem::size_of::<Packet>()]);
         buffer.copy_from_slice(&packet.data[packet_header_size..]);
         Ok(Self::from_buffer(*buffer))
     }
 
     /// Construct packet from binary buffer.
-    pub fn from_buffer(buffer: [u8; size_of::<Packet>()]) -> Packet {
+    pub fn from_buffer(buffer: [u8; mem::size_of::<Packet>()]) -> Packet {
         unsafe { std::mem::transmute::<_, Packet>(buffer) }
     }
 
     /// Construct packet from slice of bytes. Error if the slice size is not correct.
     pub fn from_slice<'a>(buffer: &'a [u8]) -> Result<&'a Packet> {
         ensure!(
-            buffer.len() == size_of::<Packet>(),
+            buffer.len() == mem::size_of::<Packet>(),
             "Requre the slice length to be {}, but get {}",
-            size_of::<Packet>(),
+            mem::size_of::<Packet>(),
             buffer.len(),
         );
         let packet = unsafe { &*(buffer.as_ptr() as *const Packet) };

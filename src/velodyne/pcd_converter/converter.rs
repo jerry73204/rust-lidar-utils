@@ -2,15 +2,17 @@ use super::{
     context::{ConverterContext, DynamicReturnContext, ToConverterContext},
     data::{DualReturnPoint, DynamicReturnPoint, SingleReturnPoint},
 };
-use crate::velodyne::{
-    config::Config,
-    marker::{
-        DualReturn, DynamicReturn, LastReturn, ModelMarker, ReturnTypeMarker, StrongestReturn,
-        Vlp16, Vlp32,
+use crate::{
+    common::*,
+    velodyne::{
+        config::Config,
+        marker::{
+            DualReturn, DynamicReturn, LastReturn, ModelMarker, ReturnTypeMarker, StrongestReturn,
+            Vlp16, Vlp32,
+        },
+        packet::{Packet, ReturnMode},
     },
-    packet::{Packet, ReturnMode},
 };
-use anyhow::{ensure, Result};
 
 /// An _interface_ trait that is implemented by all variants of [PointCloudConverter]
 pub trait PointCloudConverterInterface<Model, ReturnType>
@@ -119,18 +121,18 @@ impl PointCloudConverterInterface<Vlp16, DynamicReturn>
     where
         P: AsRef<Packet>,
     {
-        let points = match &mut self.context {
+        let points: Vec<_> = match &mut self.context {
             DynamicReturnContext::SingleReturn(context) => {
                 super::impls::convert_single_return_16_channel(context, packet)
                     .into_iter()
-                    .map(|point| DynamicReturnPoint::from(point))
-                    .collect::<Vec<_>>()
+                    .map(DynamicReturnPoint::from)
+                    .collect()
             }
             DynamicReturnContext::DualReturn(context) => {
                 super::impls::convert_dual_return_16_channel(context, packet)
                     .into_iter()
-                    .map(|point| DynamicReturnPoint::from(point))
-                    .collect::<Vec<_>>()
+                    .map(DynamicReturnPoint::from)
+                    .collect()
             }
         };
 
@@ -219,18 +221,18 @@ impl PointCloudConverterInterface<Vlp32, DynamicReturn>
     where
         P: AsRef<Packet>,
     {
-        let points = match &mut self.context {
+        let points: Vec<_> = match &mut self.context {
             DynamicReturnContext::SingleReturn(context) => {
                 super::impls::convert_single_return_32_channel(context, packet)
                     .into_iter()
-                    .map(|point| DynamicReturnPoint::from(point))
-                    .collect::<Vec<_>>()
+                    .map(DynamicReturnPoint::from)
+                    .collect()
             }
             DynamicReturnContext::DualReturn(context) => {
                 super::impls::convert_dual_return_32_channel(context, packet)
                     .into_iter()
-                    .map(|point| DynamicReturnPoint::from(point))
-                    .collect::<Vec<_>>()
+                    .map(DynamicReturnPoint::from)
+                    .collect()
             }
         };
 

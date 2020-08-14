@@ -2,15 +2,16 @@
 //! [PointCloudConverter](crate::velodyne::pcd_converter::PointCloudConverter).
 
 use super::data::{DualReturnPoint, DynamicReturnPoint, SingleReturnPoint};
-use crate::velodyne::{
-    config::Config,
-    marker::{
-        DualReturn, DynamicReturn, LastReturn, ModelMarker, ReturnTypeMarker, StrongestReturn,
+use crate::{
+    common::*,
+    velodyne::{
+        config::Config,
+        marker::{
+            DualReturn, DynamicReturn, LastReturn, ModelMarker, ReturnTypeMarker, StrongestReturn,
+        },
+        packet::Block,
     },
-    packet::Block,
 };
-use std::marker::PhantomData;
-use uom::si::f64::{Length as F64Length, Time as F64Time};
 
 /// Marker trait for converter contexts.
 pub trait ConverterContext {
@@ -24,8 +25,8 @@ where
     ReturnType: ReturnTypeMarker,
 {
     pub lasers: Model::ParamArray,
-    pub distance_resolution: F64Length,
-    pub last_block: Option<(F64Time, Block)>,
+    pub distance_resolution: Length,
+    pub last_block: Option<(Time, Block)>,
     _phantom: PhantomData<ReturnType>,
 }
 
@@ -84,8 +85,8 @@ where
     ReturnType: ReturnTypeMarker,
 {
     pub lasers: Model::ParamArray,
-    pub distance_resolution: F64Length,
-    pub last_block: Option<(F64Time, Block, Block)>,
+    pub distance_resolution: Length,
+    pub last_block: Option<(Time, Block, Block)>,
     _phantom: PhantomData<ReturnType>,
 }
 

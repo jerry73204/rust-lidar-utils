@@ -1,28 +1,27 @@
-use anyhow::{ensure, Result};
-use uom::si::f64::{Angle as F64Angle, Length as F64Length, Time as F64Time};
+use crate::common::*;
 
 pub trait PointInterface {
     fn laser_id(&self) -> u32;
-    fn timestamp(&self) -> F64Time;
-    fn original_azimuth_angle(&self) -> F64Angle;
-    fn corrected_azimuth_angle(&self) -> F64Angle;
+    fn timestamp(&self) -> Time;
+    fn original_azimuth_angle(&self) -> Angle;
+    fn corrected_azimuth_angle(&self) -> Angle;
 }
 
 /// Point in strongest or last return mode.
 #[derive(Debug, Clone)]
 pub struct PointData {
-    pub distance: F64Length,
+    pub distance: Length,
     pub intensity: u8,
-    pub position: [F64Length; 3],
+    pub position: [Length; 3],
 }
 
 /// Point in strongest or last return mode.
 #[derive(Debug, Clone)]
 pub struct SingleReturnPoint {
     pub laser_id: u32,
-    pub timestamp: F64Time,
-    pub original_azimuth_angle: F64Angle,
-    pub corrected_azimuth_angle: F64Angle,
+    pub timestamp: Time,
+    pub original_azimuth_angle: Angle,
+    pub corrected_azimuth_angle: Angle,
     pub data: PointData,
 }
 
@@ -31,15 +30,15 @@ impl PointInterface for SingleReturnPoint {
         self.laser_id
     }
 
-    fn timestamp(&self) -> F64Time {
+    fn timestamp(&self) -> Time {
         self.timestamp
     }
 
-    fn original_azimuth_angle(&self) -> F64Angle {
+    fn original_azimuth_angle(&self) -> Angle {
         self.original_azimuth_angle
     }
 
-    fn corrected_azimuth_angle(&self) -> F64Angle {
+    fn corrected_azimuth_angle(&self) -> Angle {
         self.corrected_azimuth_angle
     }
 }
@@ -48,9 +47,9 @@ impl PointInterface for SingleReturnPoint {
 #[derive(Debug, Clone)]
 pub struct DualReturnPoint {
     pub laser_id: u32,
-    pub timestamp: F64Time,
-    pub original_azimuth_angle: F64Angle,
-    pub corrected_azimuth_angle: F64Angle,
+    pub timestamp: Time,
+    pub original_azimuth_angle: Angle,
+    pub corrected_azimuth_angle: Angle,
     pub strongest_return_data: PointData,
     pub last_return_data: PointData,
 }
@@ -111,15 +110,15 @@ impl PointInterface for DualReturnPoint {
         self.laser_id
     }
 
-    fn timestamp(&self) -> F64Time {
+    fn timestamp(&self) -> Time {
         self.timestamp
     }
 
-    fn original_azimuth_angle(&self) -> F64Angle {
+    fn original_azimuth_angle(&self) -> Angle {
         self.original_azimuth_angle
     }
 
-    fn corrected_azimuth_angle(&self) -> F64Angle {
+    fn corrected_azimuth_angle(&self) -> Angle {
         self.corrected_azimuth_angle
     }
 }
@@ -140,7 +139,7 @@ impl PointInterface for DynamicReturnPoint {
         }
     }
 
-    fn timestamp(&self) -> F64Time {
+    fn timestamp(&self) -> Time {
         use DynamicReturnPoint::*;
         match self {
             SingleReturn(point) => point.timestamp(),
@@ -148,7 +147,7 @@ impl PointInterface for DynamicReturnPoint {
         }
     }
 
-    fn original_azimuth_angle(&self) -> F64Angle {
+    fn original_azimuth_angle(&self) -> Angle {
         use DynamicReturnPoint::*;
         match self {
             SingleReturn(point) => point.original_azimuth_angle(),
@@ -156,7 +155,7 @@ impl PointInterface for DynamicReturnPoint {
         }
     }
 
-    fn corrected_azimuth_angle(&self) -> F64Angle {
+    fn corrected_azimuth_angle(&self) -> Angle {
         use DynamicReturnPoint::*;
         match self {
             SingleReturn(point) => point.corrected_azimuth_angle(),

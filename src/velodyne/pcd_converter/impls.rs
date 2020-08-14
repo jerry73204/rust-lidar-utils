@@ -2,24 +2,19 @@ use super::{
     context::{DualReturnContext, SingleReturnContext},
     data::{DualReturnPoint, PointData, SingleReturnPoint},
 };
+use crate::common::*;
 use crate::velodyne::{
     config::LaserParameter,
     consts::{CHANNEL_PERIOD, FIRING_PERIOD},
     marker::{ReturnTypeMarker, Vlp16, Vlp32},
     packet::{Block, Channel, Packet, ReturnMode},
 };
-use itertools::izip;
-use uom::si::{
-    angle::radian,
-    f64::{Angle as F64Angle, Length as F64Length, Ratio as F64Ratio, Time as F64Time},
-    time::microsecond,
-};
 
 #[derive(Debug, Clone)]
 struct FiringInfo<'a> {
-    lower_timestamp: F64Time,
-    lower_azimuth_angle: F64Angle,
-    upper_azimuth_angle: F64Angle,
+    lower_timestamp: Time,
+    lower_azimuth_angle: Angle,
+    upper_azimuth_angle: Angle,
     firing: &'a [Channel],
 }
 
@@ -37,14 +32,14 @@ where
     );
 
     // consts
-    let firing_period = F64Time::new::<microsecond>(FIRING_PERIOD);
+    let firing_period = Time::new::<microsecond>(FIRING_PERIOD);
     let block_period = firing_period * 2.0;
-    let packet_timestamp = F64Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
+    let packet_timestamp = Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
 
     // update last seen block
     let prev_last_block = {
         let new_timestamp = packet_timestamp + block_period * (packet.blocks.len() - 1) as f64;
-        let new_block = packet.blocks.last().unwrap().clone();
+        let new_block = *packet.blocks.last().unwrap();
         context.last_block.replace((new_timestamp, new_block))
     };
 
@@ -57,12 +52,12 @@ where
         .iter()
         .map(|(block_timestamp, block)| (*block_timestamp, block))
         .chain(packet_blocks_iter);
-    let points = convert_to_points_16_channel(
+
+    convert_to_points_16_channel(
         &context.lasers,
         context.distance_resolution,
         &mut blocks_iter,
-    );
-    points
+    )
 }
 
 pub(crate) fn convert_dual_return_16_channel<PacketType, ReturnType>(
@@ -77,9 +72,9 @@ where
     debug_assert_eq!(packet.return_mode, ReturnMode::DualReturn);
 
     // consts
-    let firing_period = F64Time::new::<microsecond>(FIRING_PERIOD);
+    let firing_period = Time::new::<microsecond>(FIRING_PERIOD);
     let block_period = firing_period * 2.0;
-    let packet_timestamp = F64Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
+    let packet_timestamp = Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
 
     // update last blocks
     let (prev_strongest_block, prev_last_block) = {
@@ -158,14 +153,13 @@ where
         packet.blocks.len() / 2 * packet.blocks[0].channels.len()
     );
 
-    let points = strongest_points
+    strongest_points
         .into_iter()
         .zip(last_points.into_iter())
         .map(|(strongest_return_point, last_return_point)| {
             DualReturnPoint::try_from_pair(strongest_return_point, last_return_point).unwrap()
         })
-        .collect::<Vec<_>>();
-    points
+        .collect()
 }
 
 pub(crate) fn convert_single_return_32_channel<PacketType, ReturnType>(
@@ -182,9 +176,9 @@ where
     );
 
     // consts
-    let firing_period = F64Time::new::<microsecond>(FIRING_PERIOD);
+    let firing_period = Time::new::<microsecond>(FIRING_PERIOD);
     let block_period = firing_period;
-    let packet_timestamp = F64Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
+    let packet_timestamp = Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
 
     let packet_blocks_iter = packet.blocks.iter().enumerate().map(|(idx, block)| {
         let block_timestamp = packet_timestamp + block_period * idx as f64;
@@ -193,7 +187,7 @@ where
 
     let prev_last_block = {
         let new_timestamp = packet_timestamp + block_period * (packet.blocks.len() - 1) as f64;
-        let new_block = packet.blocks.last().unwrap().clone();
+        let new_block = *packet.blocks.last().unwrap();
         context.last_block.replace((new_timestamp, new_block))
     };
 
@@ -201,12 +195,12 @@ where
         .iter()
         .map(|(block_timestamp, block)| (*block_timestamp, block))
         .chain(packet_blocks_iter);
-    let points = convert_to_points_32_channel(
+
+    convert_to_points_32_channel(
         &context.lasers,
         context.distance_resolution,
         &mut blocks_iter,
-    );
-    points
+    )
 }
 
 pub(crate) fn convert_dual_return_32_channel<PacketType, ReturnType>(
@@ -221,9 +215,9 @@ where
     debug_assert_eq!(packet.return_mode, ReturnMode::DualReturn);
 
     // consts
-    let firing_period = F64Time::new::<microsecond>(FIRING_PERIOD);
+    let firing_period = Time::new::<microsecond>(FIRING_PERIOD);
     let block_period = firing_period;
-    let packet_timestamp = F64Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
+    let packet_timestamp = Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
 
     // update last blocks
     let (prev_strongest_block, prev_last_block) = {
@@ -302,28 +296,28 @@ where
         packet.blocks.len() / 2 * packet.blocks[0].channels.len()
     );
 
-    let points = strongest_points
+    strongest_points
         .into_iter()
         .zip(last_points.into_iter())
         .map(|(strongest_return_point, last_return_point)| {
             DualReturnPoint::try_from_pair(strongest_return_point, last_return_point).unwrap()
         })
-        .collect::<Vec<_>>();
-    points
+        .collect()
 }
 
 pub(crate) fn convert_to_points_16_channel<'a, I>(
     lasers: &[LaserParameter; 16],
-    distance_resolution: F64Length,
+    distance_resolution: Length,
     iter: &mut I,
 ) -> Vec<SingleReturnPoint>
 where
-    I: Iterator<Item = (F64Time, &'a Block)>,
+    I: Iterator<Item = (Time, &'a Block)>,
 {
-    let channel_period = F64Time::new::<microsecond>(CHANNEL_PERIOD);
-    let firing_period = F64Time::new::<microsecond>(FIRING_PERIOD);
+    let channel_period = Time::new::<microsecond>(CHANNEL_PERIOD);
+    let firing_period = Time::new::<microsecond>(FIRING_PERIOD);
 
     let first_item = iter.next().unwrap();
+
     iter.scan(first_item, |prev_pair, (curr_timestamp, curr_block)| {
         let (prev_timestamp, prev_block) = *prev_pair;
         *prev_pair = (curr_timestamp, curr_block);
@@ -335,12 +329,12 @@ where
             // fix roll-over case
             let curr_angle = curr_block.azimuth_angle();
             if curr_angle < prev_azimuth_angle {
-                curr_angle + F64Angle::new::<radian>(std::f64::consts::PI * 2.0)
+                curr_angle + Angle::new::<radian>(std::f64::consts::PI * 2.0)
             } else {
                 curr_angle
             }
         };
-        let mid_azimuth_angle: F64Angle = (prev_azimuth_angle + curr_azimuth_angle) / 2.0;
+        let mid_azimuth_angle: Angle = (prev_azimuth_angle + curr_azimuth_angle) / 2.0;
 
         let former_firing = FiringInfo {
             lower_timestamp: prev_timestamp,
@@ -358,7 +352,7 @@ where
 
         Some(vec![former_firing, latter_firing])
     })
-    .flat_map(|firings| firings)
+    .flatten()
     .flat_map(|firing_info| {
         let FiringInfo {
             lower_timestamp,
@@ -384,17 +378,17 @@ where
                 // clockwise angle with origin points to front of sensor
                 let original_azimuth_angle = {
                     let mut azimuth = lower_azimuth_angle
-                        + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio)
+                        + Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio)
                         + *azimuth_offset;
-                    if azimuth >= F64Angle::new::<radian>(std::f64::consts::PI * 2.0) {
-                        azimuth -= F64Angle::new::<radian>(std::f64::consts::PI * 2.0);
+                    if azimuth >= Angle::new::<radian>(std::f64::consts::PI * 2.0) {
+                        azimuth -= Angle::new::<radian>(std::f64::consts::PI * 2.0);
                     }
                     azimuth
                 };
                 let corrected_azimuth_angle = {
                     let mut azimuth = original_azimuth_angle + *azimuth_offset;
-                    if azimuth >= F64Angle::new::<radian>(std::f64::consts::PI * 2.0) {
-                        azimuth -= F64Angle::new::<radian>(std::f64::consts::PI * 2.0);
+                    if azimuth >= Angle::new::<radian>(std::f64::consts::PI * 2.0) {
+                        azimuth -= Angle::new::<radian>(std::f64::consts::PI * 2.0);
                     }
                     azimuth
                 };
@@ -421,19 +415,19 @@ where
             },
         )
     })
-    .collect::<Vec<_>>()
+    .collect()
 }
 
 pub(crate) fn convert_to_points_32_channel<'a, I>(
     lasers: &[LaserParameter; 32],
-    distance_resolution: F64Length,
+    distance_resolution: Length,
     iter: &mut I,
 ) -> Vec<SingleReturnPoint>
 where
-    I: Iterator<Item = (F64Time, &'a Block)>,
+    I: Iterator<Item = (Time, &'a Block)>,
 {
-    let channel_period = F64Time::new::<microsecond>(CHANNEL_PERIOD);
-    let firing_period = F64Time::new::<microsecond>(FIRING_PERIOD);
+    let channel_period = Time::new::<microsecond>(CHANNEL_PERIOD);
+    let firing_period = Time::new::<microsecond>(FIRING_PERIOD);
 
     let first_item = iter.next().unwrap();
     iter.scan(first_item, |prev_pair, (curr_timestamp, curr_block)| {
@@ -445,7 +439,7 @@ where
             let curr_angle = curr_block.azimuth_angle();
             // fix roll-over case
             if curr_angle < prev_azimuth_angle {
-                curr_angle + F64Angle::new::<radian>(std::f64::consts::PI * 2.0)
+                curr_angle + Angle::new::<radian>(std::f64::consts::PI * 2.0)
             } else {
                 curr_angle
             }
@@ -472,7 +466,7 @@ where
         izip!(firing.iter(), lasers.iter(), 0..).enumerate().map(
             move |(channel_idx, (channel, laser_params, laser_id))| {
                 let timestamp = lower_timestamp + channel_period * (channel_idx / 2) as f64;
-                let ratio: F64Ratio = channel_period * (channel_idx / 2) as f64 / firing_period;
+                let ratio: Ratio = channel_period * (channel_idx / 2) as f64 / firing_period;
                 let LaserParameter {
                     elevation_angle,
                     azimuth_offset,
@@ -483,16 +477,16 @@ where
                 // clockwise angle with origin points to front of sensor
                 let original_azimuth_angle = {
                     let mut azimuth = lower_azimuth_angle
-                        + F64Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio);
-                    if azimuth >= F64Angle::new::<radian>(std::f64::consts::PI * 2.0) {
-                        azimuth -= F64Angle::new::<radian>(std::f64::consts::PI * 2.0);
+                        + Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio);
+                    if azimuth >= Angle::new::<radian>(std::f64::consts::PI * 2.0) {
+                        azimuth -= Angle::new::<radian>(std::f64::consts::PI * 2.0);
                     }
                     azimuth
                 };
                 let corrected_azimuth_angle = {
                     let mut azimuth = original_azimuth_angle + *azimuth_offset;
-                    if azimuth >= F64Angle::new::<radian>(std::f64::consts::PI * 2.0) {
-                        azimuth -= F64Angle::new::<radian>(std::f64::consts::PI * 2.0);
+                    if azimuth >= Angle::new::<radian>(std::f64::consts::PI * 2.0) {
+                        azimuth -= Angle::new::<radian>(std::f64::consts::PI * 2.0);
                     }
                     azimuth
                 };
@@ -523,12 +517,12 @@ where
 }
 
 fn compute_position(
-    distance: F64Length,
-    elevation_angle: F64Angle,
-    azimuth_angle: F64Angle,
-    vertical_offset: F64Length,
-    horizontal_offset: F64Length,
-) -> [F64Length; 3] {
+    distance: Length,
+    elevation_angle: Angle,
+    azimuth_angle: Angle,
+    vertical_offset: Length,
+    horizontal_offset: Length,
+) -> [Length; 3] {
     // The origin of elevaion_angle lies on xy plane.
     // The azimuth angle starts from y-axis, rotates clockwise.
 

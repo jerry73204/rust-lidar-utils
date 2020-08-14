@@ -4,16 +4,7 @@ use super::{
     consts::{OS_1_BEAM_ALTITUDE_DEGREES, OS_1_BEAM_AZIMUTH_DEGREE_CORRECTIONS, PIXELS_PER_COLUMN},
     enums::LidarMode,
 };
-use anyhow::Result;
-use derivative::Derivative;
-use serde::{Deserialize, Serialize};
-use serde_big_array::big_array;
-use std::{
-    fmt::{Debug, Error as FormatError, Formatter},
-    fs::File,
-    io::Read,
-    path::Path,
-};
+use crate::common::*;
 
 // TODO: This workaround handles large array for serde.
 //       We'll remove is it once the const generics is introduced.
@@ -85,7 +76,7 @@ impl Config {
 
     /// Create default configuration for Ouster OS-1.
     pub fn os_1_config() -> Self {
-        // From firmare 1.12.0
+        // From firmware 1.12.0
         let beam_altitude_angles = OS_1_BEAM_ALTITUDE_DEGREES;
         let beam_azimuth_angle_corrections = OS_1_BEAM_AZIMUTH_DEGREE_CORRECTIONS;
 
@@ -100,6 +91,6 @@ impl Config {
 pub(crate) fn large_array_fmt<T: Debug>(
     array: &[T; PIXELS_PER_COLUMN],
     formatter: &mut Formatter,
-) -> Result<(), FormatError> {
-    write!(formatter, "{:?}", array as &[_])
+) -> Result<(), fmt::Error> {
+    write!(formatter, "{:?}", &array[..])
 }
