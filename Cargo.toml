@@ -20,7 +20,7 @@ chrono = "0.4"
 derivative = "1.0"
 itertools = "0.8"
 pcap = { version = "0.7", optional = true }
-uom = { version = "0.29", features = ["si"] }
+uom = { version = "0.30", features = ["si"] }
 num-traits = "0.2"
 
 [dev-dependencies]
