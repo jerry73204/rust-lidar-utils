@@ -15,17 +15,17 @@ anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.8"
-serde-big-array = "0.2"
+serde-big-array = "0.3"
 chrono = "0.4"
-derivative = "1.0"
-itertools = "0.8"
-pcap = { version = "0.7", optional = true }
-uom = { version = "0.30", features = ["si"] }
+derivative = "2.1"
+itertools = "0.10"
+pcap = { version = "0.8", optional = true }
+uom = { version = "0.31", features = ["si"] }
 num-traits = "0.2"
 
 [dev-dependencies]
 log = "0.4"
-pcap = "0.7"
+pcap = "0.8"
 toml = "0.5"
 
 [features]
