@@ -40,9 +40,31 @@ where
     context: <Config<Model, ReturnType> as ToConverterContext>::Context,
 }
 
-impl PointCloudConverterInterface<Vlp16, StrongestReturn>
-    for PointCloudConverter<Vlp16, StrongestReturn>
-{
+/// Point cloud converter for VLP-16 device with strongest return mode.
+pub type Vlp16StrongestPcdConverter = PointCloudConverter<Vlp16, StrongestReturn>;
+
+/// Point cloud converter for VLP-16 device with last return mode.
+pub type Vlp16LastPcdConverter = PointCloudConverter<Vlp16, LastReturn>;
+
+/// Point cloud converter for VLP-16 device with dual return mode.
+pub type Vlp16DualPcdConverter = PointCloudConverter<Vlp16, DualReturn>;
+
+/// Point cloud converter for VLP-16 device with return mode configured in runtime.
+pub type Vlp16DynamicPcdConverter = PointCloudConverter<Vlp16, DynamicReturn>;
+
+/// Point cloud converter for VLP-32 device with strongest return mode.
+pub type Vlp32StrongestPcdConverter = PointCloudConverter<Vlp32, StrongestReturn>;
+
+/// Point cloud converter for VLP-32 device with last return mode.
+pub type Vlp32LastPcdConverter = PointCloudConverter<Vlp32, LastReturn>;
+
+/// Point cloud converter for VLP-32 device with dual return mode.
+pub type Vlp32DualPcdConverter = PointCloudConverter<Vlp32, DualReturn>;
+
+/// Point cloud converter for VLP-32 device with return mode configured in runtime.
+pub type Vlp32DynamicPcdConverter = PointCloudConverter<Vlp32, DynamicReturn>;
+
+impl PointCloudConverterInterface<Vlp16, StrongestReturn> for Vlp16StrongestPcdConverter {
     fn from_config(config: Config<Vlp16, StrongestReturn>) -> Self {
         Self {
             context: config.into(),
@@ -64,7 +86,7 @@ impl PointCloudConverterInterface<Vlp16, StrongestReturn>
     }
 }
 
-impl PointCloudConverterInterface<Vlp16, LastReturn> for PointCloudConverter<Vlp16, LastReturn> {
+impl PointCloudConverterInterface<Vlp16, LastReturn> for Vlp16LastPcdConverter {
     fn from_config(config: Config<Vlp16, LastReturn>) -> Self {
         Self {
             context: config.into(),
@@ -86,7 +108,7 @@ impl PointCloudConverterInterface<Vlp16, LastReturn> for PointCloudConverter<Vlp
     }
 }
 
-impl PointCloudConverterInterface<Vlp16, DualReturn> for PointCloudConverter<Vlp16, DualReturn> {
+impl PointCloudConverterInterface<Vlp16, DualReturn> for Vlp16DualPcdConverter {
     fn from_config(config: Config<Vlp16, DualReturn>) -> Self {
         Self {
             context: config.into(),
@@ -108,9 +130,7 @@ impl PointCloudConverterInterface<Vlp16, DualReturn> for PointCloudConverter<Vlp
     }
 }
 
-impl PointCloudConverterInterface<Vlp16, DynamicReturn>
-    for PointCloudConverter<Vlp16, DynamicReturn>
-{
+impl PointCloudConverterInterface<Vlp16, DynamicReturn> for Vlp16DynamicPcdConverter {
     fn from_config(config: Config<Vlp16, DynamicReturn>) -> Self {
         Self {
             context: config.into(),
@@ -140,9 +160,7 @@ impl PointCloudConverterInterface<Vlp16, DynamicReturn>
     }
 }
 
-impl PointCloudConverterInterface<Vlp32, StrongestReturn>
-    for PointCloudConverter<Vlp32, StrongestReturn>
-{
+impl PointCloudConverterInterface<Vlp32, StrongestReturn> for Vlp32StrongestPcdConverter {
     fn from_config(config: Config<Vlp32, StrongestReturn>) -> Self {
         Self {
             context: config.into(),
@@ -164,7 +182,7 @@ impl PointCloudConverterInterface<Vlp32, StrongestReturn>
     }
 }
 
-impl PointCloudConverterInterface<Vlp32, LastReturn> for PointCloudConverter<Vlp32, LastReturn> {
+impl PointCloudConverterInterface<Vlp32, LastReturn> for Vlp32LastPcdConverter {
     fn from_config(config: Config<Vlp32, LastReturn>) -> Self {
         Self {
             context: config.into(),
@@ -186,7 +204,7 @@ impl PointCloudConverterInterface<Vlp32, LastReturn> for PointCloudConverter<Vlp
     }
 }
 
-impl PointCloudConverterInterface<Vlp32, DualReturn> for PointCloudConverter<Vlp32, DualReturn> {
+impl PointCloudConverterInterface<Vlp32, DualReturn> for Vlp32DualPcdConverter {
     fn from_config(config: Config<Vlp32, DualReturn>) -> Self {
         Self {
             context: config.into(),
@@ -208,9 +226,7 @@ impl PointCloudConverterInterface<Vlp32, DualReturn> for PointCloudConverter<Vlp
     }
 }
 
-impl PointCloudConverterInterface<Vlp32, DynamicReturn>
-    for PointCloudConverter<Vlp32, DynamicReturn>
-{
+impl PointCloudConverterInterface<Vlp32, DynamicReturn> for Vlp32DynamicPcdConverter {
     fn from_config(config: Config<Vlp32, DynamicReturn>) -> Self {
         Self {
             context: config.into(),
