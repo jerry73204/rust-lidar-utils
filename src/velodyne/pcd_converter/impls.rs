@@ -2,12 +2,14 @@ use super::{
     context::{DualReturnContext, SingleReturnContext},
     data::{DualReturnPoint, PointData, SingleReturnPoint},
 };
-use crate::common::*;
-use crate::velodyne::{
-    config::LaserParameter,
-    consts::{CHANNEL_PERIOD, FIRING_PERIOD},
-    marker::{ReturnTypeMarker, Vlp16, Vlp32},
-    packet::{Block, Channel, Packet, ReturnMode},
+use crate::{
+    common::*,
+    velodyne::{
+        config::LaserParameter,
+        consts::{CHANNEL_PERIOD, FIRING_PERIOD},
+        marker::{ReturnTypeMarker, Vlp16, Vlp32},
+        packet::{Block, Channel, Packet, ReturnMode},
+    },
 };
 
 #[derive(Debug, Clone)]
