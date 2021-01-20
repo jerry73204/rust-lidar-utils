@@ -29,10 +29,12 @@ pcap = "0.8"
 toml = "0.5"
 
 [features]
+default = ["pcap"]
 ouster-client-test = []
 ouster-test = []
 velodyne-test = []
+docs-only = ["pcap/docs-rs"]
 
 [package.metadata.docs.rs]
-features = ["pcap"]
+features = ["pcap", "docs-only"]
 no-default-features = true
