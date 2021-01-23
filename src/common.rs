@@ -13,6 +13,7 @@ pub use std::{
     fmt::{self, Debug, Display, Formatter},
     fs::File,
     io::{prelude::*, BufReader, LineWriter, Lines},
+    iter,
     marker::PhantomData,
     mem::{self, MaybeUninit},
     net::{Ipv4Addr, TcpStream, ToSocketAddrs},

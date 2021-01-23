@@ -2,7 +2,7 @@
 
 pub mod config;
 pub mod consts;
-// pub mod frame_converter;
+pub mod frame_converter;
 pub mod marker;
 pub mod packet;
 pub mod pcd_converter;
@@ -12,7 +12,7 @@ pub mod prelude {
 }
 
 pub use config::*;
-// pub use frame_converter::*;
+pub use frame_converter::*;
 pub use marker::*;
 pub use packet::*;
 pub use pcd_converter::*;
