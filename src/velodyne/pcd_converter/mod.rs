@@ -1,4 +1,4 @@
-//! It provides the point cloud converter along with utility types.
+//! Velodyne point cloud converter that converts a packet into a point cloud.
 
 // pub mod context;
 mod converter;
