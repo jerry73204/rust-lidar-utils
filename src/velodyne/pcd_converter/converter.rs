@@ -32,7 +32,10 @@ mod definition {
     {
         type Output;
 
+        /// Construct a point cloud converter from a config type.
         fn from_config(config: Config<Model, ReturnType>) -> Self;
+
+        /// Converts a packet into a collection points.
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
             P: AsRef<Packet>;
