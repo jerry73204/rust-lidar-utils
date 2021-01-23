@@ -1,13 +1,9 @@
-use super::{
-    context::{DualReturnContext, SingleReturnContext},
-    data::{DualReturnPoint, PointData, SingleReturnPoint},
-};
+use super::data::{DualReturnPoint, PointData, SingleReturnPoint};
 use crate::{
     common::*,
     velodyne::{
         config::LaserParameter,
         consts::{CHANNEL_PERIOD, FIRING_PERIOD},
-        marker::{ReturnTypeMarker, Vlp16, Vlp32},
         packet::{Block, Channel, Packet, ReturnMode},
     },
 };
@@ -20,15 +16,12 @@ struct FiringInfo<'a> {
     firing: &'a [Channel],
 }
 
-pub(crate) fn convert_single_return_16_channel<PacketType, ReturnType>(
-    context: &mut SingleReturnContext<Vlp16, ReturnType>,
-    packet: PacketType,
-) -> Vec<SingleReturnPoint>
-where
-    PacketType: AsRef<Packet>,
-    ReturnType: ReturnTypeMarker,
-{
-    let packet = packet.as_ref();
+pub(crate) fn convert_single_return_16_channel(
+    lasers: &[LaserParameter; 16],
+    distance_resolution: Length,
+    last_block: &mut Option<(Time, Block)>,
+    packet: &Packet,
+) -> Vec<SingleReturnPoint> {
     debug_assert!(
         [ReturnMode::StrongestReturn, ReturnMode::LastReturn].contains(&packet.return_mode)
     );
@@ -42,7 +35,7 @@ where
     let prev_last_block = {
         let new_timestamp = packet_timestamp + block_period * (packet.blocks.len() - 1) as f64;
         let new_block = *packet.blocks.last().unwrap();
-        context.last_block.replace((new_timestamp, new_block))
+        last_block.replace((new_timestamp, new_block))
     };
 
     let packet_blocks_iter = packet.blocks.iter().enumerate().map(|(idx, block)| {
@@ -55,22 +48,15 @@ where
         .map(|(block_timestamp, block)| (*block_timestamp, block))
         .chain(packet_blocks_iter);
 
-    convert_to_points_16_channel(
-        &context.lasers,
-        context.distance_resolution,
-        &mut blocks_iter,
-    )
+    convert_to_points_16_channel(&lasers, distance_resolution, &mut blocks_iter)
 }
 
-pub(crate) fn convert_dual_return_16_channel<PacketType, ReturnType>(
-    context: &mut DualReturnContext<Vlp16, ReturnType>,
-    packet: PacketType,
-) -> Vec<DualReturnPoint>
-where
-    PacketType: AsRef<Packet>,
-    ReturnType: ReturnTypeMarker,
-{
-    let packet = packet.as_ref();
+pub(crate) fn convert_dual_return_16_channel(
+    lasers: &[LaserParameter; 16],
+    distance_resolution: Length,
+    last_block: &mut Option<(Time, Block, Block)>,
+    packet: &Packet,
+) -> Vec<DualReturnPoint> {
     debug_assert_eq!(packet.return_mode, ReturnMode::DualReturn);
 
     // consts
@@ -87,10 +73,7 @@ where
             };
         let last_timestamp = packet_timestamp + block_period * (packet.blocks.len() / 2 - 1) as f64;
 
-        match context
-            .last_block
-            .replace((last_timestamp, last_strongest_block, last_last_block))
-        {
+        match last_block.replace((last_timestamp, last_strongest_block, last_last_block)) {
             Some((prev_last_timestamp, prev_strongest_block, prev_last_block)) => (
                 Some((prev_last_timestamp, prev_strongest_block)),
                 Some((prev_last_timestamp, prev_last_block)),
@@ -135,16 +118,10 @@ where
             .chain(packet_last_blocks_iter)
     };
 
-    let strongest_points = convert_to_points_16_channel(
-        &context.lasers,
-        context.distance_resolution,
-        &mut strongest_blocks_iter,
-    );
-    let last_points = convert_to_points_16_channel(
-        &context.lasers,
-        context.distance_resolution,
-        &mut last_blocks_iter,
-    );
+    let strongest_points =
+        convert_to_points_16_channel(&lasers, distance_resolution, &mut strongest_blocks_iter);
+    let last_points =
+        convert_to_points_16_channel(&lasers, distance_resolution, &mut last_blocks_iter);
 
     debug_assert_eq!(
         strongest_points.len(),
@@ -164,15 +141,12 @@ where
         .collect()
 }
 
-pub(crate) fn convert_single_return_32_channel<PacketType, ReturnType>(
-    context: &mut SingleReturnContext<Vlp32, ReturnType>,
-    packet: PacketType,
-) -> Vec<SingleReturnPoint>
-where
-    PacketType: AsRef<Packet>,
-    ReturnType: ReturnTypeMarker,
-{
-    let packet = packet.as_ref();
+pub(crate) fn convert_single_return_32_channel(
+    lasers: &[LaserParameter; 32],
+    distance_resolution: Length,
+    last_block: &mut Option<(Time, Block)>,
+    packet: &Packet,
+) -> Vec<SingleReturnPoint> {
     debug_assert!(
         [ReturnMode::StrongestReturn, ReturnMode::LastReturn].contains(&packet.return_mode)
     );
@@ -190,7 +164,7 @@ where
     let prev_last_block = {
         let new_timestamp = packet_timestamp + block_period * (packet.blocks.len() - 1) as f64;
         let new_block = *packet.blocks.last().unwrap();
-        context.last_block.replace((new_timestamp, new_block))
+        last_block.replace((new_timestamp, new_block))
     };
 
     let mut blocks_iter = prev_last_block
@@ -198,22 +172,15 @@ where
         .map(|(block_timestamp, block)| (*block_timestamp, block))
         .chain(packet_blocks_iter);
 
-    convert_to_points_32_channel(
-        &context.lasers,
-        context.distance_resolution,
-        &mut blocks_iter,
-    )
+    convert_to_points_32_channel(&lasers, distance_resolution, &mut blocks_iter)
 }
 
-pub(crate) fn convert_dual_return_32_channel<PacketType, ReturnType>(
-    context: &mut DualReturnContext<Vlp32, ReturnType>,
-    packet: PacketType,
-) -> Vec<DualReturnPoint>
-where
-    PacketType: AsRef<Packet>,
-    ReturnType: ReturnTypeMarker,
-{
-    let packet = packet.as_ref();
+pub(crate) fn convert_dual_return_32_channel(
+    lasers: &[LaserParameter; 32],
+    distance_resolution: Length,
+    last_block: &mut Option<(Time, Block, Block)>,
+    packet: &Packet,
+) -> Vec<DualReturnPoint> {
     debug_assert_eq!(packet.return_mode, ReturnMode::DualReturn);
 
     // consts
@@ -230,10 +197,7 @@ where
             };
         let last_timestamp = packet_timestamp + block_period * (packet.blocks.len() / 2 - 1) as f64;
 
-        match context
-            .last_block
-            .replace((last_timestamp, last_strongest_block, last_last_block))
-        {
+        match last_block.replace((last_timestamp, last_strongest_block, last_last_block)) {
             Some((prev_last_timestamp, prev_strongest_block, prev_last_block)) => (
                 Some((prev_last_timestamp, prev_strongest_block)),
                 Some((prev_last_timestamp, prev_last_block)),
@@ -278,16 +242,10 @@ where
             .chain(packet_last_blocks_iter)
     };
 
-    let strongest_points = convert_to_points_32_channel(
-        &context.lasers,
-        context.distance_resolution,
-        &mut strongest_blocks_iter,
-    );
-    let last_points = convert_to_points_32_channel(
-        &context.lasers,
-        context.distance_resolution,
-        &mut last_blocks_iter,
-    );
+    let strongest_points =
+        convert_to_points_32_channel(&lasers, distance_resolution, &mut strongest_blocks_iter);
+    let last_points =
+        convert_to_points_32_channel(&lasers, distance_resolution, &mut last_blocks_iter);
 
     debug_assert_eq!(
         strongest_points.len(),

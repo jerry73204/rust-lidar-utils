@@ -3,70 +3,81 @@
 use super::{config::LaserParameter, packet::ReturnMode};
 use crate::common::*;
 
-pub trait ReturnTypeMarker
-where
-    Self: Debug + Clone,
-{
-}
+pub use model::*;
+pub use return_type::*;
 
-#[derive(Debug, Clone, Copy)]
-pub struct StrongestReturn;
+mod return_type {
+    use super::*;
 
-impl ReturnTypeMarker for StrongestReturn {}
+    pub trait ReturnTypeMarker
+    where
+        Self: Debug + Clone,
+    {
+    }
 
-#[derive(Debug, Clone, Copy)]
-pub struct LastReturn;
+    #[derive(Debug, Clone, Copy)]
+    pub struct StrongestReturn;
 
-impl ReturnTypeMarker for LastReturn {}
+    impl ReturnTypeMarker for StrongestReturn {}
 
-#[derive(Debug, Clone, Copy)]
-pub struct DualReturn;
+    #[derive(Debug, Clone, Copy)]
+    pub struct LastReturn;
 
-impl ReturnTypeMarker for DualReturn {}
+    impl ReturnTypeMarker for LastReturn {}
 
-#[derive(Debug, Clone, Copy)]
-pub enum DynamicReturn {
-    LastReturn,
-    DualReturn,
-    StrongestReturn,
-}
+    #[derive(Debug, Clone, Copy)]
+    pub struct DualReturn;
 
-impl ReturnTypeMarker for DynamicReturn {}
+    impl ReturnTypeMarker for DualReturn {}
 
-impl From<ReturnMode> for DynamicReturn {
-    fn from(mode: ReturnMode) -> DynamicReturn {
-        match mode {
-            ReturnMode::LastReturn => DynamicReturn::LastReturn,
-            ReturnMode::StrongestReturn => DynamicReturn::StrongestReturn,
-            ReturnMode::DualReturn => DynamicReturn::DualReturn,
+    #[derive(Debug, Clone, Copy)]
+    pub enum DynamicReturn {
+        LastReturn,
+        DualReturn,
+        StrongestReturn,
+    }
+
+    impl ReturnTypeMarker for DynamicReturn {}
+
+    impl From<ReturnMode> for DynamicReturn {
+        fn from(mode: ReturnMode) -> DynamicReturn {
+            match mode {
+                ReturnMode::LastReturn => DynamicReturn::LastReturn,
+                ReturnMode::StrongestReturn => DynamicReturn::StrongestReturn,
+                ReturnMode::DualReturn => DynamicReturn::DualReturn,
+            }
         }
     }
 }
 
-pub trait ModelMarker {
-    type ParamArray;
-}
+mod model {
+    pub use super::*;
 
-#[derive(Debug, Clone, Copy)]
-pub struct Vlp16;
+    pub trait ModelMarker {
+        type ParamArray;
+    }
 
-impl ModelMarker for Vlp16 {
-    type ParamArray = [LaserParameter; 16];
-}
+    #[derive(Debug, Clone, Copy)]
+    pub struct Vlp16;
 
-#[derive(Debug, Clone, Copy)]
-pub struct Vlp32;
+    impl ModelMarker for Vlp16 {
+        type ParamArray = [LaserParameter; 16];
+    }
 
-impl ModelMarker for Vlp32 {
-    type ParamArray = [LaserParameter; 32];
-}
+    #[derive(Debug, Clone, Copy)]
+    pub struct Vlp32;
 
-#[derive(Debug, Clone, Copy)]
-pub enum DynamicModel {
-    Vlp16,
-    Vlp32,
-}
+    impl ModelMarker for Vlp32 {
+        type ParamArray = [LaserParameter; 32];
+    }
 
-impl ModelMarker for DynamicModel {
-    type ParamArray = Vec<LaserParameter>;
+    #[derive(Debug, Clone, Copy)]
+    pub enum DynamicModel {
+        Vlp16,
+        Vlp32,
+    }
+
+    impl ModelMarker for DynamicModel {
+        type ParamArray = Vec<LaserParameter>;
+    }
 }

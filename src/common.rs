@@ -9,6 +9,7 @@ pub use serde::{Deserialize, Deserializer, Serialize, Serializer};
 pub use serde_big_array::big_array;
 pub use std::{
     cmp::Ordering,
+    convert::TryInto,
     fmt::{self, Debug, Display, Formatter},
     fs::File,
     io::{prelude::*, BufReader, LineWriter, Lines},
