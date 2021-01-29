@@ -13,22 +13,35 @@ mod return_type {
     where
         Self: Debug + Clone,
     {
+        fn into_dynamic(self) -> DynamicReturn;
     }
 
     #[derive(Debug, Clone, Copy)]
     pub struct StrongestReturn;
 
-    impl ReturnTypeMarker for StrongestReturn {}
+    impl ReturnTypeMarker for StrongestReturn {
+        fn into_dynamic(self) -> DynamicReturn {
+            DynamicReturn::StrongestReturn
+        }
+    }
 
     #[derive(Debug, Clone, Copy)]
     pub struct LastReturn;
 
-    impl ReturnTypeMarker for LastReturn {}
+    impl ReturnTypeMarker for LastReturn {
+        fn into_dynamic(self) -> DynamicReturn {
+            DynamicReturn::LastReturn
+        }
+    }
 
     #[derive(Debug, Clone, Copy)]
     pub struct DualReturn;
 
-    impl ReturnTypeMarker for DualReturn {}
+    impl ReturnTypeMarker for DualReturn {
+        fn into_dynamic(self) -> DynamicReturn {
+            DynamicReturn::DualReturn
+        }
+    }
 
     #[derive(Debug, Clone, Copy)]
     pub enum DynamicReturn {
@@ -37,7 +50,11 @@ mod return_type {
         StrongestReturn,
     }
 
-    impl ReturnTypeMarker for DynamicReturn {}
+    impl ReturnTypeMarker for DynamicReturn {
+        fn into_dynamic(self) -> DynamicReturn {
+            self
+        }
+    }
 
     impl From<ReturnMode> for DynamicReturn {
         fn from(mode: ReturnMode) -> DynamicReturn {
@@ -55,6 +72,9 @@ mod model {
 
     pub trait ModelMarker {
         type ParamArray;
+
+        fn into_dynamic(self) -> DynamicModel;
+        fn to_dynamic_params(params: Self::ParamArray) -> Vec<LaserParameter>;
     }
 
     #[derive(Debug, Clone, Copy)]
@@ -62,6 +82,14 @@ mod model {
 
     impl ModelMarker for Vlp16 {
         type ParamArray = [LaserParameter; 16];
+
+        fn into_dynamic(self) -> DynamicModel {
+            DynamicModel::Vlp16
+        }
+
+        fn to_dynamic_params(params: Self::ParamArray) -> Vec<LaserParameter> {
+            params.into()
+        }
     }
 
     #[derive(Debug, Clone, Copy)]
@@ -69,6 +97,14 @@ mod model {
 
     impl ModelMarker for Vlp32 {
         type ParamArray = [LaserParameter; 32];
+
+        fn into_dynamic(self) -> DynamicModel {
+            DynamicModel::Vlp32
+        }
+
+        fn to_dynamic_params(params: Self::ParamArray) -> Vec<LaserParameter> {
+            params.into()
+        }
     }
 
     #[derive(Debug, Clone, Copy)]
@@ -79,5 +115,13 @@ mod model {
 
     impl ModelMarker for DynamicModel {
         type ParamArray = Vec<LaserParameter>;
+
+        fn into_dynamic(self) -> DynamicModel {
+            self
+        }
+
+        fn to_dynamic_params(params: Self::ParamArray) -> Vec<LaserParameter> {
+            params
+        }
     }
 }

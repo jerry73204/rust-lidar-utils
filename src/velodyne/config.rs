@@ -17,39 +17,66 @@ use super::{
 };
 use crate::common::*;
 
+pub use config::*;
 pub use config_builder::*;
 pub use param_config::*;
 
-#[allow(non_camel_case_types)]
-pub type Vlp16_Strongest_Config = Config<Vlp16, StrongestReturn>;
-#[allow(non_camel_case_types)]
-pub type Vlp16_Last_Config = Config<Vlp16, LastReturn>;
-#[allow(non_camel_case_types)]
-pub type Vlp16_Dual_Config = Config<Vlp16, DualReturn>;
-#[allow(non_camel_case_types)]
-pub type Vlp16_Dynamic_Config = Config<Vlp16, DynamicReturn>;
-#[allow(non_camel_case_types)]
-pub type Vlp32_Strongest_Config = Config<Vlp32, StrongestReturn>;
-#[allow(non_camel_case_types)]
-pub type Vlp32_Last_Config = Config<Vlp32, LastReturn>;
-#[allow(non_camel_case_types)]
-pub type Vlp32_Dual_Config = Config<Vlp32, DualReturn>;
-#[allow(non_camel_case_types)]
-pub type Vlp32_Dynamic_Config = Config<Vlp32, DynamicReturn>;
-#[allow(non_camel_case_types)]
-pub type Dynamic_Config = Config<DynamicModel, DynamicReturn>;
+mod config {
+    use super::*;
 
-/// Config type for Velodyne LiDARs.
-#[derive(Debug, Clone)]
-pub struct Config<Model, ReturnType>
-where
-    Model: ModelMarker,
-    ReturnType: ReturnTypeMarker,
-{
-    pub model: Model,
-    pub lasers: Model::ParamArray,
-    pub return_type: ReturnType,
-    pub distance_resolution: Length,
+    /// Config type for Velodyne LiDARs.
+    #[derive(Debug, Clone)]
+    pub struct Config<Model, ReturnType>
+    where
+        Model: ModelMarker,
+        ReturnType: ReturnTypeMarker,
+    {
+        pub model: Model,
+        pub lasers: Model::ParamArray,
+        pub return_type: ReturnType,
+        pub distance_resolution: Length,
+    }
+
+    #[allow(non_camel_case_types)]
+    pub type Vlp16_Strongest_Config = Config<Vlp16, StrongestReturn>;
+    #[allow(non_camel_case_types)]
+    pub type Vlp16_Last_Config = Config<Vlp16, LastReturn>;
+    #[allow(non_camel_case_types)]
+    pub type Vlp16_Dual_Config = Config<Vlp16, DualReturn>;
+    #[allow(non_camel_case_types)]
+    pub type Vlp16_Dynamic_Config = Config<Vlp16, DynamicReturn>;
+    #[allow(non_camel_case_types)]
+    pub type Vlp32_Strongest_Config = Config<Vlp32, StrongestReturn>;
+    #[allow(non_camel_case_types)]
+    pub type Vlp32_Last_Config = Config<Vlp32, LastReturn>;
+    #[allow(non_camel_case_types)]
+    pub type Vlp32_Dual_Config = Config<Vlp32, DualReturn>;
+    #[allow(non_camel_case_types)]
+    pub type Vlp32_Dynamic_Config = Config<Vlp32, DynamicReturn>;
+    #[allow(non_camel_case_types)]
+    pub type Dynamic_Config = Config<DynamicModel, DynamicReturn>;
+
+    impl<Model, ReturnType> Config<Model, ReturnType>
+    where
+        Model: ModelMarker,
+        ReturnType: ReturnTypeMarker,
+    {
+        pub fn into_dynamic(self) -> Dynamic_Config {
+            let Self {
+                model,
+                lasers,
+                return_type,
+                distance_resolution,
+            } = self;
+
+            Dynamic_Config {
+                model: model.into_dynamic(),
+                lasers: Model::to_dynamic_params(lasers),
+                return_type: return_type.into_dynamic(),
+                distance_resolution,
+            }
+        }
+    }
 }
 
 mod config_builder {
