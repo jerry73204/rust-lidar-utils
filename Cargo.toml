@@ -30,6 +30,7 @@ toml = "0.5"
 
 [features]
 default = ["pcap"]
+all-tests = ["ouster-client-test", "ouster-test", "velodyne-test"]
 ouster-client-test = []
 ouster-test = []
 velodyne-test = []

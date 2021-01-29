@@ -2,9 +2,8 @@
 
 use anyhow::Result;
 use lidar_utils::velodyne::{
-    config::ConfigBuilder,
-    packet::Packet as VelodynePacket,
-    pcd_converter::{PointCloudConverter, PointCloudConverterInterface, PointInterface},
+    ConfigBuilder, DataPacket, PointCloudConverter, VelodynePoint, Vlp16_Strongest_PcdConverter,
+    Vlp32_Strongest_PcdConverter,
 };
 use pcap::Capture;
 
@@ -17,7 +16,7 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
     cap.filter("udp")?;
 
     while let Ok(packet) = cap.next() {
-        let lidar_packet = VelodynePacket::from_pcap(&packet)?;
+        let lidar_packet = DataPacket::from_pcap(&packet)?;
 
         packets.push(lidar_packet);
     }
@@ -39,7 +38,7 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
 #[cfg(feature = "pcap")]
 fn velodyne_vlp_16_scan() -> Result<()> {
     let config = ConfigBuilder::vlp_16_strongest_return();
-    let mut converter = PointCloudConverter::from_config(config);
+    let mut converter = Vlp16_Strongest_PcdConverter::from_config(config);
 
     let mut cap = Capture::from_file("test_files/velodyne_example.pcap")?;
     cap.filter("udp")?;
@@ -49,7 +48,7 @@ fn velodyne_vlp_16_scan() -> Result<()> {
     let mut points_per_frame = 0;
 
     while let Ok(packet) = cap.next() {
-        let lidar_packet = VelodynePacket::from_pcap(&packet)?;
+        let lidar_packet = DataPacket::from_pcap(&packet)?;
 
         for point in converter.convert(lidar_packet)?.into_iter() {
             let curr_timestamp = point.timestamp();
@@ -83,7 +82,7 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
     cap.filter("udp")?;
 
     while let Ok(packet) = cap.next() {
-        let lidar_packet = match VelodynePacket::from_pcap(&packet) {
+        let lidar_packet = match DataPacket::from_pcap(&packet) {
             Ok(packet) => packet,
             Err(_) => continue,
         };
@@ -107,7 +106,7 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
 #[cfg(feature = "pcap")]
 fn velodyne_vlp_32c_scan() -> Result<()> {
     let config = ConfigBuilder::vlp_32c_strongest_return();
-    let mut converter = PointCloudConverter::from_config(config);
+    let mut converter = Vlp32_Strongest_PcdConverter::from_config(config);
 
     let mut cap = Capture::from_file("test_files/hdl32_example.pcap")?;
     cap.filter("udp")?;
@@ -117,7 +116,7 @@ fn velodyne_vlp_32c_scan() -> Result<()> {
     let mut points_per_frame = 0;
 
     while let Ok(packet) = cap.next() {
-        let lidar_packet = match VelodynePacket::from_pcap(&packet) {
+        let lidar_packet = match DataPacket::from_pcap(&packet) {
             Ok(packet) => packet,
             Err(_) => continue,
         };
