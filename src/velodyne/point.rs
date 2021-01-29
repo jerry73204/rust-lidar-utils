@@ -6,6 +6,7 @@ pub use dual_return_point::*;
 pub use dynamic_return_points::*;
 pub use single_return_point::*;
 
+/// Generic point from Velodyne LiDAR device.
 pub trait VelodynePoint {
     fn laser_id(&self) -> u32;
     fn timestamp(&self) -> Time;
