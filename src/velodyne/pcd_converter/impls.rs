@@ -3,7 +3,7 @@ use crate::{
     velodyne::{
         config::LaserParameter,
         consts::{CHANNEL_PERIOD, FIRING_PERIOD},
-        packet::{Block, Channel, Packet, ReturnMode},
+        packet::{Block, Channel, DataPacket, ReturnMode},
         point::{DualReturnPoint, PointData, SingleReturnPoint},
     },
 };
@@ -20,7 +20,7 @@ pub(crate) fn convert_single_return_16_channel(
     lasers: &[LaserParameter; 16],
     distance_resolution: Length,
     last_block: &mut Option<(Time, Block)>,
-    packet: &Packet,
+    packet: &DataPacket,
 ) -> Vec<SingleReturnPoint> {
     debug_assert!(
         [ReturnMode::StrongestReturn, ReturnMode::LastReturn].contains(&packet.return_mode)
@@ -34,7 +34,7 @@ pub(crate) fn convert_single_return_16_channel(
     // update last seen block
     let prev_last_block = {
         let new_timestamp = packet_timestamp + block_period * (packet.blocks.len() - 1) as f64;
-        let new_block = *packet.blocks.last().unwrap();
+        let new_block = packet.blocks.last().unwrap().clone();
         last_block.replace((new_timestamp, new_block))
     };
 
@@ -55,7 +55,7 @@ pub(crate) fn convert_dual_return_16_channel(
     lasers: &[LaserParameter; 16],
     distance_resolution: Length,
     last_block: &mut Option<(Time, Block, Block)>,
-    packet: &Packet,
+    packet: &DataPacket,
 ) -> Vec<DualReturnPoint> {
     debug_assert_eq!(packet.return_mode, ReturnMode::DualReturn);
 
@@ -145,7 +145,7 @@ pub(crate) fn convert_single_return_32_channel(
     lasers: &[LaserParameter; 32],
     distance_resolution: Length,
     last_block: &mut Option<(Time, Block)>,
-    packet: &Packet,
+    packet: &DataPacket,
 ) -> Vec<SingleReturnPoint> {
     debug_assert!(
         [ReturnMode::StrongestReturn, ReturnMode::LastReturn].contains(&packet.return_mode)
@@ -179,7 +179,7 @@ pub(crate) fn convert_dual_return_32_channel(
     lasers: &[LaserParameter; 32],
     distance_resolution: Length,
     last_block: &mut Option<(Time, Block, Block)>,
-    packet: &Packet,
+    packet: &DataPacket,
 ) -> Vec<DualReturnPoint> {
     debug_assert_eq!(packet.return_mode, ReturnMode::DualReturn);
 

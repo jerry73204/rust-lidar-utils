@@ -11,7 +11,7 @@ use crate::{
             DualReturn, DynamicModel, DynamicReturn, LastReturn, ModelMarker, ReturnTypeMarker,
             StrongestReturn, Vlp16, Vlp32,
         },
-        packet::Packet,
+        packet::DataPacket,
         pcd_converter::{
             Dynamic_PcdConverter, PointCloudConverter, Vlp16_Dual_PcdConverter,
             Vlp16_Dynamic_PcdConverter, Vlp16_Last_PcdConverter, Vlp16_Strongest_PcdConverter,
@@ -42,7 +42,7 @@ mod definitions {
         /// Converts a packet into a collection of frames of points.
         fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
-            P: AsRef<Packet>;
+            P: Borrow<DataPacket>;
 
         fn pop_remaining(&mut self) -> Option<Self::Frame>;
     }
@@ -146,14 +146,14 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 pcd_converter,
                 remaining_points,
             } = self;
 
-            impls::convert_dynamic_return(pcd_converter, remaining_points, packet.as_ref())
+            impls::convert_dynamic_return(pcd_converter, remaining_points, packet.borrow())
         }
 
         fn pop_remaining(&mut self) -> Option<Self::Frame> {
@@ -178,14 +178,14 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 pcd_converter,
                 remaining_points,
             } = self;
 
-            impls::convert_single_return(pcd_converter, remaining_points, packet.as_ref())
+            impls::convert_single_return(pcd_converter, remaining_points, packet.borrow())
         }
 
         fn pop_remaining(&mut self) -> Option<Self::Frame> {
@@ -209,14 +209,14 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 pcd_converter,
                 remaining_points,
             } = self;
 
-            impls::convert_single_return(pcd_converter, remaining_points, packet.as_ref())
+            impls::convert_single_return(pcd_converter, remaining_points, packet.borrow())
         }
 
         fn pop_remaining(&mut self) -> Option<Self::Frame> {
@@ -240,14 +240,14 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 pcd_converter,
                 remaining_points,
             } = self;
 
-            impls::convert_dual_return(pcd_converter, remaining_points, packet.as_ref())
+            impls::convert_dual_return(pcd_converter, remaining_points, packet.borrow())
         }
 
         fn pop_remaining(&mut self) -> Option<Self::Frame> {
@@ -272,14 +272,14 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 pcd_converter,
                 remaining_points,
             } = self;
 
-            impls::convert_dynamic_return(pcd_converter, remaining_points, packet.as_ref())
+            impls::convert_dynamic_return(pcd_converter, remaining_points, packet.borrow())
         }
 
         fn pop_remaining(&mut self) -> Option<Self::Frame> {
@@ -304,14 +304,14 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 pcd_converter,
                 remaining_points,
             } = self;
 
-            impls::convert_single_return(pcd_converter, remaining_points, packet.as_ref())
+            impls::convert_single_return(pcd_converter, remaining_points, packet.borrow())
         }
 
         fn pop_remaining(&mut self) -> Option<Self::Frame> {
@@ -335,14 +335,14 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 pcd_converter,
                 remaining_points,
             } = self;
 
-            impls::convert_single_return(pcd_converter, remaining_points, packet.as_ref())
+            impls::convert_single_return(pcd_converter, remaining_points, packet.borrow())
         }
 
         fn pop_remaining(&mut self) -> Option<Self::Frame> {
@@ -366,14 +366,14 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 pcd_converter,
                 remaining_points,
             } = self;
 
-            impls::convert_dual_return(pcd_converter, remaining_points, packet.as_ref())
+            impls::convert_dual_return(pcd_converter, remaining_points, packet.borrow())
         }
 
         fn pop_remaining(&mut self) -> Option<Self::Frame> {
@@ -398,14 +398,14 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 pcd_converter,
                 remaining_points,
             } = self;
 
-            impls::convert_dynamic_return(pcd_converter, remaining_points, packet.as_ref())
+            impls::convert_dynamic_return(pcd_converter, remaining_points, packet.borrow())
         }
 
         fn pop_remaining(&mut self) -> Option<Self::Frame> {

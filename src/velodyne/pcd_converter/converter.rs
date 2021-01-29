@@ -11,7 +11,7 @@ use crate::{
             DualReturn, DynamicModel, DynamicReturn, LastReturn, ModelMarker, ReturnTypeMarker,
             StrongestReturn, Vlp16, Vlp32,
         },
-        packet::{Block, Packet, ReturnMode},
+        packet::{Block, DataPacket, ReturnMode},
         point::{DualReturnPoint, DynamicReturnPoints, SingleReturnPoint},
     },
 };
@@ -36,7 +36,7 @@ mod definition {
         /// Converts a packet into a collection points.
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
-            P: AsRef<Packet>;
+            P: Borrow<DataPacket>;
     }
 
     #[derive(Debug)]
@@ -167,7 +167,7 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 ref lasers,
@@ -175,7 +175,7 @@ mod converter_impls {
                 ref mut last_block,
             } = *self;
 
-            let packet = packet.as_ref();
+            let packet = packet.borrow();
             ensure!(
                 packet.return_mode == ReturnMode::StrongestReturn,
                 "return mode does not match"
@@ -208,7 +208,7 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 ref lasers,
@@ -216,7 +216,7 @@ mod converter_impls {
                 ref mut last_block,
             } = *self;
 
-            let packet = packet.as_ref();
+            let packet = packet.borrow();
             ensure!(
                 packet.return_mode == ReturnMode::LastReturn,
                 "return mode does not match"
@@ -249,7 +249,7 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 ref lasers,
@@ -257,7 +257,7 @@ mod converter_impls {
                 ref mut last_block,
             } = *self;
 
-            let packet = packet.as_ref();
+            let packet = packet.borrow();
             ensure!(
                 packet.return_mode == ReturnMode::DualReturn,
                 "return mode does not match"
@@ -292,7 +292,7 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 return_type,
@@ -301,7 +301,7 @@ mod converter_impls {
                 ref mut last_block,
             } = *self;
 
-            let packet = packet.as_ref();
+            let packet = packet.borrow();
 
             let points: DynamicReturnPoints = match return_type {
                 DynamicReturn::LastReturn | DynamicReturn::StrongestReturn => {
@@ -345,7 +345,7 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 ref lasers,
@@ -353,7 +353,7 @@ mod converter_impls {
                 ref mut last_block,
             } = *self;
 
-            let packet = packet.as_ref();
+            let packet = packet.borrow();
             ensure!(
                 packet.return_mode == ReturnMode::StrongestReturn,
                 "return mode does not match"
@@ -386,7 +386,7 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 ref lasers,
@@ -394,7 +394,7 @@ mod converter_impls {
                 ref mut last_block,
             } = *self;
 
-            let packet = packet.as_ref();
+            let packet = packet.borrow();
             ensure!(
                 packet.return_mode == ReturnMode::LastReturn,
                 "return mode does not match"
@@ -427,7 +427,7 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 ref lasers,
@@ -435,7 +435,7 @@ mod converter_impls {
                 ref mut last_block,
             } = *self;
 
-            let packet = packet.as_ref();
+            let packet = packet.borrow();
             ensure!(
                 packet.return_mode == ReturnMode::DualReturn,
                 "return mode does not match"
@@ -470,7 +470,7 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 return_type,
@@ -479,7 +479,7 @@ mod converter_impls {
                 ref mut last_block,
             } = *self;
 
-            let packet = packet.as_ref();
+            let packet = packet.borrow();
 
             let points: DynamicReturnPoints = match return_type {
                 DynamicReturn::LastReturn | DynamicReturn::StrongestReturn => {
@@ -527,7 +527,7 @@ mod converter_impls {
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
-            P: AsRef<Packet>,
+            P: Borrow<DataPacket>,
         {
             let Self {
                 model,
@@ -537,7 +537,7 @@ mod converter_impls {
                 ref mut last_block,
             } = *self;
 
-            let packet = packet.as_ref();
+            let packet = packet.borrow();
 
             let points: DynamicReturnPoints = match (model, return_type) {
                 (DynamicModel::Vlp16, DynamicReturn::LastReturn)

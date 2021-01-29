@@ -8,6 +8,7 @@ pub use pcap::Packet as PcapPacket;
 pub use serde::{Deserialize, Deserializer, Serialize, Serializer};
 pub use serde_big_array::big_array;
 pub use std::{
+    borrow::Borrow,
     cmp::Ordering,
     convert::TryInto,
     fmt::{self, Debug, Display, Formatter},
