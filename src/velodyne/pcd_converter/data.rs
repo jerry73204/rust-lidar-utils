@@ -145,6 +145,22 @@ mod dynamic_return_points {
         Dual(Vec<DualReturnPoint>),
     }
 
+    impl DynamicReturnPoints {
+        pub fn is_empty(&self) -> bool {
+            match self {
+                Self::Single(points) => points.is_empty(),
+                Self::Dual(points) => points.is_empty(),
+            }
+        }
+
+        pub(crate) fn empty_like(&self) -> Self {
+            match self {
+                Self::Single(_) => Self::Single(vec![]),
+                Self::Dual(_) => Self::Dual(vec![]),
+            }
+        }
+    }
+
     impl From<Vec<SingleReturnPoint>> for DynamicReturnPoints {
         fn from(points: Vec<SingleReturnPoint>) -> Self {
             Self::Single(points)

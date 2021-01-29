@@ -33,15 +33,17 @@ mod definitions {
         Model: ModelMarker,
         ReturnType: ReturnTypeMarker,
     {
-        type Output;
+        type Frame;
 
         /// Construct a frame converter from a config type.
         fn from_config(config: Config<Model, ReturnType>) -> Self;
 
         /// Converts a packet into a collection of frames of points.
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
             P: AsRef<Packet>;
+
+        fn pop_remaining(&mut self) -> Option<Self::Frame>;
     }
 
     #[derive(Debug)]
@@ -57,23 +59,10 @@ mod definitions {
             })
         }
 
-        // pub fn single(&mut self) -> &mut Vec<SingleReturnPoint> {
-        //     match &mut self.0 {
-        //         DynamicReturnPoints::Single(points) => points,
-        //         _ => unreachable!(),
-        //     }
-        // }
-
-        // pub fn dual(&mut self) -> &mut Vec<DualReturnPoint> {
-        //     match &mut self.0 {
-        //         DynamicReturnPoints::Dual(points) => points,
-        //         _ => unreachable!(),
-        //     }
-        // }
-
-        // pub fn dynamic(&mut self) -> &mut DynamicReturnPoints {
-        //     &mut self.0
-        // }
+        pub fn take(&mut self) -> DynamicReturnPoints {
+            let empty = self.0.empty_like();
+            mem::replace(&mut self.0, empty)
+        }
     }
 
     #[derive(Debug)]
@@ -144,7 +133,7 @@ mod converter_impls {
     use super::*;
 
     impl FrameConverter<DynamicModel, DynamicReturn> for Dynamic_FrameConverter {
-        type Output = Vec<DynamicReturnPoints>;
+        type Frame = DynamicReturnPoints;
 
         fn from_config(config: Dynamic_Config) -> Self {
             let remaining_points = RemainingPoints::new(config.return_type);
@@ -154,7 +143,7 @@ mod converter_impls {
             }
         }
 
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
             P: AsRef<Packet>,
         {
@@ -165,10 +154,19 @@ mod converter_impls {
 
             impls::convert_dynamic_return(pcd_converter, remaining_points, packet.as_ref())
         }
+
+        fn pop_remaining(&mut self) -> Option<Self::Frame> {
+            let remaining = self.remaining_points.take();
+            if remaining.is_empty() {
+                None
+            } else {
+                Some(remaining)
+            }
+        }
     }
 
     impl FrameConverter<Vlp16, LastReturn> for Vlp16_Last_FrameConverter {
-        type Output = Vec<Vec<SingleReturnPoint>>;
+        type Frame = Vec<SingleReturnPoint>;
 
         fn from_config(config: Vlp16_Last_Config) -> Self {
             Self {
@@ -177,7 +175,7 @@ mod converter_impls {
             }
         }
 
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
             P: AsRef<Packet>,
         {
@@ -188,10 +186,18 @@ mod converter_impls {
 
             impls::convert_single_return(pcd_converter, remaining_points, packet.as_ref())
         }
+
+        fn pop_remaining(&mut self) -> Option<Self::Frame> {
+            if self.remaining_points.is_empty() {
+                None
+            } else {
+                Some(mem::replace(&mut self.remaining_points, vec![]))
+            }
+        }
     }
 
     impl FrameConverter<Vlp16, StrongestReturn> for Vlp16_Strongest_FrameConverter {
-        type Output = Vec<Vec<SingleReturnPoint>>;
+        type Frame = Vec<SingleReturnPoint>;
 
         fn from_config(config: Vlp16_Strongest_Config) -> Self {
             Self {
@@ -200,7 +206,7 @@ mod converter_impls {
             }
         }
 
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
             P: AsRef<Packet>,
         {
@@ -211,10 +217,18 @@ mod converter_impls {
 
             impls::convert_single_return(pcd_converter, remaining_points, packet.as_ref())
         }
+
+        fn pop_remaining(&mut self) -> Option<Self::Frame> {
+            if self.remaining_points.is_empty() {
+                None
+            } else {
+                Some(mem::replace(&mut self.remaining_points, vec![]))
+            }
+        }
     }
 
     impl FrameConverter<Vlp16, DualReturn> for Vlp16_Dual_FrameConverter {
-        type Output = Vec<Vec<DualReturnPoint>>;
+        type Frame = Vec<DualReturnPoint>;
 
         fn from_config(config: Vlp16_Dual_Config) -> Self {
             Self {
@@ -223,7 +237,7 @@ mod converter_impls {
             }
         }
 
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
             P: AsRef<Packet>,
         {
@@ -234,10 +248,18 @@ mod converter_impls {
 
             impls::convert_dual_return(pcd_converter, remaining_points, packet.as_ref())
         }
+
+        fn pop_remaining(&mut self) -> Option<Self::Frame> {
+            if self.remaining_points.is_empty() {
+                None
+            } else {
+                Some(mem::replace(&mut self.remaining_points, vec![]))
+            }
+        }
     }
 
     impl FrameConverter<Vlp16, DynamicReturn> for Vlp16_Dynamic_FrameConverter {
-        type Output = Vec<DynamicReturnPoints>;
+        type Frame = DynamicReturnPoints;
 
         fn from_config(config: Vlp16_Dynamic_Config) -> Self {
             let remaining_points = RemainingPoints::new(config.return_type);
@@ -247,7 +269,7 @@ mod converter_impls {
             }
         }
 
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
             P: AsRef<Packet>,
         {
@@ -258,10 +280,19 @@ mod converter_impls {
 
             impls::convert_dynamic_return(pcd_converter, remaining_points, packet.as_ref())
         }
+
+        fn pop_remaining(&mut self) -> Option<Self::Frame> {
+            let remaining = self.remaining_points.take();
+            if remaining.is_empty() {
+                None
+            } else {
+                Some(remaining)
+            }
+        }
     }
 
     impl FrameConverter<Vlp32, LastReturn> for Vlp32_Last_FrameConverter {
-        type Output = Vec<Vec<SingleReturnPoint>>;
+        type Frame = Vec<SingleReturnPoint>;
 
         fn from_config(config: Vlp32_Last_Config) -> Self {
             Self {
@@ -270,7 +301,7 @@ mod converter_impls {
             }
         }
 
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
             P: AsRef<Packet>,
         {
@@ -281,10 +312,18 @@ mod converter_impls {
 
             impls::convert_single_return(pcd_converter, remaining_points, packet.as_ref())
         }
+
+        fn pop_remaining(&mut self) -> Option<Self::Frame> {
+            if self.remaining_points.is_empty() {
+                None
+            } else {
+                Some(mem::replace(&mut self.remaining_points, vec![]))
+            }
+        }
     }
 
     impl FrameConverter<Vlp32, StrongestReturn> for Vlp32_Strongest_FrameConverter {
-        type Output = Vec<Vec<SingleReturnPoint>>;
+        type Frame = Vec<SingleReturnPoint>;
 
         fn from_config(config: Vlp32_Strongest_Config) -> Self {
             Self {
@@ -293,7 +332,7 @@ mod converter_impls {
             }
         }
 
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
             P: AsRef<Packet>,
         {
@@ -304,10 +343,18 @@ mod converter_impls {
 
             impls::convert_single_return(pcd_converter, remaining_points, packet.as_ref())
         }
+
+        fn pop_remaining(&mut self) -> Option<Self::Frame> {
+            if self.remaining_points.is_empty() {
+                None
+            } else {
+                Some(mem::replace(&mut self.remaining_points, vec![]))
+            }
+        }
     }
 
     impl FrameConverter<Vlp32, DualReturn> for Vlp32_Dual_FrameConverter {
-        type Output = Vec<Vec<DualReturnPoint>>;
+        type Frame = Vec<DualReturnPoint>;
 
         fn from_config(config: Vlp32_Dual_Config) -> Self {
             Self {
@@ -316,7 +363,7 @@ mod converter_impls {
             }
         }
 
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
             P: AsRef<Packet>,
         {
@@ -327,10 +374,18 @@ mod converter_impls {
 
             impls::convert_dual_return(pcd_converter, remaining_points, packet.as_ref())
         }
+
+        fn pop_remaining(&mut self) -> Option<Self::Frame> {
+            if self.remaining_points.is_empty() {
+                None
+            } else {
+                Some(mem::replace(&mut self.remaining_points, vec![]))
+            }
+        }
     }
 
     impl FrameConverter<Vlp32, DynamicReturn> for Vlp32_Dynamic_FrameConverter {
-        type Output = Vec<DynamicReturnPoints>;
+        type Frame = DynamicReturnPoints;
 
         fn from_config(config: Vlp32_Dynamic_Config) -> Self {
             let remaining_points = RemainingPoints::new(config.return_type);
@@ -340,7 +395,7 @@ mod converter_impls {
             }
         }
 
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        fn convert<P>(&mut self, packet: P) -> Result<Vec<Self::Frame>>
         where
             P: AsRef<Packet>,
         {
@@ -350,6 +405,15 @@ mod converter_impls {
             } = self;
 
             impls::convert_dynamic_return(pcd_converter, remaining_points, packet.as_ref())
+        }
+
+        fn pop_remaining(&mut self) -> Option<Self::Frame> {
+            let remaining = self.remaining_points.take();
+            if remaining.is_empty() {
+                None
+            } else {
+                Some(remaining)
+            }
         }
     }
 }
