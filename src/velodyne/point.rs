@@ -1,3 +1,5 @@
+//! Point data types.
+
 use crate::common::*;
 
 pub use dual_return_point::*;

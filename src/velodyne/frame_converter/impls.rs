@@ -4,10 +4,8 @@ use crate::{
     velodyne::{
         marker::{ModelMarker, ReturnTypeMarker},
         packet::Packet,
-        pcd_converter::{
-            DualReturnPoint, DynamicReturnPoints, PointCloudConverter, SingleReturnPoint,
-            VelodynePoint,
-        },
+        pcd_converter::PointCloudConverter,
+        point::{DualReturnPoint, DynamicReturnPoints, SingleReturnPoint, VelodynePoint},
     },
 };
 

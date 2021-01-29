@@ -6,9 +6,10 @@ pub mod frame_converter;
 pub mod marker;
 pub mod packet;
 pub mod pcd_converter;
+pub mod point;
 
 pub mod prelude {
-    pub use super::pcd_converter::{PointCloudConverter, VelodynePoint};
+    pub use super::{pcd_converter::PointCloudConverter, point::VelodynePoint};
 }
 
 pub use config::*;
@@ -16,3 +17,4 @@ pub use frame_converter::*;
 pub use marker::*;
 pub use packet::*;
 pub use pcd_converter::*;
+pub use point::*;

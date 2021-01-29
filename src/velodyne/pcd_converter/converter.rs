@@ -1,7 +1,4 @@
-use super::{
-    data::{DualReturnPoint, DynamicReturnPoints, SingleReturnPoint},
-    impls,
-};
+use super::impls;
 use crate::{
     common::*,
     velodyne::{
@@ -15,6 +12,7 @@ use crate::{
             StrongestReturn, Vlp16, Vlp32,
         },
         packet::{Block, Packet, ReturnMode},
+        point::{DualReturnPoint, DynamicReturnPoints, SingleReturnPoint},
     },
 };
 

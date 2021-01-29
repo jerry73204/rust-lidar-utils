@@ -1,10 +1,10 @@
-use super::data::{DualReturnPoint, PointData, SingleReturnPoint};
 use crate::{
     common::*,
     velodyne::{
         config::LaserParameter,
         consts::{CHANNEL_PERIOD, FIRING_PERIOD},
         packet::{Block, Channel, Packet, ReturnMode},
+        point::{DualReturnPoint, PointData, SingleReturnPoint},
     },
 };
 

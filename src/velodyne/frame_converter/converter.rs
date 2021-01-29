@@ -13,11 +13,12 @@ use crate::{
         },
         packet::Packet,
         pcd_converter::{
-            DualReturnPoint, DynamicReturnPoints, Dynamic_PcdConverter, PointCloudConverter,
-            SingleReturnPoint, Vlp16_Dual_PcdConverter, Vlp16_Dynamic_PcdConverter,
-            Vlp16_Last_PcdConverter, Vlp16_Strongest_PcdConverter, Vlp32_Dual_PcdConverter,
-            Vlp32_Dynamic_PcdConverter, Vlp32_Last_PcdConverter, Vlp32_Strongest_PcdConverter,
+            Dynamic_PcdConverter, PointCloudConverter, Vlp16_Dual_PcdConverter,
+            Vlp16_Dynamic_PcdConverter, Vlp16_Last_PcdConverter, Vlp16_Strongest_PcdConverter,
+            Vlp32_Dual_PcdConverter, Vlp32_Dynamic_PcdConverter, Vlp32_Last_PcdConverter,
+            Vlp32_Strongest_PcdConverter,
         },
+        point::{DualReturnPoint, DynamicReturnPoints, SingleReturnPoint},
     },
 };
 
