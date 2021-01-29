@@ -143,7 +143,7 @@ pub struct Packet {
 impl Packet {
     /// Construct packet from [pcap's Packet](pcap::Packet).
     #[cfg(feature = "pcap")]
-    pub fn from_pcap(packet: &PcapPacket) -> Result<Packet> {
+    pub fn from_pcap(packet: &pcap::Packet) -> Result<Packet> {
         let packet_header_size = 42;
 
         ensure!(

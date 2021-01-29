@@ -3,8 +3,6 @@ pub use chrono::NaiveDateTime;
 pub use derivative::Derivative;
 pub use itertools::izip;
 pub use num_traits::{Float, Num};
-#[cfg(feature = "pcap")]
-pub use pcap::Packet as PcapPacket;
 pub use serde::{Deserialize, Deserializer, Serialize, Serializer};
 pub use serde_big_array::big_array;
 pub use std::{

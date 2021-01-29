@@ -5,6 +5,7 @@ use super::consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK
 use crate::common::*;
 
 pub use data_packet::*;
+pub use position_packet::*;
 
 mod data_packet {
     use super::*;
@@ -93,7 +94,7 @@ mod data_packet {
     impl DataPacket {
         /// Construct packet from [pcap::Packet](pcap::Packet).
         #[cfg(feature = "pcap")]
-        pub fn from_pcap(packet: &PcapPacket) -> Result<DataPacket> {
+        pub fn from_pcap(packet: &pcap::Packet) -> Result<Self> {
             let packet_header_size = 42;
 
             ensure!(
@@ -229,5 +230,16 @@ mod position_packet {
     pub enum ThermalStatus {
         Ok = 0,
         ThermalShutdown = 1,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn velodyne_packet_size_test() {
+        assert_eq!(mem::size_of::<DataPacket>(), 1206);
+        assert_eq!(mem::size_of::<PositionPacket>(), 512);
     }
 }
