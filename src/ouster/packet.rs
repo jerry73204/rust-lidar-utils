@@ -5,7 +5,7 @@ use crate::common::*;
 
 /// Represents a point of signal measurement.
 #[repr(C, packed)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Pixel {
     /// The least significant 20 bits form distance in millimeters.
     pub raw_distance: u32,
@@ -28,7 +28,7 @@ impl Pixel {
 
 /// Represents a list of [Pixel]s along with meta data.
 #[repr(C, packed)]
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Column {
     /// Unix timestamp in nanoseconds.
     pub timestamp: u64,
@@ -76,66 +76,9 @@ impl Column {
     }
 }
 
-impl PartialEq for Column {
-    fn eq(&self, other: &Column) -> bool {
-        let Self {
-            timestamp: timestamp_lhs,
-            measurement_id: measurement_id_lhs,
-            frame_id: frame_id_lhs,
-            encoder_ticks: encoder_ticks_lhs,
-            raw_valid: raw_valid_lhs,
-            pixels: pixels_lhs,
-        } = *self;
-
-        let Self {
-            timestamp: timestamp_rhs,
-            measurement_id: measurement_id_rhs,
-            frame_id: frame_id_rhs,
-            encoder_ticks: encoder_ticks_rhs,
-            raw_valid: raw_valid_rhs,
-            pixels: pixels_rhs,
-        } = *other;
-
-        timestamp_lhs == timestamp_rhs
-            && measurement_id_lhs == measurement_id_rhs
-            && frame_id_lhs == frame_id_rhs
-            && encoder_ticks_lhs == encoder_ticks_rhs
-            && raw_valid_lhs == raw_valid_rhs
-            && pixels_lhs
-                .iter()
-                .zip(pixels_rhs.iter())
-                .all(|(lval, rval)| lval == rval)
-    }
-}
-
-impl Eq for Column {}
-
-impl Debug for Column {
-    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
-        let Self {
-            timestamp,
-            measurement_id,
-            frame_id,
-            encoder_ticks,
-            raw_valid,
-            pixels,
-        } = *self;
-
-        formatter
-            .debug_struct(std::any::type_name::<Self>())
-            .field("timestamp", &timestamp)
-            .field("measurement_id", &measurement_id)
-            .field("frame_id", &frame_id)
-            .field("encoder_ticks", &encoder_ticks)
-            .field("raw_valid", &raw_valid)
-            .field("pixels", &pixels)
-            .finish()
-    }
-}
-
 /// Represents a data packet from Ouster sensor.
 #[repr(C, packed)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Packet {
     pub columns: [Column; COLUMNS_PER_PACKET],
 }

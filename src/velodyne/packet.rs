@@ -12,7 +12,7 @@ mod data_packet {
 
     /// Represents the block index in range from 0 to 31, or from 32 to 63.
     #[repr(u16)]
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub enum BlockIdentifier {
         Block0To31 = 0xeeff,
         Block32To63 = 0xddff,
@@ -20,7 +20,7 @@ mod data_packet {
 
     /// Represents the way the sensor measures the laser signal.
     #[repr(u8)]
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub enum ReturnMode {
         StrongestReturn = 0x37,
         LastReturn = 0x38,
@@ -29,7 +29,7 @@ mod data_packet {
 
     /// Represents the hardware model.
     #[repr(u8)]
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub enum ProductID {
         HDL32E = 0x21,
         VLP16 = 0x22,
@@ -42,7 +42,7 @@ mod data_packet {
 
     /// Represents a point of measurement.
     #[repr(C, packed)]
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct Channel {
         /// The raw distance of laser return.
         pub distance: u16,
@@ -52,7 +52,7 @@ mod data_packet {
 
     /// Represents a sequence of measurements with meta data.
     #[repr(C, packed)]
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct Block {
         /// Represents the block that the firing belongs to.
         pub block_identifier: BlockIdentifier,
@@ -79,7 +79,7 @@ mod data_packet {
 
     /// Represents the data packet from Velodyne sensor.
     #[repr(C, packed)]
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct DataPacket {
         /// Sensor data.
         pub blocks: [Block; BLOCKS_PER_PACKET],
@@ -141,7 +141,7 @@ mod position_packet {
     use super::*;
 
     #[repr(C, packed)]
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct PositionPacket {
         pub reserved_head: [u8; 187],
         pub top_board_temperature: u8,
@@ -207,7 +207,7 @@ mod position_packet {
     }
 
     #[repr(u8)]
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub enum LastAdcCalibrationReason {
         NoCalibration = 0,
         PowerOn = 1,
@@ -217,7 +217,7 @@ mod position_packet {
     }
 
     #[repr(u8)]
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub enum PpsStatus {
         Abscent = 0,
         Synchronizing = 1,
@@ -226,7 +226,7 @@ mod position_packet {
     }
 
     #[repr(u8)]
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub enum ThermalStatus {
         Ok = 0,
         ThermalShutdown = 1,
