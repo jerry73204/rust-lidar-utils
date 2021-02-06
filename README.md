@@ -3,7 +3,7 @@
 The crate lets you parse data from Velodyne and Ouster LiDARs. It provides the following functionalities.
 
 - Raw packet encoding and decoding
-- Raw data to point cloud conversion
+- Packet to point cloud conversion
 - Ouster LiDAR command API client
 
 ## Usage
