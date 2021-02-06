@@ -1,74 +1,61 @@
 #![cfg(feature = "velodyne-test")]
 
-use anyhow::Result;
+use anyhow::{ensure, Result};
+use itertools::izip;
 use lidar_utils::velodyne::{
-    ConfigBuilder, DataPacket, PointCloudConverter, VelodynePoint, Vlp16_Strongest_PcdConverter,
+    ConfigBuilder, DataPacket, FrameConverter, PointCloudConverter, PositionPacket,
+    Vlp16_Strongest_FrameConverter, Vlp16_Strongest_PcdConverter, Vlp32_Strongest_FrameConverter,
     Vlp32_Strongest_PcdConverter,
 };
 use pcap::Capture;
+use std::mem;
+
+const UDP_HEADER_SIZE: usize = 42;
 
 #[test]
 #[cfg(feature = "pcap")]
 fn velodyne_vlp_16_pcap_file() -> Result<()> {
-    let mut packets = vec![];
-
-    let mut cap = Capture::from_file("test_files/velodyne_example.pcap")?;
+    let mut cap = Capture::from_file("test_files/velodyne_vlp16.pcap")?;
     cap.filter("udp")?;
 
-    while let Ok(packet) = cap.next() {
-        let lidar_packet = DataPacket::from_pcap(&packet)?;
-
-        packets.push(lidar_packet);
-    }
-
-    let mut prev_timestamp = None;
-
-    for packet in packets.iter() {
-        if let Some(prev) = prev_timestamp {
-            let curr = packet.timestamp;
-            assert!(curr > prev);
-        }
-        prev_timestamp = Some(packet.timestamp);
-    }
-
-    Ok(())
-}
-
-#[test]
-#[cfg(feature = "pcap")]
-fn velodyne_vlp_16_scan() -> Result<()> {
-    let config = ConfigBuilder::vlp_16_strongest_return();
-    let mut converter = Vlp16_Strongest_PcdConverter::from_config(config);
-
-    let mut cap = Capture::from_file("test_files/velodyne_example.pcap")?;
-    cap.filter("udp")?;
-
-    let mut prev_timestamp = None;
-    let mut prev_azimuth_angle = None;
-    let mut points_per_frame = 0;
+    let mut data_packets = vec![];
+    let mut position_packets = vec![];
 
     while let Ok(packet) = cap.next() {
-        let lidar_packet = DataPacket::from_pcap(&packet)?;
-
-        for point in converter.convert(lidar_packet)?.into_iter() {
-            let curr_timestamp = point.timestamp();
-            if let Some(prev) = prev_timestamp {
-                assert!(curr_timestamp > prev, "Points are not ordered by timestamp");
-            }
-            prev_timestamp = Some(curr_timestamp);
-
-            let curr_azimuth_angle = point.original_azimuth_angle();
-            if let Some(true) = prev_azimuth_angle.map(|prev| curr_azimuth_angle >= prev) {
-                points_per_frame += 1;
-            } else {
-                eprintln!("# of points in frame: {}", points_per_frame);
-                points_per_frame = 0;
-            }
-            prev_azimuth_angle = Some(curr_azimuth_angle);
+        if packet.data.len() == mem::size_of::<DataPacket>() + UDP_HEADER_SIZE {
+            data_packets.push(DataPacket::from_pcap(&packet)?);
+        } else if packet.data.len() == mem::size_of::<PositionPacket>() + UDP_HEADER_SIZE {
+            position_packets.push(PositionPacket::from_pcap(&packet)?);
         }
     }
 
-    let _ = points_per_frame;
+    // timestamp test
+    {
+        let is_timestamp_valid = izip!(data_packets.iter(), data_packets.iter().skip(1))
+            .all(|(former, latter)| former.timestamp < latter.timestamp);
+
+        ensure!(is_timestamp_valid, "invalid timestamp detected");
+    }
+
+    // convert to point cloud
+    {
+        let config = ConfigBuilder::vlp_16_strongest_return();
+        let mut converter = Vlp16_Strongest_PcdConverter::from_config(config);
+        data_packets.iter().try_for_each(|packet| -> Result<_> {
+            converter.convert(packet)?;
+            Ok(())
+        })?;
+    }
+
+    // convert to frames
+    {
+        let config = ConfigBuilder::vlp_16_strongest_return();
+        let mut converter = Vlp16_Strongest_FrameConverter::from_config(config);
+        data_packets.iter().try_for_each(|packet| -> Result<_> {
+            converter.convert(packet)?;
+            Ok(())
+        })?;
+    }
 
     Ok(())
 }
@@ -76,64 +63,47 @@ fn velodyne_vlp_16_scan() -> Result<()> {
 #[test]
 #[cfg(feature = "pcap")]
 fn velodyne_vlp_32_pcap_file() -> Result<()> {
-    let mut packets = vec![];
-
-    let mut cap = Capture::from_file("test_files/hdl32_example.pcap")?;
+    let mut cap = Capture::from_file("test_files/velodyne_vlp32.pcap")?;
     cap.filter("udp")?;
 
-    while let Ok(packet) = cap.next() {
-        let lidar_packet = match DataPacket::from_pcap(&packet) {
-            Ok(packet) => packet,
-            Err(_) => continue,
-        };
-        packets.push(lidar_packet);
-    }
-
-    let mut prev_timestamp = None;
-
-    for packet in packets.iter() {
-        if let Some(prev) = prev_timestamp {
-            let curr = packet.timestamp;
-            assert!(curr > prev);
-        }
-        prev_timestamp = Some(packet.timestamp);
-    }
-
-    Ok(())
-}
-
-#[test]
-#[cfg(feature = "pcap")]
-fn velodyne_vlp_32c_scan() -> Result<()> {
-    let config = ConfigBuilder::vlp_32c_strongest_return();
-    let mut converter = Vlp32_Strongest_PcdConverter::from_config(config);
-
-    let mut cap = Capture::from_file("test_files/hdl32_example.pcap")?;
-    cap.filter("udp")?;
-
-    // let mut prev_timestamp = None;
-    let mut prev_azimuth_angle = None;
-    let mut points_per_frame = 0;
+    let mut data_packets = vec![];
+    let mut position_packets = vec![];
 
     while let Ok(packet) = cap.next() {
-        let lidar_packet = match DataPacket::from_pcap(&packet) {
-            Ok(packet) => packet,
-            Err(_) => continue,
-        };
-
-        for point in converter.convert(lidar_packet)?.into_iter() {
-            let curr_azimuth_angle = point.original_azimuth_angle();
-            if let Some(true) = prev_azimuth_angle.map(|prev| curr_azimuth_angle >= prev) {
-                points_per_frame += 1;
-            } else {
-                eprintln!("# of points in frame: {}", points_per_frame);
-                points_per_frame = 0;
-            }
-            prev_azimuth_angle = Some(curr_azimuth_angle);
+        if packet.data.len() == mem::size_of::<DataPacket>() + UDP_HEADER_SIZE {
+            data_packets.push(DataPacket::from_pcap(&packet)?);
+        } else if packet.data.len() == mem::size_of::<PositionPacket>() + UDP_HEADER_SIZE {
+            position_packets.push(PositionPacket::from_pcap(&packet)?);
         }
     }
 
-    let _ = points_per_frame;
+    // timestamp test
+    {
+        let is_timestamp_valid = izip!(data_packets.iter(), data_packets.iter().skip(1))
+            .all(|(former, latter)| former.timestamp < latter.timestamp);
+
+        ensure!(is_timestamp_valid, "invalid timestamp detected");
+    }
+
+    // convert to point cloud
+    {
+        let config = ConfigBuilder::vlp_32c_strongest_return();
+        let mut converter = Vlp32_Strongest_PcdConverter::from_config(config);
+        data_packets.iter().try_for_each(|packet| -> Result<_> {
+            converter.convert(packet)?;
+            Ok(())
+        })?;
+    }
+
+    // convert to frames
+    {
+        let config = ConfigBuilder::vlp_32c_strongest_return();
+        let mut converter = Vlp32_Strongest_FrameConverter::from_config(config);
+        data_packets.iter().try_for_each(|packet| -> Result<_> {
+            converter.convert(packet)?;
+            Ok(())
+        })?;
+    }
 
     Ok(())
 }
