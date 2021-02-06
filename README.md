@@ -11,7 +11,7 @@ The crate lets you parse data from Velodyne and Ouster LiDARs. It provides the f
 Add this line to your `Cargo.toml`.
 
 ```toml
-lidar-utils = "0.9"
+lidar-utils = "0.10"
 ```
 
 ## Documentation
