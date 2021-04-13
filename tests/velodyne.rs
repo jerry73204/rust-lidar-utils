@@ -3,7 +3,7 @@
 use anyhow::{ensure, Result};
 use itertools::izip;
 use lidar_utils::velodyne::{
-    ConfigBuilder, DataPacket, FrameConverter, PointCloudConverter, PositionPacket,
+    Config, DataPacket, FrameConverter, PointCloudConverter, PositionPacket,
     Vlp16_Strongest_FrameConverter, Vlp16_Strongest_PcdConverter, Vlp32_Strongest_FrameConverter,
     Vlp32_Strongest_PcdConverter,
 };
@@ -39,7 +39,7 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
 
     // convert to point cloud
     {
-        let config = ConfigBuilder::vlp_16_strongest_return();
+        let config = Config::vlp_16_strongest_return();
         let mut converter = Vlp16_Strongest_PcdConverter::from_config(config);
         data_packets.iter().try_for_each(|packet| -> Result<_> {
             converter.convert(packet)?;
@@ -49,7 +49,7 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
 
     // convert to frames
     {
-        let config = ConfigBuilder::vlp_16_strongest_return();
+        let config = Config::vlp_16_strongest_return();
         let mut converter = Vlp16_Strongest_FrameConverter::from_config(config);
         data_packets.iter().try_for_each(|packet| -> Result<_> {
             converter.convert(packet)?;
@@ -87,7 +87,7 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
 
     // convert to point cloud
     {
-        let config = ConfigBuilder::vlp_32c_strongest_return();
+        let config = Config::vlp_32c_strongest_return();
         let mut converter = Vlp32_Strongest_PcdConverter::from_config(config);
         data_packets.iter().try_for_each(|packet| -> Result<_> {
             converter.convert(packet)?;
@@ -97,7 +97,7 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
 
     // convert to frames
     {
-        let config = ConfigBuilder::vlp_32c_strongest_return();
+        let config = Config::vlp_32c_strongest_return();
         let mut converter = Vlp32_Strongest_FrameConverter::from_config(config);
         data_packets.iter().try_for_each(|packet| -> Result<_> {
             converter.convert(packet)?;
