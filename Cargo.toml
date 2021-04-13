@@ -11,22 +11,22 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-anyhow = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-serde_yaml = "0.8"
-serde-big-array = "0.3"
-chrono = "0.4"
-derivative = "2.1"
-itertools = "0.10"
-pcap = { version = "0.8", optional = true }
-uom = { version = "0.31", features = ["si"] }
-num-traits = "0.2"
+anyhow = "1.0.40"
+serde = { version = "1.0.125", features = ["derive"] }
+serde_json = "1.0.64"
+serde_yaml = "0.8.17"
+serde-big-array = "0.3.2"
+chrono = "0.4.19"
+derivative = "2.2.0"
+itertools = "0.10.0"
+pcap = { version = "0.8.1", optional = true }
+uom = { version = "0.31.1", features = ["si"] }
+num-traits = "0.2.14"
 
 [dev-dependencies]
-log = "0.4"
-pcap = "0.8"
-toml = "0.5"
+log = "0.4.14"
+pcap = "0.8.1"
+toml = "0.5.8"
 
 [features]
 default = ["pcap"]
