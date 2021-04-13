@@ -213,4 +213,34 @@ mod dynamic_return_points {
         Single(SingleReturnPoint),
         Dual(DualReturnPoint),
     }
+
+    impl DynamicReturnPoint {
+        pub fn laser_id(&self) -> u32 {
+            match self {
+                Self::Single(point) => point.laser_id,
+                Self::Dual(point) => point.laser_id,
+            }
+        }
+
+        pub fn timestamp(&self) -> Time {
+            match self {
+                Self::Single(point) => point.timestamp,
+                Self::Dual(point) => point.timestamp,
+            }
+        }
+
+        pub fn original_azimuth_angle(&self) -> Angle {
+            match self {
+                Self::Single(point) => point.original_azimuth_angle,
+                Self::Dual(point) => point.original_azimuth_angle,
+            }
+        }
+
+        pub fn corrected_azimuth_angle(&self) -> Angle {
+            match self {
+                Self::Single(point) => point.corrected_azimuth_angle,
+                Self::Dual(point) => point.corrected_azimuth_angle,
+            }
+        }
+    }
 }
