@@ -164,6 +164,21 @@ mod dynamic_return_points {
         }
     }
 
+    impl IntoIterator for DynamicReturnPoints {
+        type Item = DynamicReturnPoint;
+        type IntoIter = DynamicReturnPointsIter;
+
+        fn into_iter(self) -> Self::IntoIter {
+            let iter: Box<dyn Iterator<Item = DynamicReturnPoint> + Sync + Send> = match self {
+                Self::Single(points) => {
+                    Box::new(points.into_iter().map(DynamicReturnPoint::Single))
+                }
+                Self::Dual(points) => Box::new(points.into_iter().map(DynamicReturnPoint::Dual)),
+            };
+            Self::IntoIter { iter }
+        }
+    }
+
     impl From<Vec<SingleReturnPoint>> for DynamicReturnPoints {
         fn from(points: Vec<SingleReturnPoint>) -> Self {
             Self::Single(points)
@@ -174,5 +189,28 @@ mod dynamic_return_points {
         fn from(points: Vec<DualReturnPoint>) -> Self {
             Self::Dual(points)
         }
+    }
+
+    /// Collection of points in either single return or dual return mode.
+    #[derive(Derivative)]
+    #[derivative(Debug)]
+    pub struct DynamicReturnPointsIter {
+        #[derivative(Debug = "ignore")]
+        iter: Box<dyn Iterator<Item = DynamicReturnPoint> + Sync + Send>,
+    }
+
+    impl Iterator for DynamicReturnPointsIter {
+        type Item = DynamicReturnPoint;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            self.iter.next()
+        }
+    }
+
+    /// collection of points in either single return or dual return mode.
+    #[derive(Debug, Clone)]
+    pub enum DynamicReturnPoint {
+        Single(SingleReturnPoint),
+        Dual(DualReturnPoint),
     }
 }
