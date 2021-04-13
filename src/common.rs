@@ -1,4 +1,4 @@
-pub use anyhow::{bail, ensure, format_err, Result};
+pub use anyhow::{bail, ensure, format_err, Error, Result};
 pub use chrono::NaiveDateTime;
 pub use derivative::Derivative;
 pub use itertools::izip;
@@ -18,6 +18,7 @@ pub use std::{
     net::{Ipv4Addr, TcpStream, ToSocketAddrs},
     ops::Range,
     path::Path,
+    str::FromStr,
     time::Duration,
 };
 pub use uom::{

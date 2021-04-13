@@ -17,11 +17,11 @@ use super::{
 };
 use crate::common::*;
 
-pub use config::*;
-pub use config_builder::*;
+pub use config_::*;
 pub use param_config::*;
+pub use params::*;
 
-mod config {
+mod config_ {
     use super::*;
 
     /// Config type for Velodyne LiDARs.
@@ -61,7 +61,7 @@ mod config {
         Model: ModelMarker,
         ReturnType: ReturnTypeMarker,
     {
-        pub fn into_dynamic(self) -> Dynamic_Config {
+        pub fn into_dyn(self) -> Dynamic_Config {
             let Self {
                 model,
                 lasers,
@@ -77,14 +77,186 @@ mod config {
             }
         }
     }
+
+    impl Vlp16_Last_Config {
+        pub fn vlp_16_last_return() -> Self {
+            Config {
+                model: Vlp16,
+                lasers: vlp_16_laser_params(),
+                distance_resolution: Length::new::<millimeter>(VLP_16_DISTANCE_RESOLUTION_MILLIS),
+                return_type: LastReturn,
+            }
+        }
+
+        pub fn puck_hires_last_return() -> Self {
+            Config {
+                model: Vlp16,
+                lasers: puck_hires_laser_params(),
+                distance_resolution: Length::new::<millimeter>(
+                    PUCK_HIRES_DISTANCE_RESOLUTION_MILLIS,
+                ),
+                return_type: LastReturn,
+            }
+        }
+
+        pub fn puck_lite_last_return() -> Self {
+            Config {
+                model: Vlp16,
+                lasers: puck_lite_laser_params(),
+                distance_resolution: Length::new::<millimeter>(
+                    PUCK_LITE_DISTANCE_RESOLUTION_MILLIS,
+                ),
+                return_type: LastReturn,
+            }
+        }
+    }
+
+    impl Vlp16_Strongest_Config {
+        pub fn vlp_16_strongest_return() -> Self {
+            Config {
+                model: Vlp16,
+                lasers: vlp_16_laser_params(),
+                distance_resolution: Length::new::<millimeter>(VLP_16_DISTANCE_RESOLUTION_MILLIS),
+                return_type: StrongestReturn,
+            }
+        }
+
+        pub fn puck_hires_strongest_return() -> Self {
+            Config {
+                model: Vlp16,
+                lasers: puck_hires_laser_params(),
+                distance_resolution: Length::new::<millimeter>(
+                    PUCK_HIRES_DISTANCE_RESOLUTION_MILLIS,
+                ),
+                return_type: StrongestReturn,
+            }
+        }
+
+        pub fn puck_lite_strongest_return() -> Self {
+            Config {
+                model: Vlp16,
+                lasers: puck_lite_laser_params(),
+                distance_resolution: Length::new::<millimeter>(
+                    PUCK_LITE_DISTANCE_RESOLUTION_MILLIS,
+                ),
+                return_type: StrongestReturn,
+            }
+        }
+    }
+
+    impl Vlp16_Dual_Config {
+        pub fn vlp_16_dual_return() -> Self {
+            Config {
+                model: Vlp16,
+                lasers: vlp_16_laser_params(),
+                distance_resolution: Length::new::<millimeter>(VLP_16_DISTANCE_RESOLUTION_MILLIS),
+                return_type: DualReturn,
+            }
+        }
+
+        pub fn puck_hires_dual_return() -> Self {
+            Config {
+                model: Vlp16,
+                lasers: puck_hires_laser_params(),
+                distance_resolution: Length::new::<millimeter>(
+                    PUCK_HIRES_DISTANCE_RESOLUTION_MILLIS,
+                ),
+                return_type: DualReturn,
+            }
+        }
+
+        pub fn puck_lite_dual_return() -> Self {
+            Config {
+                model: Vlp16,
+                lasers: puck_lite_laser_params(),
+                distance_resolution: Length::new::<millimeter>(
+                    PUCK_LITE_DISTANCE_RESOLUTION_MILLIS,
+                ),
+                return_type: DualReturn,
+            }
+        }
+    }
+
+    impl Vlp16_Dynamic_Config {
+        pub fn vlp_16_dynamic_return(return_mode: ReturnMode) -> Self {
+            Config {
+                model: Vlp16,
+                lasers: vlp_16_laser_params(),
+                distance_resolution: Length::new::<millimeter>(VLP_16_DISTANCE_RESOLUTION_MILLIS),
+                return_type: DynamicReturn::from(return_mode),
+            }
+        }
+
+        pub fn puck_hires_dynamic_return(return_mode: ReturnMode) -> Self {
+            Config {
+                model: Vlp16,
+                lasers: puck_hires_laser_params(),
+                distance_resolution: Length::new::<millimeter>(
+                    PUCK_HIRES_DISTANCE_RESOLUTION_MILLIS,
+                ),
+                return_type: DynamicReturn::from(return_mode),
+            }
+        }
+
+        pub fn puck_lite_dynamic_return(return_mode: ReturnMode) -> Self {
+            Config {
+                model: Vlp16,
+                lasers: puck_lite_laser_params(),
+                distance_resolution: Length::new::<millimeter>(
+                    PUCK_LITE_DISTANCE_RESOLUTION_MILLIS,
+                ),
+                return_type: DynamicReturn::from(return_mode),
+            }
+        }
+    }
+
+    impl Vlp32_Last_Config {
+        pub fn vlp_32c_last_return() -> Self {
+            Config {
+                model: Vlp32,
+                lasers: vlp_32c_laser_params(),
+                distance_resolution: Length::new::<millimeter>(VLP_32C_DISTANCE_RESOLUTION_MILLIS),
+                return_type: LastReturn,
+            }
+        }
+    }
+
+    impl Vlp32_Strongest_Config {
+        pub fn vlp_32c_strongest_return() -> Self {
+            Config {
+                model: Vlp32,
+                lasers: vlp_32c_laser_params(),
+                distance_resolution: Length::new::<millimeter>(VLP_32C_DISTANCE_RESOLUTION_MILLIS),
+                return_type: StrongestReturn,
+            }
+        }
+    }
+
+    impl Vlp32_Dual_Config {
+        pub fn vlp_32c_dual_return() -> Self {
+            Config {
+                model: Vlp32,
+                lasers: vlp_32c_laser_params(),
+                distance_resolution: Length::new::<millimeter>(VLP_32C_DISTANCE_RESOLUTION_MILLIS),
+                return_type: DualReturn,
+            }
+        }
+    }
+
+    impl Vlp32_Dynamic_Config {
+        pub fn vlp_32c_dynamic_return(return_mode: ReturnMode) -> Self {
+            Config {
+                model: Vlp32,
+                lasers: vlp_32c_laser_params(),
+                distance_resolution: Length::new::<millimeter>(VLP_32C_DISTANCE_RESOLUTION_MILLIS),
+                return_type: DynamicReturn::from(return_mode),
+            }
+        }
+    }
 }
 
-mod config_builder {
+mod params {
     use super::*;
-
-    /// Config builder that builds [Config](Config) type.
-    #[derive(Debug, Clone)]
-    pub struct ConfigBuilder {}
 
     #[derive(Debug, Clone)]
     pub struct LaserParameter {
@@ -94,248 +266,105 @@ mod config_builder {
         pub horizontal_offset: Length,
     }
 
-    impl ConfigBuilder {
-        fn vlp_16_laser_params() -> [LaserParameter; 16] {
-            let mut params: [MaybeUninit<LaserParameter>; 16] =
-                unsafe { MaybeUninit::uninit().assume_init() };
-            izip!(
-                params.iter_mut(),
-                VLP_16_ELEVAION_DEGREES.iter(),
-                VLP_16_VERTICAL_OFFSETS.iter(),
-                VLP_16_HORIZONTAL_OFFSETS.iter(),
-                VLP_16_AZIMUTH_OFFSETS.iter(),
-            )
-            .for_each(
-                |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
-                    *param = MaybeUninit::new(LaserParameter {
-                        elevation_angle: Angle::new::<degree>(*elevation_angle),
-                        vertical_offset: Length::new::<millimeter>(*vertical_offset),
-                        horizontal_offset: Length::new::<millimeter>(*horizontal_offset),
-                        azimuth_offset: Angle::new::<degree>(*azimuth_offset),
-                    });
-                },
-            );
+    pub const VLP_16_DISTANCE_RESOLUTION_MILLIS: f64 = 2.0;
+    pub const PUCK_HIRES_DISTANCE_RESOLUTION_MILLIS: f64 = 2.0;
+    pub const PUCK_LITE_DISTANCE_RESOLUTION_MILLIS: f64 = 2.0;
+    pub const VLP_32C_DISTANCE_RESOLUTION_MILLIS: f64 = 4.0;
 
-            unsafe { std::mem::transmute::<_, [LaserParameter; 16]>(params) }
-        }
+    pub fn vlp_16_laser_params() -> [LaserParameter; 16] {
+        let mut params: [MaybeUninit<LaserParameter>; 16] =
+            unsafe { MaybeUninit::uninit().assume_init() };
+        izip!(
+            params.iter_mut(),
+            VLP_16_ELEVAION_DEGREES.iter(),
+            VLP_16_VERTICAL_OFFSETS.iter(),
+            VLP_16_HORIZONTAL_OFFSETS.iter(),
+            VLP_16_AZIMUTH_OFFSETS.iter(),
+        )
+        .for_each(
+            |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
+                *param = MaybeUninit::new(LaserParameter {
+                    elevation_angle: Angle::new::<degree>(elevation_angle),
+                    vertical_offset: Length::new::<millimeter>(vertical_offset),
+                    horizontal_offset: Length::new::<millimeter>(horizontal_offset),
+                    azimuth_offset: Angle::new::<degree>(azimuth_offset),
+                });
+            },
+        );
 
-        fn puck_hires_laser_params() -> [LaserParameter; 16] {
-            let mut params: [MaybeUninit<LaserParameter>; 16] =
-                unsafe { MaybeUninit::uninit().assume_init() };
-            izip!(
-                params.iter_mut(),
-                PUCK_HIRES_ELEVAION_DEGREES.iter(),
-                PUCK_HIRES_VERTICAL_OFFSETS.iter(),
-                PUCK_HIRES_HORIZONTAL_OFFSETS.iter(),
-                PUCK_HIRES_AZIMUTH_OFFSETS.iter(),
-            )
-            .for_each(
-                |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
-                    *param = MaybeUninit::new(LaserParameter {
-                        elevation_angle: Angle::new::<degree>(*elevation_angle),
-                        vertical_offset: Length::new::<millimeter>(*vertical_offset),
-                        horizontal_offset: Length::new::<millimeter>(*horizontal_offset),
-                        azimuth_offset: Angle::new::<degree>(*azimuth_offset),
-                    });
-                },
-            );
-
-            unsafe { std::mem::transmute::<_, [LaserParameter; 16]>(params) }
-        }
-
-        fn puck_lite_laser_params() -> [LaserParameter; 16] {
-            let mut params: [MaybeUninit<LaserParameter>; 16] =
-                unsafe { MaybeUninit::uninit().assume_init() };
-            izip!(
-                params.iter_mut(),
-                PUCK_LITE_ELEVAION_DEGREES.iter(),
-                PUCK_LITE_VERTICAL_OFFSETS.iter(),
-                PUCK_LITE_HORIZONTAL_OFFSETS.iter(),
-                PUCK_LITE_AZIMUTH_OFFSETS.iter(),
-            )
-            .for_each(
-                |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
-                    *param = MaybeUninit::new(LaserParameter {
-                        elevation_angle: Angle::new::<degree>(*elevation_angle),
-                        vertical_offset: Length::new::<millimeter>(*vertical_offset),
-                        horizontal_offset: Length::new::<millimeter>(*horizontal_offset),
-                        azimuth_offset: Angle::new::<degree>(*azimuth_offset),
-                    });
-                },
-            );
-
-            unsafe { std::mem::transmute::<_, [LaserParameter; 16]>(params) }
-        }
-
-        fn vlp_32c_laser_params() -> [LaserParameter; 32] {
-            let mut params: [MaybeUninit<LaserParameter>; 32] =
-                unsafe { MaybeUninit::uninit().assume_init() };
-            izip!(
-                params.iter_mut(),
-                VLP_32C_ELEVAION_DEGREES.iter(),
-                VLP_32C_VERTICAL_OFFSETS.iter(),
-                VLP_32C_HORIZONTAL_OFFSETS.iter(),
-                VLP_32C_AZIMUTH_OFFSETS.iter(),
-            )
-            .for_each(
-                |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
-                    *param = MaybeUninit::new(LaserParameter {
-                        elevation_angle: Angle::new::<degree>(*elevation_angle),
-                        vertical_offset: Length::new::<millimeter>(*vertical_offset),
-                        horizontal_offset: Length::new::<millimeter>(*horizontal_offset),
-                        azimuth_offset: Angle::new::<degree>(*azimuth_offset),
-                    });
-                },
-            );
-
-            unsafe { std::mem::transmute::<_, [LaserParameter; 32]>(params) }
-        }
+        unsafe { mem::transmute::<_, [LaserParameter; 16]>(params) }
     }
 
-    impl ConfigBuilder {
-        pub fn vlp_16_last_return() -> Vlp16_Last_Config {
-            Config {
-                model: Vlp16,
-                lasers: Self::vlp_16_laser_params(),
-                distance_resolution: Length::new::<millimeter>(2.0),
-                return_type: LastReturn,
-            }
-        }
+    pub fn puck_hires_laser_params() -> [LaserParameter; 16] {
+        let mut params: [MaybeUninit<LaserParameter>; 16] =
+            unsafe { MaybeUninit::uninit().assume_init() };
+        izip!(
+            params.iter_mut(),
+            PUCK_HIRES_ELEVAION_DEGREES.iter(),
+            PUCK_HIRES_VERTICAL_OFFSETS.iter(),
+            PUCK_HIRES_HORIZONTAL_OFFSETS.iter(),
+            PUCK_HIRES_AZIMUTH_OFFSETS.iter(),
+        )
+        .for_each(
+            |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
+                *param = MaybeUninit::new(LaserParameter {
+                    elevation_angle: Angle::new::<degree>(elevation_angle),
+                    vertical_offset: Length::new::<millimeter>(vertical_offset),
+                    horizontal_offset: Length::new::<millimeter>(horizontal_offset),
+                    azimuth_offset: Angle::new::<degree>(azimuth_offset),
+                });
+            },
+        );
 
-        pub fn vlp_16_strongest_return() -> Vlp16_Strongest_Config {
-            Config {
-                model: Vlp16,
-                lasers: Self::vlp_16_laser_params(),
-                distance_resolution: Length::new::<millimeter>(2.0),
-                return_type: StrongestReturn,
-            }
-        }
+        unsafe { mem::transmute::<_, [LaserParameter; 16]>(params) }
+    }
 
-        pub fn vlp_16_dual_return() -> Vlp16_Dual_Config {
-            Config {
-                model: Vlp16,
-                lasers: Self::vlp_16_laser_params(),
-                distance_resolution: Length::new::<millimeter>(2.0),
-                return_type: DualReturn,
-            }
-        }
+    pub fn puck_lite_laser_params() -> [LaserParameter; 16] {
+        let mut params: [MaybeUninit<LaserParameter>; 16] =
+            unsafe { MaybeUninit::uninit().assume_init() };
+        izip!(
+            params.iter_mut(),
+            PUCK_LITE_ELEVAION_DEGREES.iter(),
+            PUCK_LITE_VERTICAL_OFFSETS.iter(),
+            PUCK_LITE_HORIZONTAL_OFFSETS.iter(),
+            PUCK_LITE_AZIMUTH_OFFSETS.iter(),
+        )
+        .for_each(
+            |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
+                *param = MaybeUninit::new(LaserParameter {
+                    elevation_angle: Angle::new::<degree>(elevation_angle),
+                    vertical_offset: Length::new::<millimeter>(vertical_offset),
+                    horizontal_offset: Length::new::<millimeter>(horizontal_offset),
+                    azimuth_offset: Angle::new::<degree>(azimuth_offset),
+                });
+            },
+        );
 
-        pub fn vlp_16_dynamic_return(return_mode: ReturnMode) -> Vlp16_Dynamic_Config {
-            Config {
-                model: Vlp16,
-                lasers: Self::vlp_16_laser_params(),
-                distance_resolution: Length::new::<millimeter>(2.0),
-                return_type: DynamicReturn::from(return_mode),
-            }
-        }
+        unsafe { mem::transmute::<_, [LaserParameter; 16]>(params) }
+    }
 
-        pub fn puck_hires_last_return() -> Vlp16_Last_Config {
-            Config {
-                model: Vlp16,
-                lasers: Self::puck_hires_laser_params(),
-                distance_resolution: Length::new::<millimeter>(2.0),
-                return_type: LastReturn,
-            }
-        }
+    pub fn vlp_32c_laser_params() -> [LaserParameter; 32] {
+        let mut params: [MaybeUninit<LaserParameter>; 32] =
+            unsafe { MaybeUninit::uninit().assume_init() };
+        izip!(
+            params.iter_mut(),
+            VLP_32C_ELEVAION_DEGREES.iter(),
+            VLP_32C_VERTICAL_OFFSETS.iter(),
+            VLP_32C_HORIZONTAL_OFFSETS.iter(),
+            VLP_32C_AZIMUTH_OFFSETS.iter(),
+        )
+        .for_each(
+            |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
+                *param = MaybeUninit::new(LaserParameter {
+                    elevation_angle: Angle::new::<degree>(elevation_angle),
+                    vertical_offset: Length::new::<millimeter>(vertical_offset),
+                    horizontal_offset: Length::new::<millimeter>(horizontal_offset),
+                    azimuth_offset: Angle::new::<degree>(azimuth_offset),
+                });
+            },
+        );
 
-        pub fn puck_hires_strongest_return() -> Vlp16_Strongest_Config {
-            Config {
-                model: Vlp16,
-                lasers: Self::puck_hires_laser_params(),
-                distance_resolution: Length::new::<millimeter>(2.0),
-                return_type: StrongestReturn,
-            }
-        }
-
-        pub fn puck_hires_dual_return() -> Vlp16_Dual_Config {
-            Config {
-                model: Vlp16,
-                lasers: Self::puck_hires_laser_params(),
-                distance_resolution: Length::new::<millimeter>(2.0),
-                return_type: DualReturn,
-            }
-        }
-
-        pub fn puck_hires_dynamic_return(return_mode: ReturnMode) -> Vlp16_Dynamic_Config {
-            Config {
-                model: Vlp16,
-                lasers: Self::puck_hires_laser_params(),
-                distance_resolution: Length::new::<millimeter>(2.0),
-                return_type: DynamicReturn::from(return_mode),
-            }
-        }
-
-        pub fn puck_lite_last_return() -> Vlp16_Last_Config {
-            Config {
-                model: Vlp16,
-                lasers: Self::puck_lite_laser_params(),
-                distance_resolution: Length::new::<millimeter>(2.0),
-                return_type: LastReturn,
-            }
-        }
-
-        pub fn puck_lite_strongest_return() -> Vlp16_Strongest_Config {
-            Config {
-                model: Vlp16,
-                lasers: Self::puck_lite_laser_params(),
-                distance_resolution: Length::new::<millimeter>(2.0),
-                return_type: StrongestReturn,
-            }
-        }
-
-        pub fn puck_lite_dual_return() -> Vlp16_Dual_Config {
-            Config {
-                model: Vlp16,
-                lasers: Self::puck_lite_laser_params(),
-                distance_resolution: Length::new::<millimeter>(2.0),
-                return_type: DualReturn,
-            }
-        }
-
-        pub fn puck_lite_dynamic_return(return_mode: ReturnMode) -> Vlp16_Dynamic_Config {
-            Config {
-                model: Vlp16,
-                lasers: Self::puck_lite_laser_params(),
-                distance_resolution: Length::new::<millimeter>(2.0),
-                return_type: DynamicReturn::from(return_mode),
-            }
-        }
-
-        pub fn vlp_32c_last_return() -> Vlp32_Last_Config {
-            Config {
-                model: Vlp32,
-                lasers: Self::vlp_32c_laser_params(),
-                distance_resolution: Length::new::<millimeter>(4.0),
-                return_type: LastReturn,
-            }
-        }
-
-        pub fn vlp_32c_strongest_return() -> Vlp32_Strongest_Config {
-            Config {
-                model: Vlp32,
-                lasers: Self::vlp_32c_laser_params(),
-                distance_resolution: Length::new::<millimeter>(4.0),
-                return_type: StrongestReturn,
-            }
-        }
-
-        pub fn vlp_32c_dual_return() -> Vlp32_Dual_Config {
-            Config {
-                model: Vlp32,
-                lasers: Self::vlp_32c_laser_params(),
-                distance_resolution: Length::new::<millimeter>(4.0),
-                return_type: DualReturn,
-            }
-        }
-
-        pub fn vlp_32c_dynamic_return(return_mode: ReturnMode) -> Vlp32_Dynamic_Config {
-            Config {
-                model: Vlp32,
-                lasers: Self::vlp_32c_laser_params(),
-                distance_resolution: Length::new::<millimeter>(4.0),
-                return_type: DynamicReturn::from(return_mode),
-            }
-        }
+        unsafe { mem::transmute::<_, [LaserParameter; 32]>(params) }
     }
 }
 
@@ -382,8 +411,12 @@ mod param_config {
             let config = Self::from_str(&text)?;
             Ok(config)
         }
+    }
 
-        pub fn from_str(text: &str) -> Result<Self> {
+    impl FromStr for ParamsConfig {
+        type Err = Error;
+
+        fn from_str(text: &str) -> Result<Self, Self::Err> {
             let config: Self = serde_yaml::from_str(text)?;
             ensure!(
                 config.distance_resolution > 0.0,
@@ -415,21 +448,21 @@ mod tests {
 
     #[test]
     fn buildin_config_test() -> Result<()> {
-        let _: Vlp16_Last_Config = ConfigBuilder::vlp_16_last_return();
-        let _: Vlp16_Strongest_Config = ConfigBuilder::vlp_16_strongest_return();
-        let _: Vlp16_Dual_Config = ConfigBuilder::vlp_16_dual_return();
+        let _: Vlp16_Last_Config = Config::vlp_16_last_return();
+        let _: Vlp16_Strongest_Config = Config::vlp_16_strongest_return();
+        let _: Vlp16_Dual_Config = Config::vlp_16_dual_return();
 
-        let _: Vlp16_Last_Config = ConfigBuilder::puck_hires_last_return();
-        let _: Vlp16_Strongest_Config = ConfigBuilder::puck_hires_strongest_return();
-        let _: Vlp16_Dual_Config = ConfigBuilder::puck_hires_dual_return();
+        let _: Vlp16_Last_Config = Config::puck_hires_last_return();
+        let _: Vlp16_Strongest_Config = Config::puck_hires_strongest_return();
+        let _: Vlp16_Dual_Config = Config::puck_hires_dual_return();
 
-        let _: Vlp16_Last_Config = ConfigBuilder::puck_lite_last_return();
-        let _: Vlp16_Strongest_Config = ConfigBuilder::puck_lite_strongest_return();
-        let _: Vlp16_Dual_Config = ConfigBuilder::puck_lite_dual_return();
+        let _: Vlp16_Last_Config = Config::puck_lite_last_return();
+        let _: Vlp16_Strongest_Config = Config::puck_lite_strongest_return();
+        let _: Vlp16_Dual_Config = Config::puck_lite_dual_return();
 
-        let _: Vlp32_Last_Config = ConfigBuilder::vlp_32c_last_return();
-        let _: Vlp32_Strongest_Config = ConfigBuilder::vlp_32c_strongest_return();
-        let _: Vlp32_Dual_Config = ConfigBuilder::vlp_32c_dual_return();
+        let _: Vlp32_Last_Config = Config::vlp_32c_last_return();
+        let _: Vlp32_Strongest_Config = Config::vlp_32c_strongest_return();
+        let _: Vlp32_Dual_Config = Config::vlp_32c_dual_return();
 
         Ok(())
     }
