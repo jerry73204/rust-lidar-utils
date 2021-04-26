@@ -3,7 +3,7 @@
 use crate::common::*;
 
 /// The mode includes number of vertical scans in one revolution and rotation frequency (Hz).
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum LidarMode {
     #[serde(rename = "512x10")]
     Mode512x10,
@@ -42,7 +42,7 @@ impl Display for LidarMode {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum MultipurposeIoMode {
     #[serde(rename = "OUTPUT_FROM_INTERNAL_OSC")]
     OutputFromInternalOsc,
@@ -67,7 +67,7 @@ impl Display for MultipurposeIoMode {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum TimestampMode {
     #[serde(rename = "TIME_FROM_INTERNAL_OSC")]
     TimeFromInternalOsc,
@@ -89,7 +89,7 @@ impl Display for TimestampMode {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Polarity {
     #[serde(rename = "ACTIVE_HIGH")]
     ActiveHigh,
@@ -108,7 +108,7 @@ impl Display for Polarity {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum OnOffMode {
     #[serde(rename = "ON")]
     On,
@@ -127,7 +127,7 @@ impl Display for OnOffMode {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum NmeaBaudRate {
     #[serde(rename = "BAUD_9600")]
     Baud9600,

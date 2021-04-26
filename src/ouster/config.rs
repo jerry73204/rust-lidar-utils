@@ -11,15 +11,15 @@ use crate::common::*;
 big_array! { BigArray; }
 
 /// A serializable struct that represents a Ouster sensor configuration.
-#[derive(Clone, Serialize, Deserialize, Derivative)]
+#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Derivative)]
 #[derivative(Debug)]
 pub struct Config {
     #[serde(with = "BigArray")]
     #[derivative(Debug(format_with = "self::large_array_fmt"))]
-    pub beam_altitude_angles: [f64; PIXELS_PER_COLUMN],
+    pub beam_altitude_angles: [R64; PIXELS_PER_COLUMN],
     #[serde(with = "BigArray", rename = "beam_azimuth_angles")]
     #[derivative(Debug(format_with = "self::large_array_fmt"))]
-    pub beam_azimuth_angle_corrections: [f64; PIXELS_PER_COLUMN],
+    pub beam_azimuth_angle_corrections: [R64; PIXELS_PER_COLUMN],
     pub lidar_mode: LidarMode,
 }
 
@@ -31,8 +31,10 @@ impl Config {
         lidar_mode: LidarMode,
     ) -> Config {
         Config {
-            beam_altitude_angles,
-            beam_azimuth_angle_corrections,
+            beam_altitude_angles: unsafe { mem::transmute(beam_altitude_angles) },
+            beam_azimuth_angle_corrections: unsafe {
+                mem::transmute(beam_azimuth_angle_corrections)
+            },
             lidar_mode,
         }
     }
@@ -61,12 +63,13 @@ impl Config {
         &mut self,
         beam_azimuth_angle_corrections: [f64; PIXELS_PER_COLUMN],
     ) {
-        self.beam_azimuth_angle_corrections = beam_azimuth_angle_corrections;
+        self.beam_azimuth_angle_corrections =
+            unsafe { mem::transmute(beam_azimuth_angle_corrections) };
     }
 
     /// Sets `beam_altitude_angles` field.
     pub fn beam_altitude_angles(&mut self, beam_altitude_angles: [f64; PIXELS_PER_COLUMN]) {
-        self.beam_altitude_angles = beam_altitude_angles;
+        self.beam_altitude_angles = unsafe { mem::transmute(beam_altitude_angles) };
     }
 
     /// Sets `lidar_mode` field.
@@ -81,8 +84,10 @@ impl Config {
         let beam_azimuth_angle_corrections = OS_1_BEAM_AZIMUTH_DEGREE_CORRECTIONS;
 
         Self {
-            beam_altitude_angles,
-            beam_azimuth_angle_corrections,
+            beam_altitude_angles: unsafe { mem::transmute(beam_altitude_angles) },
+            beam_azimuth_angle_corrections: unsafe {
+                mem::transmute(beam_azimuth_angle_corrections)
+            },
             lidar_mode: LidarMode::Mode1024x10,
         }
     }

@@ -49,7 +49,8 @@ impl PointCloudConverter {
             debug_assert_eq!(array.len(), beam_altitude_angles.len());
 
             for idx in 0..(array.len()) {
-                let angle = std::f64::consts::FRAC_PI_2 - beam_altitude_angles[idx].to_radians();
+                let angle =
+                    std::f64::consts::FRAC_PI_2 - beam_altitude_angles[idx].to_radians().raw();
                 array[idx] = Angle::new::<radian>(angle);
             }
             array
@@ -61,7 +62,7 @@ impl PointCloudConverter {
 
             for idx in 0..(array.len()) {
                 let angle = beam_azimuth_angle_corrections[idx].to_radians();
-                array[idx] = Angle::new::<radian>(angle);
+                array[idx] = Angle::new::<radian>(angle.raw());
             }
             array
         };

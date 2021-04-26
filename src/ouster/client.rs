@@ -10,7 +10,7 @@ use crate::common::*;
 //       We'll remove is it once the const generics is introduced.
 big_array! { BigArray; }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ConfigText {
     pub timestamp_mode: TimestampMode,
     pub multipurpose_io_mode: MultipurposeIoMode,
@@ -32,42 +32,42 @@ pub struct ConfigText {
     pub azimuth_window: [u64; 2],
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize, Derivative)]
+#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Derivative)]
 #[derivative(Debug)]
 pub struct BeamIntrinsics {
     #[serde(with = "BigArray")]
     #[derivative(Debug(format_with = "self::large_array_fmt"))]
-    pub beam_altitude_angles: [f64; PIXELS_PER_COLUMN],
+    pub beam_altitude_angles: [R64; PIXELS_PER_COLUMN],
     #[serde(with = "BigArray")]
     #[derivative(Debug(format_with = "self::large_array_fmt"))]
-    pub beam_azimuth_angles: [f64; PIXELS_PER_COLUMN],
+    pub beam_azimuth_angles: [R64; PIXELS_PER_COLUMN],
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LidarIntrinsics {
-    pub lidar_to_sensor_transform: [f64; 16],
+    pub lidar_to_sensor_transform: [R64; 16],
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ImuIntrinsics {
-    pub imu_to_sensor_transform: [f64; 16],
+    pub imu_to_sensor_transform: [R64; 16],
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TimeInfo {
     pub timestamp: TimestampInfo,
     pub sync_pulse_in: SyncPulseInInfo,
     pub multipurpose_io: MultiPurposeIo,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct MultiPurposeIo {
     pub mode: OnOffMode,
     pub sync_pulse_out: SyncPulseOutInfo,
     pub nmea: NmeaInfo,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SyncPulseInInfo {
     pub diagnostics: SyncPulseInDiagnosticsInfo,
     pub polarity: Polarity,
@@ -75,7 +75,7 @@ pub struct SyncPulseInInfo {
     pub locked: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct NmeaInfo {
     pub polarity: Polarity,
     pub baud_rate: NmeaBaudRate,
@@ -87,7 +87,7 @@ pub struct NmeaInfo {
     pub locked: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SyncPulseOutInfo {
     pub frequency_hz: u64,
     pub angle_deg: u64,
@@ -95,11 +95,11 @@ pub struct SyncPulseOutInfo {
     pub polarity: Polarity,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TimestampInfo {
     pub time_options: TimeOptionsInfo,
     pub mode: TimestampMode,
-    pub time: f64,
+    pub time: R64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
