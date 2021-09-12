@@ -13,7 +13,7 @@ fn ouster_create_packet() -> Result<()> {
     let mut packets = vec![];
 
     let mut cap = Capture::from_file("test_files/ouster_example.pcap")?;
-    cap.filter("udp")?;
+    cap.filter("udp", true)?;
 
     while let Ok(packet) = cap.next() {
         let lidar_packet = OusterPacket::from_pcap(&packet)?;
@@ -42,7 +42,7 @@ fn ouster_pcd_converter() -> Result<()> {
 
     // Load pcap file
     let mut cap = Capture::from_file("test_files/ouster_example.pcap")?;
-    cap.filter("udp")?;
+    cap.filter("udp", true)?;
 
     while let Ok(packet) = cap.next() {
         let lidar_packet = OusterPacket::from_pcap(&packet)?;
@@ -62,7 +62,7 @@ fn ouster_frame_converter() -> Result<()> {
 
     // Load pcap file
     let mut cap = Capture::from_file("test_files/ouster_example.pcap")?;
-    cap.filter("udp")?;
+    cap.filter("udp", true)?;
 
     let mut frames = vec![];
 

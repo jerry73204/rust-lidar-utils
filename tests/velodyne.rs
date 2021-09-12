@@ -16,7 +16,7 @@ const UDP_HEADER_SIZE: usize = 42;
 #[cfg(feature = "pcap")]
 fn velodyne_vlp_16_pcap_file() -> Result<()> {
     let mut cap = Capture::from_file("test_files/velodyne_vlp16.pcap")?;
-    cap.filter("udp")?;
+    cap.filter("udp", true)?;
 
     let mut data_packets = vec![];
     let mut position_packets = vec![];
@@ -64,7 +64,7 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
 #[cfg(feature = "pcap")]
 fn velodyne_vlp_32_pcap_file() -> Result<()> {
     let mut cap = Capture::from_file("test_files/velodyne_vlp32.pcap")?;
-    cap.filter("udp")?;
+    cap.filter("udp", true)?;
 
     let mut data_packets = vec![];
     let mut position_packets = vec![];
