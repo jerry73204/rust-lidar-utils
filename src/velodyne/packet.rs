@@ -72,8 +72,8 @@ mod data_packet {
             360.0 * self.azimuth_count as f64 / (AZIMUTH_COUNT_PER_REV - 1) as f64
         }
 
-        pub fn azimuth_angle(&self) -> uom::si::f64::Angle {
-            uom::si::f64::Angle::new::<uom::si::angle::radian>(self.azimuth_angle_radian())
+        pub fn azimuth_angle(&self) -> Angle {
+            Angle::new::<radian>(self.azimuth_angle_radian())
         }
     }
 
