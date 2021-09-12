@@ -113,7 +113,7 @@ mod data_packet {
         }
 
         /// Construct packet from slice of bytes. Fail if the slice size is not correct.
-        pub fn from_slice<'a>(buffer: &'a [u8]) -> Result<&'a Self> {
+        pub fn from_slice(buffer: &[u8]) -> Result<&Self> {
             ensure!(
                 buffer.len() == mem::size_of::<Self>(),
                 "Requre the slice length to be {}, but get {}",
@@ -182,7 +182,7 @@ mod position_packet {
         }
 
         /// Construct packet from slice of bytes. Fail if the slice size is not correct.
-        pub fn from_slice<'a>(buffer: &'a [u8]) -> Result<&'a Self> {
+        pub fn from_slice(buffer: &[u8]) -> Result<&Self> {
             ensure!(
                 buffer.len() == mem::size_of::<Self>(),
                 "Requre the slice length to be {}, but get {}",

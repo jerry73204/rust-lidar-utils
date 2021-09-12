@@ -34,7 +34,7 @@ pub(crate) fn convert_single_return_16_channel(
     // update last seen block
     let prev_last_block = {
         let new_timestamp = packet_timestamp + block_period * (packet.blocks.len() - 1) as f64;
-        let new_block = packet.blocks.last().unwrap().clone();
+        let new_block = *packet.blocks.last().unwrap();
         last_block.replace((new_timestamp, new_block))
     };
 
@@ -48,7 +48,7 @@ pub(crate) fn convert_single_return_16_channel(
         .map(|(block_timestamp, block)| (*block_timestamp, block))
         .chain(packet_blocks_iter);
 
-    convert_to_points_16_channel(&lasers, distance_resolution, &mut blocks_iter)
+    convert_to_points_16_channel(lasers, distance_resolution, &mut blocks_iter)
 }
 
 pub(crate) fn convert_dual_return_16_channel(
@@ -119,9 +119,9 @@ pub(crate) fn convert_dual_return_16_channel(
     };
 
     let strongest_points =
-        convert_to_points_16_channel(&lasers, distance_resolution, &mut strongest_blocks_iter);
+        convert_to_points_16_channel(lasers, distance_resolution, &mut strongest_blocks_iter);
     let last_points =
-        convert_to_points_16_channel(&lasers, distance_resolution, &mut last_blocks_iter);
+        convert_to_points_16_channel(lasers, distance_resolution, &mut last_blocks_iter);
 
     debug_assert_eq!(
         strongest_points.len(),
@@ -172,7 +172,7 @@ pub(crate) fn convert_single_return_32_channel(
         .map(|(block_timestamp, block)| (*block_timestamp, block))
         .chain(packet_blocks_iter);
 
-    convert_to_points_32_channel(&lasers, distance_resolution, &mut blocks_iter)
+    convert_to_points_32_channel(lasers, distance_resolution, &mut blocks_iter)
 }
 
 pub(crate) fn convert_dual_return_32_channel(
@@ -243,9 +243,9 @@ pub(crate) fn convert_dual_return_32_channel(
     };
 
     let strongest_points =
-        convert_to_points_32_channel(&lasers, distance_resolution, &mut strongest_blocks_iter);
+        convert_to_points_32_channel(lasers, distance_resolution, &mut strongest_blocks_iter);
     let last_points =
-        convert_to_points_32_channel(&lasers, distance_resolution, &mut last_blocks_iter);
+        convert_to_points_32_channel(lasers, distance_resolution, &mut last_blocks_iter);
 
     debug_assert_eq!(
         strongest_points.len(),

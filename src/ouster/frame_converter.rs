@@ -61,7 +61,7 @@ impl FrameConverter {
         let curr_fid = column.frame_id;
         let curr_mid = column.measurement_id;
         let curr_ts = column.timestamp;
-        let curr_points = self.pcd_converter.column_to_points(&column)?;
+        let curr_points = self.pcd_converter.column_to_points(column)?;
 
         // If received column is not valid, update last_{fid,mid} only
         if !column.valid() {
@@ -216,7 +216,7 @@ impl FrameConverter {
     {
         let mut frames = vec![];
         for column in packet.as_ref().columns.iter() {
-            frames.extend(self.push_column(&column)?);
+            frames.extend(self.push_column(column)?);
         }
         Ok(frames)
     }

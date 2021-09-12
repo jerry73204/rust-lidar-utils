@@ -105,7 +105,7 @@ impl Packet {
     }
 
     /// Construct packet from slice of bytes. Error if the slice size is not correct.
-    pub fn from_slice<'a>(buffer: &'a [u8]) -> Result<&'a Packet> {
+    pub fn from_slice(buffer: &[u8]) -> Result<&Packet> {
         ensure!(
             buffer.len() == mem::size_of::<Packet>(),
             "Requre the slice length to be {}, but get {}",
@@ -119,6 +119,6 @@ impl Packet {
 
 impl AsRef<Packet> for Packet {
     fn as_ref(&self) -> &Packet {
-        &self
+        self
     }
 }

@@ -192,7 +192,7 @@ mod converter_impls {
             if self.remaining_points.is_empty() {
                 None
             } else {
-                Some(mem::replace(&mut self.remaining_points, vec![]))
+                Some(mem::take(&mut self.remaining_points))
             }
         }
     }
@@ -223,7 +223,7 @@ mod converter_impls {
             if self.remaining_points.is_empty() {
                 None
             } else {
-                Some(mem::replace(&mut self.remaining_points, vec![]))
+                Some(mem::take(&mut self.remaining_points))
             }
         }
     }
@@ -254,7 +254,7 @@ mod converter_impls {
             if self.remaining_points.is_empty() {
                 None
             } else {
-                Some(mem::replace(&mut self.remaining_points, vec![]))
+                Some(mem::take(&mut self.remaining_points))
             }
         }
     }
@@ -318,7 +318,7 @@ mod converter_impls {
             if self.remaining_points.is_empty() {
                 None
             } else {
-                Some(mem::replace(&mut self.remaining_points, vec![]))
+                Some(mem::take(&mut self.remaining_points))
             }
         }
     }
@@ -349,7 +349,7 @@ mod converter_impls {
             if self.remaining_points.is_empty() {
                 None
             } else {
-                Some(mem::replace(&mut self.remaining_points, vec![]))
+                Some(mem::take(&mut self.remaining_points))
             }
         }
     }
@@ -380,7 +380,7 @@ mod converter_impls {
             if self.remaining_points.is_empty() {
                 None
             } else {
-                Some(mem::replace(&mut self.remaining_points, vec![]))
+                Some(mem::take(&mut self.remaining_points))
             }
         }
     }
