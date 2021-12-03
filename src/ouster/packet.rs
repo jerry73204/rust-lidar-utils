@@ -89,8 +89,9 @@ impl Packet {
     pub fn from_pcap(packet: &pcap::Packet) -> Result<Packet> {
         let packet_header_size = 42;
 
+        let body_size = packet.header.len as usize - packet_header_size;
         ensure!(
-            packet.header.len as usize - packet_header_size == mem::size_of::<Packet>(),
+            body_size == mem::size_of::<Packet>(),
             "Input pcap packet is not a valid Ouster Lidar packet",
         );
 

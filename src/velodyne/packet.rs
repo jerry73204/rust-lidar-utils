@@ -97,8 +97,9 @@ mod data_packet {
         pub fn from_pcap(packet: &pcap::Packet) -> Result<Self> {
             let packet_header_size = 42;
 
+            let body_size = packet.header.len as usize - packet_header_size;
             ensure!(
-                packet.header.len as usize - packet_header_size == mem::size_of::<Self>(),
+                body_size == mem::size_of::<Self>(),
                 "Input pcap packet is not a valid Velodyne Lidar packet",
             );
 
@@ -166,8 +167,9 @@ mod position_packet {
         pub fn from_pcap(packet: &pcap::Packet) -> Result<Self> {
             let packet_header_size = 42;
 
+            let body_size = packet.header.len as usize - packet_header_size;
             ensure!(
-                packet.header.len as usize - packet_header_size == mem::size_of::<Self>(),
+                body_size == mem::size_of::<Self>(),
                 "Input pcap packet is not a valid Velodyne Lidar packet",
             );
 
