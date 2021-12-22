@@ -25,6 +25,10 @@ pub const VLP_16_ELEVAION_DEGREES: [f64; 16] = [
     -15.0, 1.0, -13.0, 3.0, -11.0, 5.0, -9.0, 7.0, -7.0, 9.0, -5.0, 11.0, -3.0, 13.0, -1.0, 15.0,
 ];
 
+/// VLP-16 correspond index
+pub const VLP_16_ELEVAION_INDEX: [usize; 16] =
+    [15, 7, 14, 6, 13, 5, 12, 4, 11, 3, 10, 2, 9, 1, 8, 0];
+
 /// The correction distance added to point position along vertical axis for VLP-16.
 pub const VLP_16_VERTICAL_OFFSETS: [f64; 16] = [
     11.2, -0.7, 9.7, -2.2, 8.1, -3.7, 6.6, -5.1, 5.1, -6.6, 3.7, -8.1, 2.2, -9.7, 0.7, -11.2,
@@ -84,6 +88,12 @@ pub const VLP_32C_ELEVAION_DEGREES: [f64; 32] = [
     -25.0, -1.0, -1.667, -15.639, -11.31, 0.0, -0.667, -8.843, -7.254, 0.333, -0.333, -6.148,
     -5.333, 1.333, 0.667, -4.0, -4.667, 1.667, 1.0, -3.667, -3.333, 3.333, 2.333, -2.667, -3.0,
     7.0, 4.667, -2.333, -2.0, 15.0, 10.333, -1.333,
+];
+
+/// VLP-32C correspond index
+pub const VLP_32C_ELEVAION_INDEX: [usize; 32] = [
+    31, 14, 16, 30, 29, 11, 13, 28, 27, 10, 12, 26, 25, 7, 9, 23, 24, 6, 8, 22, 21, 4, 5, 19, 20,
+    2, 3, 18, 17, 0, 1, 15,
 ];
 
 /// The correction distance added to point position along vertical axis for VLP-32C.

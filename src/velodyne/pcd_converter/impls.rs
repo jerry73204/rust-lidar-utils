@@ -2,9 +2,9 @@ use crate::{
     common::*,
     velodyne::{
         config::LaserParameter,
-        consts::{CHANNEL_PERIOD, FIRING_PERIOD},
+        consts::{self, CHANNEL_PERIOD, FIRING_PERIOD},
         packet::{Block, Channel, DataPacket, ReturnMode},
-        point::{DualReturnPoint, PointData, SingleReturnPoint},
+        point::{DualReturnPoint, LidarFrameEntry, PointData, SingleReturnPoint},
     },
 };
 
@@ -48,7 +48,20 @@ pub(crate) fn convert_single_return_16_channel(
         .map(|(block_timestamp, block)| (*block_timestamp, block))
         .chain(packet_blocks_iter);
 
-    convert_to_points_16_channel(lasers, distance_resolution, &mut blocks_iter)
+    //set lidar beam channel index
+    let mut channel_vec =
+        convert_to_points_16_channel(lasers, distance_resolution, &mut blocks_iter);
+
+    // get index  array
+    let corr_deg_index = consts::VLP_16_ELEVAION_INDEX;
+
+    // set channel_index
+    for i in 0..=channel_vec.len() - 1 {
+        //set channel index
+        channel_vec[i].lidar_frame_entry.row_idx = corr_deg_index[i % 16];
+    }
+
+    channel_vec
 }
 
 pub(crate) fn convert_dual_return_16_channel(
@@ -118,10 +131,26 @@ pub(crate) fn convert_dual_return_16_channel(
             .chain(packet_last_blocks_iter)
     };
 
-    let strongest_points =
+    // get index  array
+    let corr_deg_index = consts::VLP_16_ELEVAION_INDEX;
+
+    let mut strongest_points =
         convert_to_points_16_channel(lasers, distance_resolution, &mut strongest_blocks_iter);
-    let last_points =
+
+    // set channel_index
+    for i in 0..=strongest_points.len() - 1 {
+        //set channel index
+        strongest_points[i].lidar_frame_entry.row_idx = corr_deg_index[i % 16];
+    }
+
+    let mut last_points =
         convert_to_points_16_channel(lasers, distance_resolution, &mut last_blocks_iter);
+
+    // set channel_index
+    for i in 0..=last_points.len() - 1 {
+        //set channel index
+        last_points[i].lidar_frame_entry.row_idx = corr_deg_index[i % 16];
+    }
 
     debug_assert_eq!(
         strongest_points.len(),
@@ -172,7 +201,20 @@ pub(crate) fn convert_single_return_32_channel(
         .map(|(block_timestamp, block)| (*block_timestamp, block))
         .chain(packet_blocks_iter);
 
-    convert_to_points_32_channel(lasers, distance_resolution, &mut blocks_iter)
+    //set lidar beam channel index
+    let mut channel_vec =
+        convert_to_points_32_channel(lasers, distance_resolution, &mut blocks_iter).clone();
+
+    // get index  array
+    let corr_deg_index = consts::VLP_32C_ELEVAION_INDEX;
+
+    // set channel_index
+    for i in 0..=channel_vec.len() - 1 {
+        //set channel index
+        channel_vec[i].lidar_frame_entry.row_idx = corr_deg_index[i % 32];
+    }
+
+    channel_vec
 }
 
 pub(crate) fn convert_dual_return_32_channel(
@@ -242,10 +284,26 @@ pub(crate) fn convert_dual_return_32_channel(
             .chain(packet_last_blocks_iter)
     };
 
-    let strongest_points =
+    let mut strongest_points =
         convert_to_points_32_channel(lasers, distance_resolution, &mut strongest_blocks_iter);
-    let last_points =
+
+    // get index  array
+    let corr_deg_index = consts::VLP_32C_ELEVAION_INDEX;
+
+    // set channel_index
+    for i in 0..=strongest_points.len() - 1 {
+        //set channel index
+        strongest_points[i].lidar_frame_entry.row_idx = corr_deg_index[i % 32];
+    }
+
+    let mut last_points =
         convert_to_points_32_channel(lasers, distance_resolution, &mut last_blocks_iter);
+
+    // set channel_index
+    for i in 0..=last_points.len() - 1 {
+        //set channel index
+        last_points[i].lidar_frame_entry.row_idx = corr_deg_index[i % 32];
+    }
 
     debug_assert_eq!(
         strongest_points.len(),
@@ -371,6 +429,10 @@ where
                         intensity: channel.intensity,
                         position,
                     },
+                    lidar_frame_entry: LidarFrameEntry {
+                        row_idx: std::usize::MIN,
+                        col_idx: std::usize::MIN,
+                    },
                 }
             },
         )
@@ -468,6 +530,10 @@ where
                         distance,
                         intensity: channel.intensity,
                         position,
+                    },
+                    lidar_frame_entry: LidarFrameEntry {
+                        row_idx: std::usize::MIN,
+                        col_idx: std::usize::MIN,
                     },
                 }
             },

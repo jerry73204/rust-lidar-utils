@@ -7,32 +7,47 @@ pub use dynamic_return_points::*;
 pub use single_return_point::*;
 
 /// Generic point from Velodyne LiDAR device.
+
 pub trait VelodynePoint {
     fn laser_id(&self) -> u32;
     fn timestamp(&self) -> Time;
     fn original_azimuth_angle(&self) -> Angle;
     fn corrected_azimuth_angle(&self) -> Angle;
+    fn set_col_idx(&mut self, id: usize);
+    fn col_idx(&self) -> usize;
+    fn row_idx(&self) -> usize;
 }
 
+// Todo
+pub trait LidarFrame {}
+
 /// Point in strongest or last return mode.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct PointData {
     pub distance: Length,
     pub intensity: u8,
     pub position: [Length; 3],
+}
+#[derive(Debug, Clone, Copy)]
+pub struct LidarFrameEntry {
+    //Index of channel, from bottom(-25 degree) to top (15 degree)
+    pub row_idx: usize,
+    // Index of line in a frame
+    pub col_idx: usize,
 }
 
 mod single_return_point {
     use super::*;
 
     /// Point in strongest or last return mode.
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     pub struct SingleReturnPoint {
         pub laser_id: u32,
         pub timestamp: Time,
         pub original_azimuth_angle: Angle,
         pub corrected_azimuth_angle: Angle,
         pub data: PointData,
+        pub lidar_frame_entry: LidarFrameEntry,
     }
 
     impl VelodynePoint for SingleReturnPoint {
@@ -51,6 +66,16 @@ mod single_return_point {
         fn corrected_azimuth_angle(&self) -> Angle {
             self.corrected_azimuth_angle
         }
+        fn set_col_idx(&mut self, id: usize) {
+            self.lidar_frame_entry.col_idx = id;
+        }
+        fn col_idx(&self) -> usize {
+            self.lidar_frame_entry.col_idx
+        }
+
+        fn row_idx(&self) -> usize {
+            self.lidar_frame_entry.row_idx
+        }
     }
 }
 
@@ -58,7 +83,7 @@ mod dual_return_point {
     use super::*;
 
     /// Point in dual return mode.
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     pub struct DualReturnPoint {
         pub laser_id: u32,
         pub timestamp: Time,
@@ -66,6 +91,7 @@ mod dual_return_point {
         pub corrected_azimuth_angle: Angle,
         pub strongest_return_data: PointData,
         pub last_return_data: PointData,
+        pub lidar_frame_entry: LidarFrameEntry,
     }
 
     impl DualReturnPoint {
@@ -79,6 +105,7 @@ mod dual_return_point {
                 original_azimuth_angle: original_azimuth_angle_strongest,
                 corrected_azimuth_angle: corrected_azimuth_angle_strongest,
                 data: strongest_return_data,
+                lidar_frame_entry,
             } = strongest_return_point;
 
             let SingleReturnPoint {
@@ -87,6 +114,7 @@ mod dual_return_point {
                 original_azimuth_angle: original_azimuth_angle_last,
                 corrected_azimuth_angle: corrected_azimuth_angle_last,
                 data: last_return_data,
+                lidar_frame_entry,
             } = last_return_point;
 
             ensure!(
@@ -113,6 +141,7 @@ mod dual_return_point {
                 corrected_azimuth_angle: corrected_azimuth_angle_strongest,
                 strongest_return_data,
                 last_return_data,
+                lidar_frame_entry,
             };
 
             Ok(dual_return_point)
@@ -134,6 +163,16 @@ mod dual_return_point {
 
         fn corrected_azimuth_angle(&self) -> Angle {
             self.corrected_azimuth_angle
+        }
+        fn set_col_idx(&mut self, id: usize) {
+            self.lidar_frame_entry.col_idx = id;
+        }
+        fn col_idx(&self) -> usize {
+            self.lidar_frame_entry.col_idx
+        }
+
+        fn row_idx(&self) -> usize {
+            self.lidar_frame_entry.row_idx
         }
     }
 }
@@ -208,7 +247,7 @@ mod dynamic_return_points {
     }
 
     /// collection of points in either single return or dual return mode.
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     pub enum DynamicReturnPoint {
         Single(SingleReturnPoint),
         Dual(DualReturnPoint),
