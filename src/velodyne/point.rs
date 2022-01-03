@@ -13,13 +13,7 @@ pub trait VelodynePoint {
     fn timestamp(&self) -> Time;
     fn original_azimuth_angle(&self) -> Angle;
     fn corrected_azimuth_angle(&self) -> Angle;
-    fn set_col_idx(&mut self, id: usize);
-    fn col_idx(&self) -> usize;
-    fn row_idx(&self) -> usize;
 }
-
-// Todo
-pub trait LidarFrame {}
 
 /// Point in strongest or last return mode.
 #[derive(Debug, Clone, Copy)]
@@ -28,12 +22,35 @@ pub struct PointData {
     pub intensity: u8,
     pub position: [Length; 3],
 }
+
+pub trait LidarFrameMsg {
+    fn set_row_idx(&mut self, id: usize);
+    fn row_idx(&self) -> usize;
+    fn set_col_idx(&mut self, id: usize);
+    fn col_idx(&self) -> usize;
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct LidarFrameEntry {
     //Index of channel, from bottom(-25 degree) to top (15 degree)
     pub row_idx: usize,
     // Index of line in a frame
     pub col_idx: usize,
+}
+
+impl LidarFrameMsg for LidarFrameEntry {
+    fn set_row_idx(&mut self, id: usize) {
+        self.row_idx = id;
+    }
+    fn row_idx(&self) -> usize {
+        self.row_idx
+    }
+    fn set_col_idx(&mut self, id: usize) {
+        self.col_idx = id;
+    }
+    fn col_idx(&self) -> usize {
+        self.col_idx
+    }
 }
 
 mod single_return_point {
@@ -66,15 +83,20 @@ mod single_return_point {
         fn corrected_azimuth_angle(&self) -> Angle {
             self.corrected_azimuth_angle
         }
+    }
+
+    impl LidarFrameMsg for SingleReturnPoint {
+        fn set_row_idx(&mut self, id: usize) {
+            self.lidar_frame_entry.row_idx = id;
+        }
+        fn row_idx(&self) -> usize {
+            self.lidar_frame_entry.row_idx
+        }
         fn set_col_idx(&mut self, id: usize) {
             self.lidar_frame_entry.col_idx = id;
         }
         fn col_idx(&self) -> usize {
             self.lidar_frame_entry.col_idx
-        }
-
-        fn row_idx(&self) -> usize {
-            self.lidar_frame_entry.row_idx
         }
     }
 }
@@ -164,15 +186,20 @@ mod dual_return_point {
         fn corrected_azimuth_angle(&self) -> Angle {
             self.corrected_azimuth_angle
         }
+    }
+
+    impl LidarFrameMsg for DualReturnPoint {
+        fn set_row_idx(&mut self, id: usize) {
+            self.lidar_frame_entry.row_idx = id;
+        }
+        fn row_idx(&self) -> usize {
+            self.lidar_frame_entry.row_idx
+        }
         fn set_col_idx(&mut self, id: usize) {
             self.lidar_frame_entry.col_idx = id;
         }
         fn col_idx(&self) -> usize {
             self.lidar_frame_entry.col_idx
-        }
-
-        fn row_idx(&self) -> usize {
-            self.lidar_frame_entry.row_idx
         }
     }
 }

@@ -6,6 +6,7 @@ use crate::{
         packet::DataPacket,
         pcd_converter::PointCloudConverter,
         point::{DualReturnPoint, DynamicReturnPoints, SingleReturnPoint, VelodynePoint},
+        LidarFrameMsg,
     },
 };
 
@@ -88,14 +89,14 @@ where
 
 fn points_to_frames<Point>(points: impl IntoIterator<Item = Point>) -> (Vec<Vec<Point>>, Vec<Point>)
 where
-    Point: VelodynePoint,
+    Point: VelodynePoint + LidarFrameMsg,
 {
     let mut frames = vec![];
     let mut remaining_points: Vec<Point> = vec![];
     let mut prev_azimuth = None;
-    let mut remaining_channel = vec![];
+    let mut remaining_channel: Vec<Point> = vec![];
 
-    let mut prev_lazer_id = u32::MIN;
+    let mut prev_laser_id = u32::MIN;
     let mut col_idx_cnt = 0;
 
     let mut beam_num = 0;
@@ -104,7 +105,7 @@ where
         let curr_azimuth = point.original_azimuth_angle();
         let pass_zero_azimuth = prev_azimuth.map_or(false, |prev| curr_azimuth < prev);
 
-        if pass_zero_azimuth && point.col_idx() > 0 {
+        if pass_zero_azimuth && remaining_points.len() > 0 {
             let mut frame: Vec<Point> = vec![];
 
             // sort channel order by row_idx
@@ -118,32 +119,31 @@ where
 
             //reset line ID for new frame
             col_idx_cnt = 0;
-        } else {
-            if prev_lazer_id > point.laser_id() {
-                assert!(prev_lazer_id == 15 || prev_lazer_id == 31);
-                assert!(point.laser_id() == 0);
-
-                //check whether it is 32 beam or 16 beam
-                beam_num = (prev_lazer_id + 1) as usize;
-
-                //append to remaining_points when a line is collected
-                remaining_points.append(&mut remaining_channel);
-
-                //update line ID for next line
-                col_idx_cnt = col_idx_cnt + 1;
-            }
-
-            //set line ID
-            point.set_col_idx(col_idx_cnt);
-
-            prev_lazer_id = point.laser_id();
-            remaining_channel.push(point);
         }
 
+        if prev_laser_id > point.laser_id() {
+            //previous data ID should either 31(for 32 beam laser) or 15(for 16 beam laser)
+            assert!(prev_laser_id == 15 || prev_laser_id == 31);
+
+            // input data length should be either 32 or 16
+            assert!(remaining_channel.len() == 16 || remaining_channel.len() == 32);
+
+            //count whether it is 32 beam or 16 beam
+            beam_num = (prev_laser_id + 1) as usize;
+
+            //append to remaining_points when a line is collected
+            remaining_points.append(&mut remaining_channel);
+
+            //update line ID for next line
+            col_idx_cnt = col_idx_cnt + 1;
+        }
+        //set line ID
+        point.set_col_idx(col_idx_cnt);
+        prev_laser_id = point.laser_id();
+        remaining_channel.push(point);
         prev_azimuth = Some(curr_azimuth);
     });
 
-    //Collect all remaining point
     let mut remain: Vec<Point> = vec![];
     remain.append(&mut remaining_points);
     remain.append(&mut remaining_channel);
