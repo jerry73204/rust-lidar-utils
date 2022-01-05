@@ -1,7 +1,8 @@
-#![cfg(feature = "velodyne-test")]
+// #![cfg(feature = "velodyne-test")]
 
 use anyhow::{ensure, Result};
 use itertools::izip;
+use lidar_utils::velodyne::consts;
 use lidar_utils::velodyne::{
     Config, DataPacket, FrameConverter, PointCloudConverter, PositionPacket,
     Vlp16_Strongest_FrameConverter, Vlp16_Strongest_PcdConverter, Vlp32_Strongest_FrameConverter,
@@ -49,10 +50,34 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
 
     // convert to frames
     {
+        let beam_num = 16;
         let config = Config::vlp_16_strongest_return();
         let mut converter = Vlp16_Strongest_FrameConverter::from_config(config);
         data_packets.iter().try_for_each(|packet| -> Result<_> {
-            converter.convert(packet)?;
+            let frame_return = converter.convert(packet).unwrap();
+            if frame_return.len() >= 1 {
+                frame_return.iter().for_each(|frame| {
+                    // check if azimuth is in order
+                    for i in 1..(frame.len() / beam_num) - 1 {
+                        assert!(
+                            frame[i * beam_num].original_azimuth_angle
+                                < frame[(i + 1) * beam_num].original_azimuth_angle
+                        )
+                    }
+                });
+
+                //check if elevion(laser id) is in order
+                let deg = consts::VLP_16_ELEVAION_INDEX;
+                frame_return.iter().for_each(|frame| {
+                    for i in 0..frame.len() - 1 {
+                        assert!(
+                            (deg[frame[i].laser_id as usize] < deg[frame[i + 1].laser_id as usize])
+                                || (deg[frame[i].laser_id as usize] == 15
+                                    && deg[frame[i + 1].laser_id as usize] == 0)
+                        );
+                    }
+                });
+            }
             Ok(())
         })?;
     }
@@ -97,6 +122,7 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
 
     // convert to frames
     {
+        let beam_num = 32;
         let config = Config::vlp_32c_strongest_return();
         let mut converter = Vlp32_Strongest_FrameConverter::from_config(config);
         data_packets.iter().try_for_each(|packet| -> Result<_> {
@@ -115,14 +141,12 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
                 //check if elevion(laser id) is in order
                 let deg = consts::VLP_32C_ELEVAION_INDEX;
                 frame_return.iter().for_each(|frame| {
-                    for i in 0..frame.len() {
-                        // use element(row_idx) to find its index in deg, it should be equal to laser ID
-                        let idx = deg
-                            .iter()
-                            .position(|&n| n == frame[i].lidar_frame_entry.row_idx)
-                            .unwrap();
-
-                        assert!(idx == frame[i].laser_id as usize);
+                    for i in 0..frame.len() - 1 {
+                        assert!(
+                            (deg[frame[i].laser_id as usize] < deg[frame[i + 1].laser_id as usize])
+                                || (deg[frame[i].laser_id as usize] == 31
+                                    && deg[frame[i + 1].laser_id as usize] == 0)
+                        );
                     }
                 });
             }
