@@ -109,7 +109,7 @@ where
             let mut frame: Vec<Point> = vec![];
 
             // sort channel order by row_idx
-            for i in 0..=(remaining_points.len() / beam_num) - 1 {
+            for i in 0..(remaining_points.len() / beam_num) {
                 remaining_points[i * beam_num..(i * beam_num + beam_num)]
                     .sort_by(|a, b| a.row_idx().partial_cmp(&b.row_idx()).unwrap());
             }
