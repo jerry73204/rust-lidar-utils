@@ -1,4 +1,4 @@
-// #![cfg(feature = "velodyne-test")]
+#![cfg(feature = "velodyne-test")]
 
 use anyhow::{ensure, Result};
 use itertools::izip;
