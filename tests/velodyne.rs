@@ -38,6 +38,19 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
         ensure!(is_timestamp_valid, "invalid timestamp detected");
     }
 
+    //check if elevation angle is in order
+    {
+        let original = consts::VLP_16_ELEVAION_DEGREES;
+        let mut sort = consts::VLP_16_ELEVAION_DEGREES;
+        sort.sort_by(|a, b| b.partial_cmp(a).unwrap());
+
+        let idx_order = consts::VLP_16_ELEVAION_INDEX;
+
+        for i in 0..idx_order.len() {
+            assert!(sort[i] == original[idx_order[i]]);
+        }
+    }
+
     // convert to point cloud
     {
         let config = Config::vlp_16_strongest_return();
@@ -108,6 +121,19 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
             .all(|(former, latter)| former.timestamp < latter.timestamp);
 
         ensure!(is_timestamp_valid, "invalid timestamp detected");
+    }
+
+    //check if elevation angle is in order
+    {
+        let original = consts::VLP_32C_ELEVAION_DEGREES;
+        let mut sort = consts::VLP_32C_ELEVAION_DEGREES;
+        sort.sort_by(|a, b| b.partial_cmp(a).unwrap());
+
+        let idx_order = consts::VLP_32C_ELEVAION_INDEX;
+
+        for i in 0..idx_order.len() {
+            assert!(sort[i] == original[idx_order[i]]);
+        }
     }
 
     // convert to point cloud
