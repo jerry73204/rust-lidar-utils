@@ -216,6 +216,22 @@ mod dynamic_return_points {
         Dual(PcdFrame<DualReturnPoint>),
     }
 
+    impl DynamicReturnFrame {
+        pub fn is_empty(&self) -> bool {
+            match self {
+                Self::Single(points) => points.data.is_empty(),
+                Self::Dual(points) => points.data.is_empty(),
+            }
+        }
+
+        pub(crate) fn empty_like(&self) -> Self {
+            match self {
+                Self::Single(_) => Self::Single(PcdFrame::new()),
+                Self::Dual(_) => Self::Dual(PcdFrame::new()),
+            }
+        }
+    }
+
     /// Collection of points in either single return or dual return mode.
     #[derive(Debug, Clone)]
     pub enum DynamicReturnPoints {
