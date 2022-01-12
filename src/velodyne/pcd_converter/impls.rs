@@ -57,7 +57,7 @@ pub(crate) fn convert_single_return_16_channel(
 
     // set channel_index
     for i in 0..channel_vec.len() {
-        //set channel index
+        // set channel index
         channel_vec[i].lidar_frame_entry.row_idx = corr_deg_index[i % 16];
     }
 
