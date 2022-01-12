@@ -18,7 +18,7 @@ use crate::{
             Vlp32_Dual_PcdConverter, Vlp32_Dynamic_PcdConverter, Vlp32_Last_PcdConverter,
             Vlp32_Strongest_PcdConverter,
         },
-        point::{DualReturnPoint, DynamicReturnPoints, SingleReturnPoint},
+        point::{DualReturnPoint, DynamicReturnFrame, DynamicReturnPoints, SingleReturnPoint},
     },
 };
 
@@ -138,8 +138,6 @@ mod definitions {
         pub data: Vec<P>,
     }
 
-    // impl<P> Copy for PcdFrame<P> {}
-
     impl<P> PcdFrame<P> {
         pub fn point_at(&self, rol_idx: usize, col_idx: usize) -> Result<&P> {
             Ok(&self.data[col_idx * self.height + rol_idx])
@@ -159,7 +157,7 @@ mod converter_impls {
     use super::*;
 
     impl FrameConverter<DynamicModel, DynamicReturn> for Dynamic_FrameConverter {
-        type Frame = Vec<DynamicReturnPoints>;
+        type Frame = DynamicReturnFrame;
         type Remain = DynamicReturnPoints;
 
         fn from_config(config: Dynamic_Config) -> Self {
@@ -289,7 +287,7 @@ mod converter_impls {
     }
 
     impl FrameConverter<Vlp16, DynamicReturn> for Vlp16_Dynamic_FrameConverter {
-        type Frame = Vec<DynamicReturnPoints>;
+        type Frame = DynamicReturnFrame;
         type Remain = DynamicReturnPoints;
 
         fn from_config(config: Vlp16_Dynamic_Config) -> Self {
@@ -419,7 +417,7 @@ mod converter_impls {
     }
 
     impl FrameConverter<Vlp32, DynamicReturn> for Vlp32_Dynamic_FrameConverter {
-        type Frame = Vec<DynamicReturnPoints>;
+        type Frame = DynamicReturnFrame;
         type Remain = DynamicReturnPoints;
 
         fn from_config(config: Vlp32_Dynamic_Config) -> Self {

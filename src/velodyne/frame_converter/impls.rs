@@ -5,7 +5,10 @@ use crate::{
         marker::{ModelMarker, ReturnTypeMarker},
         packet::DataPacket,
         pcd_converter::PointCloudConverter,
-        point::{DualReturnPoint, DynamicReturnPoints, SingleReturnPoint, VelodynePoint},
+        point::{
+            DualReturnPoint, DynamicReturnFrame, DynamicReturnPoints, SingleReturnPoint,
+            VelodynePoint,
+        },
         LidarFrameMsg, PcdFrame,
     },
 };
@@ -51,7 +54,7 @@ pub(crate) fn convert_dynamic_return<PcdConverter, Model, ReturnType>(
     pcd_converter: &mut PcdConverter,
     remaining_points: &mut RemainingPoints,
     packet: &DataPacket,
-) -> Option<Vec<DynamicReturnPoints>>
+) -> Option<DynamicReturnFrame>
 where
     PcdConverter: PointCloudConverter<Model, ReturnType, Output = DynamicReturnPoints>,
     Model: ModelMarker,
@@ -66,9 +69,7 @@ where
             let points = remaining_points.drain(..).chain(new_points.into_iter());
             let (frames, new_remaining_points) = points_to_frames(points);
             let _ = mem::replace(remaining_points, new_remaining_points);
-            // ! bad present
-            let test = vec![frames.unwrap().data];
-            let frames: Vec<_> = test.into_iter().map(DynamicReturnPoints::Single).collect();
+            let frames = DynamicReturnFrame::Single(frames.unwrap());
             frames
         }
         (
@@ -78,13 +79,12 @@ where
             let points = remaining_points.drain(..).chain(new_points.into_iter());
             let (frames, new_remaining_points) = points_to_frames(points);
             let _ = mem::replace(remaining_points, new_remaining_points);
-            // ! bad present
-            let test = vec![frames.unwrap().data];
-            let frames: Vec<_> = test.into_iter().map(DynamicReturnPoints::Dual).collect();
+            let frames = DynamicReturnFrame::Dual(frames.unwrap());
             frames
         }
         _ => unreachable!(),
     };
+
     Some(frames)
 }
 

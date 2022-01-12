@@ -205,7 +205,16 @@ mod dual_return_point {
 }
 
 mod dynamic_return_points {
+    use crate::velodyne::PcdFrame;
+
     use super::*;
+
+    // Convert dynamic return points to frame
+    #[derive(Debug)]
+    pub enum DynamicReturnFrame {
+        Single(PcdFrame<SingleReturnPoint>),
+        Dual(PcdFrame<DualReturnPoint>),
+    }
 
     /// Collection of points in either single return or dual return mode.
     #[derive(Debug, Clone)]
