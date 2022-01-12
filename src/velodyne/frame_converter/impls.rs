@@ -54,7 +54,7 @@ pub(crate) fn convert_dynamic_return<PcdConverter, Model, ReturnType>(
     pcd_converter: &mut PcdConverter,
     remaining_points: &mut RemainingPoints,
     packet: &DataPacket,
-) -> Option<DynamicReturnFrame>
+) -> Option<Vec<DynamicReturnFrame>>
 where
     PcdConverter: PointCloudConverter<Model, ReturnType, Output = DynamicReturnPoints>,
     Model: ModelMarker,
@@ -85,7 +85,7 @@ where
         _ => unreachable!(),
     };
 
-    Some(frames)
+    Some(vec![frames])
 }
 
 fn points_to_frames<Point>(
