@@ -69,8 +69,14 @@ where
             let points = remaining_points.drain(..).chain(new_points.into_iter());
             let (frames, new_remaining_points) = points_to_frames(points);
             let _ = mem::replace(remaining_points, new_remaining_points);
-            let frames = DynamicReturnFrame::Single(frames.unwrap());
-            frames
+            let frame;
+            if let Some(_) = frames {
+                frame = DynamicReturnFrame::Single(frames.unwrap());
+            } else {
+                frame = DynamicReturnFrame::Single(PcdFrame::new());
+            }
+
+            frame
         }
         (
             RemainingPoints(DynamicReturnPoints::Dual(remaining_points)),
@@ -79,8 +85,14 @@ where
             let points = remaining_points.drain(..).chain(new_points.into_iter());
             let (frames, new_remaining_points) = points_to_frames(points);
             let _ = mem::replace(remaining_points, new_remaining_points);
-            let frames = DynamicReturnFrame::Dual(frames.unwrap());
-            frames
+            let frame;
+            if let Some(_) = frames {
+                frame = DynamicReturnFrame::Dual(frames.unwrap());
+            } else {
+                frame = DynamicReturnFrame::Dual(PcdFrame::new());
+            }
+
+            frame
         }
         _ => unreachable!(),
     };

@@ -134,7 +134,7 @@ mod definitions {
     #[derive(Debug, Clone)]
     pub struct PcdFrame<P>
     where
-        P: Copy,
+        P: Copy + Clone,
     {
         pub height: usize,
         pub width: usize,
