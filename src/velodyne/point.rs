@@ -232,22 +232,22 @@ mod dynamic_return_points {
         }
     }
 
-    impl IntoIterator for DynamicReturnFrame {
-        type Item = DynamicReturnPoint;
-        type IntoIter = DynamicReturnPointsIter;
+    // impl IntoIterator for DynamicReturnFrame {
+    //     type Item = DynamicReturnPoint;
+    //     type IntoIter = DynamicReturnPointsIter;
 
-        fn into_iter(self) -> Self::IntoIter {
-            let iter: Box<dyn Iterator<Item = DynamicReturnPoint> + Sync + Send> = match self {
-                Self::Single(points) => {
-                    Box::new(points.data.into_iter().map(DynamicReturnPoint::Single))
-                }
-                Self::Dual(points) => {
-                    Box::new(points.data.into_iter().map(DynamicReturnPoint::Dual))
-                }
-            };
-            Self::IntoIter { iter }
-        }
-    }
+    //     fn into_iter(self) -> Self::IntoIter {
+    //         let iter: Box<dyn Iterator<Item = DynamicReturnPoint> + Sync + Send> = match self {
+    //             Self::Single(points) => {
+    //                 Box::new(points.data.into_iter().map(DynamicReturnPoint::Single))
+    //             }
+    //             Self::Dual(points) => {
+    //                 Box::new(points.data.into_iter().map(DynamicReturnPoint::Dual))
+    //             }
+    //         };
+    //         Self::IntoIter { iter }
+    //     }
+    // }
 
     /// Collection of points in either single return or dual return mode.
     #[derive(Debug, Clone)]
