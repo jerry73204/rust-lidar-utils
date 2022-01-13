@@ -210,7 +210,7 @@ mod dynamic_return_points {
     use super::*;
 
     // Convert dynamic return points to frame
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub enum DynamicReturnFrame {
         Single(PcdFrame<SingleReturnPoint>),
         Dual(PcdFrame<DualReturnPoint>),
