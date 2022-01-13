@@ -92,7 +92,7 @@ fn points_to_frames<Point>(
     points: impl IntoIterator<Item = Point>,
 ) -> (Option<PcdFrame<Point>>, Vec<Point>)
 where
-    Point: VelodynePoint + LidarFrameMsg,
+    Point: VelodynePoint + LidarFrameMsg + Copy,
 {
     let mut frames: Option<PcdFrame<Point>> = None;
     let mut remaining_points: Vec<Point> = vec![];

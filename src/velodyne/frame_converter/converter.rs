@@ -131,14 +131,20 @@ mod definitions {
         pub(crate) remaining_points: RemainingPoints,
     }
 
-    #[derive(Debug)]
-    pub struct PcdFrame<P> {
+    #[derive(Debug, Clone)]
+    pub struct PcdFrame<P>
+    where
+        P: Copy,
+    {
         pub height: usize,
         pub width: usize,
         pub data: Vec<P>,
     }
 
-    impl<P> PcdFrame<P> {
+    impl<P> PcdFrame<P>
+    where
+        P: Copy,
+    {
         pub fn point_at(&self, rol_idx: usize, col_idx: usize) -> Result<&P> {
             Ok(&self.data[col_idx * self.height + rol_idx])
         }
