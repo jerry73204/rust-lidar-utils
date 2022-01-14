@@ -163,7 +163,7 @@ mod converter_impls {
     use super::*;
 
     impl FrameConverter<DynamicModel, DynamicReturn> for Dynamic_FrameConverter {
-        type Frame = Vec<DynamicReturnFrame>;
+        type Frame = DynamicReturnFrame;
         type Remain = DynamicReturnPoints;
 
         fn from_config(config: Dynamic_Config) -> Self {
@@ -293,7 +293,7 @@ mod converter_impls {
     }
 
     impl FrameConverter<Vlp16, DynamicReturn> for Vlp16_Dynamic_FrameConverter {
-        type Frame = Vec<DynamicReturnFrame>;
+        type Frame = DynamicReturnFrame;
         type Remain = DynamicReturnPoints;
 
         fn from_config(config: Vlp16_Dynamic_Config) -> Self {
@@ -423,7 +423,7 @@ mod converter_impls {
     }
 
     impl FrameConverter<Vlp32, DynamicReturn> for Vlp32_Dynamic_FrameConverter {
-        type Frame = Vec<DynamicReturnFrame>;
+        type Frame = DynamicReturnFrame;
         type Remain = DynamicReturnPoints;
 
         fn from_config(config: Vlp32_Dynamic_Config) -> Self {
