@@ -2,9 +2,8 @@
 
 use anyhow::{ensure, Result};
 use itertools::izip;
-use lidar_utils::velodyne::consts;
 use lidar_utils::velodyne::{
-    Config, DataPacket, FrameConverter, PointCloudConverter, PositionPacket,
+    consts, Config, DataPacket, FrameConverter, PointCloudConverter, PositionPacket,
     Vlp16_Strongest_FrameConverter, Vlp16_Strongest_PcdConverter, Vlp32_Strongest_FrameConverter,
     Vlp32_Strongest_PcdConverter,
 };
