@@ -205,7 +205,49 @@ mod dual_return_point {
 }
 
 mod dynamic_return_points {
+    use crate::velodyne::PcdFrame;
+
     use super::*;
+
+    // Convert dynamic return points to frame
+    #[derive(Debug, Clone)]
+    pub enum DynamicReturnFrame {
+        Single(PcdFrame<SingleReturnPoint>),
+        Dual(PcdFrame<DualReturnPoint>),
+    }
+
+    impl DynamicReturnFrame {
+        pub fn is_empty(&self) -> bool {
+            match self {
+                Self::Single(points) => points.data.is_empty(),
+                Self::Dual(points) => points.data.is_empty(),
+            }
+        }
+
+        pub(crate) fn empty_like(&self) -> Self {
+            match self {
+                Self::Single(_) => Self::Single(PcdFrame::new()),
+                Self::Dual(_) => Self::Dual(PcdFrame::new()),
+            }
+        }
+    }
+
+    impl IntoIterator for DynamicReturnFrame {
+        type Item = DynamicReturnPoint;
+        type IntoIter = DynamicReturnPointsIter;
+
+        fn into_iter(self) -> Self::IntoIter {
+            let iter: Box<dyn Iterator<Item = DynamicReturnPoint> + Sync + Send> = match self {
+                Self::Single(points) => {
+                    Box::new(points.data.into_iter().map(DynamicReturnPoint::Single))
+                }
+                Self::Dual(points) => {
+                    Box::new(points.data.into_iter().map(DynamicReturnPoint::Dual))
+                }
+            };
+            Self::IntoIter { iter }
+        }
+    }
 
     /// Collection of points in either single return or dual return mode.
     #[derive(Debug, Clone)]
