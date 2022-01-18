@@ -1,5 +1,3 @@
-#![cfg(feature = "ouster-test")]
-
 use anyhow::Result;
 use lidar_utils::ouster::{
     config::Config, frame_converter::FrameConverter, packet::Packet as OusterPacket,

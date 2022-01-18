@@ -1,5 +1,3 @@
-#![cfg(feature = "velodyne-test")]
-
 use anyhow::{ensure, Result};
 use itertools::izip;
 use lidar_utils::velodyne::{
