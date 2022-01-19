@@ -61,43 +61,36 @@ where
     ReturnType: ReturnTypeMarker,
 {
     let new_points = pcd_converter.convert(packet).unwrap();
-    let frames = match (remaining_points, new_points) {
+    match (remaining_points, new_points) {
         (
             RemainingPoints(DynamicReturnPoints::Single(remaining_points)),
             DynamicReturnPoints::Single(new_points),
         ) => {
             let points = remaining_points.drain(..).chain(new_points.into_iter());
-            let (frames, new_remaining_points) = points_to_frames(points);
+            let (frame, new_remaining_points) = points_to_frames(points);
             let _ = mem::replace(remaining_points, new_remaining_points);
-            let frame;
-            if let Some(_) = frames {
-                frame = DynamicReturnFrame::Single(frames.unwrap());
+            if let Some(frame) = frame {
+                return Some(DynamicReturnFrame::Single(frame));
             } else {
-                frame = DynamicReturnFrame::Single(PcdFrame::new());
-            }
-
-            frame
+                return None;
+            };
         }
         (
             RemainingPoints(DynamicReturnPoints::Dual(remaining_points)),
             DynamicReturnPoints::Dual(new_points),
         ) => {
             let points = remaining_points.drain(..).chain(new_points.into_iter());
-            let (frames, new_remaining_points) = points_to_frames(points);
+            let (frame, new_remaining_points) = points_to_frames(points);
             let _ = mem::replace(remaining_points, new_remaining_points);
-            let frame;
-            if let Some(_) = frames {
-                frame = DynamicReturnFrame::Dual(frames.unwrap());
-            } else {
-                frame = DynamicReturnFrame::Dual(PcdFrame::new());
-            }
 
-            frame
+            if let Some(frame) = frame {
+                return Some(DynamicReturnFrame::Dual(frame));
+            } else {
+                return None;
+            };
         }
         _ => unreachable!(),
-    };
-
-    Some(frames)
+    }
 }
 
 fn points_to_frames<Point>(
