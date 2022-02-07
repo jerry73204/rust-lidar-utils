@@ -344,72 +344,120 @@ mod params {
 mod param_config {
     use super::*;
 
-    #[derive(Debug, Clone, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+    #[serde(try_from = "ParamsConfigUnchecked", into = "ParamsConfigUnchecked")]
     pub struct ParamsConfig {
         lasers: Vec<LaserConfig>,
         num_lasers: usize,
-        distance_resolution: f64,
+        distance_resolution: R64,
     }
 
-    #[derive(Debug, Clone, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+    struct ParamsConfigUnchecked {
+        pub lasers: Vec<LaserConfig>,
+        pub num_lasers: usize,
+        pub distance_resolution: R64,
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
     pub struct LaserConfig {
-        pub dist_correction: f64,
-        pub dist_correction_x: f64,
-        pub dist_correction_y: f64,
-        pub focal_distance: f64,
-        pub focal_slope: f64,
-        pub horiz_offset_correction: Option<f64>,
+        pub dist_correction: R64,
+        pub dist_correction_x: R64,
+        pub dist_correction_y: R64,
+        pub focal_distance: R64,
+        pub focal_slope: R64,
+        pub horiz_offset_correction: Option<R64>,
         pub laser_id: usize,
-        pub rot_correction: f64,
-        pub vert_correction: f64,
-        pub vert_offset_correction: f64,
+        pub rot_correction: R64,
+        pub vert_correction: R64,
+        pub vert_offset_correction: R64,
     }
 
     impl ParamsConfig {
-        pub fn load<P>(path: P) -> Result<Self>
+        pub fn open_yaml<P>(path: P) -> Result<Self>
         where
             P: AsRef<Path>,
         {
             let mut reader = BufReader::new(File::open(path)?);
-            let config = Self::from_reader(&mut reader)?;
+            let config = Self::from_reader_yaml(&mut reader)?;
             Ok(config)
         }
 
-        pub fn from_reader<R>(reader: &mut R) -> Result<Self>
+        pub fn from_reader_yaml<R>(reader: &mut R) -> Result<Self>
         where
             R: Read,
         {
             let mut text = String::new();
             reader.read_to_string(&mut text)?;
-            let config = Self::from_str(&text)?;
+            let config = serde_yaml::from_str(&text)?;
             Ok(config)
+        }
+
+        /// Get a reference to the params config's lasers.
+        pub fn lasers(&self) -> &[LaserConfig] {
+            self.lasers.as_ref()
+        }
+
+        /// Get the params config's distance resolution.
+        pub fn distance_resolution(&self) -> R64 {
+            self.distance_resolution
+        }
+
+        /// Get the params config's num lasers.
+        pub fn num_lasers(&self) -> usize {
+            self.num_lasers
         }
     }
 
-    impl FromStr for ParamsConfig {
-        type Err = Error;
+    impl TryFrom<ParamsConfigUnchecked> for ParamsConfig {
+        type Error = Error;
 
-        fn from_str(text: &str) -> Result<Self, Self::Err> {
-            let config: Self = serde_yaml::from_str(text)?;
+        fn try_from(from: ParamsConfigUnchecked) -> Result<Self, Self::Error> {
+            let ParamsConfigUnchecked {
+                lasers,
+                num_lasers,
+                distance_resolution,
+            } = from;
+
             ensure!(
-                config.distance_resolution > 0.0,
+                from.distance_resolution > 0.0,
                 "distance_resolution must be positive"
             );
             ensure!(
-                config.num_lasers == config.lasers.len(),
+                num_lasers == lasers.len(),
                 "the number of element in lasers field does not match num_layers"
             );
             ensure!(
                 {
-                    config
-                        .lasers
+                    lasers
                         .iter()
                         .enumerate()
                         .all(|(idx, params)| idx == params.laser_id)
                 },
                 "the laser_id in lasers field must be consecutively counted from 1"
             );
-            Ok(config)
+
+            Ok(Self {
+                lasers,
+                num_lasers,
+                distance_resolution,
+            })
+        }
+    }
+
+    impl From<ParamsConfig> for ParamsConfigUnchecked {
+        fn from(from: ParamsConfig) -> Self {
+            let ParamsConfig {
+                lasers,
+                num_lasers,
+                distance_resolution,
+            } = from;
+
+            Self {
+                lasers,
+                num_lasers,
+                distance_resolution,
+            }
         }
     }
 }
@@ -442,13 +490,34 @@ mod tests {
 
     #[test]
     fn load_yaml_params_test() -> Result<()> {
-        ParamsConfig::from_str(include_str!("params/32db.yaml"))?;
-        ParamsConfig::from_str(include_str!("params/64e_s2.1-sztaki.yaml"))?;
-        ParamsConfig::from_str(include_str!("params/64e_s3-xiesc.yaml"))?;
-        ParamsConfig::from_str(include_str!("params/64e_utexas.yaml"))?;
-        ParamsConfig::from_str(include_str!("params/VeloView-VLP-32C.yaml"))?;
-        ParamsConfig::from_str(include_str!("params/VLP16db.yaml"))?;
-        ParamsConfig::from_str(include_str!("params/VLP16_hires_db.yaml"))?;
+        ParamsConfig::open_yaml(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/config/velodyne/32db.yaml"
+        ))?;
+        ParamsConfig::open_yaml(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/config/velodyne/64e_s2.1-sztaki.yaml"
+        ))?;
+        ParamsConfig::open_yaml(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/config/velodyne/64e_s3-xiesc.yaml"
+        ))?;
+        ParamsConfig::open_yaml(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/config/velodyne/64e_utexas.yaml"
+        ))?;
+        ParamsConfig::open_yaml(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/config/velodyne/VeloView-VLP-32C.yaml"
+        ))?;
+        ParamsConfig::open_yaml(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/config/velodyne/VLP16db.yaml"
+        ))?;
+        ParamsConfig::open_yaml(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/config/velodyne/VLP16_hires_db.yaml"
+        ))?;
         Ok(())
     }
 }
