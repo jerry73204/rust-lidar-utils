@@ -69,11 +69,7 @@ where
             let points = remaining_points.drain(..).chain(new_points.into_iter());
             let (frame, new_remaining_points) = points_to_frames(points);
             let _ = mem::replace(remaining_points, new_remaining_points);
-            if let Some(frame) = frame {
-                return Some(DynamicReturnFrame::Single(frame));
-            } else {
-                return None;
-            };
+            frame.map(DynamicReturnFrame::Single)
         }
         (
             RemainingPoints(DynamicReturnPoints::Dual(remaining_points)),
@@ -82,12 +78,7 @@ where
             let points = remaining_points.drain(..).chain(new_points.into_iter());
             let (frame, new_remaining_points) = points_to_frames(points);
             let _ = mem::replace(remaining_points, new_remaining_points);
-
-            if let Some(frame) = frame {
-                return Some(DynamicReturnFrame::Dual(frame));
-            } else {
-                return None;
-            };
+            frame.map(DynamicReturnFrame::Dual)
         }
         _ => unreachable!(),
     }
@@ -114,8 +105,8 @@ where
         let pass_zero_azimuth = prev_azimuth.map_or(false, |prev| curr_azimuth < prev);
 
         // pass 0 azimuth, and remaining point need to be more than 0, in case the first few points is the left points of previous frame
-        if pass_zero_azimuth && remaining_points.len() > 0 {
-            let mut frame = PcdFrame::new();
+        if pass_zero_azimuth && !remaining_points.is_empty() {
+            let mut frame = PcdFrame::empty();
 
             // sort channel order by row_idx
             for i in 0..(remaining_points.len() / beam_num) {
@@ -146,7 +137,7 @@ where
             remaining_points.append(&mut remaining_channel);
 
             //update line ID for next line
-            col_idx_cnt = col_idx_cnt + 1;
+            col_idx_cnt += 1;
         }
         //set line ID
         point.set_col_idx(col_idx_cnt);

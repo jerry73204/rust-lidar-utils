@@ -127,7 +127,7 @@ mod dual_return_point {
                 original_azimuth_angle: original_azimuth_angle_strongest,
                 corrected_azimuth_angle: corrected_azimuth_angle_strongest,
                 data: strongest_return_data,
-                lidar_frame_entry,
+                ..
             } = strongest_return_point;
 
             let SingleReturnPoint {
@@ -221,13 +221,6 @@ mod dynamic_return_points {
             match self {
                 Self::Single(points) => points.data.is_empty(),
                 Self::Dual(points) => points.data.is_empty(),
-            }
-        }
-
-        pub(crate) fn empty_like(&self) -> Self {
-            match self {
-                Self::Single(_) => Self::Single(PcdFrame::new()),
-                Self::Dual(_) => Self::Dual(PcdFrame::new()),
             }
         }
     }

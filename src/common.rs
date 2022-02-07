@@ -1,7 +1,7 @@
 pub use anyhow::{bail, ensure, format_err, Error, Result};
 pub use chrono::NaiveDateTime;
 pub use derivative::Derivative;
-pub use itertools::izip;
+pub use itertools::{chain, izip};
 pub use noisy_float::types::R64;
 pub use num_traits::{Float, Num};
 pub use serde::{Deserialize, Deserializer, Serialize, Serializer};

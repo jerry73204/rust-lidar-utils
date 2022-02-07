@@ -149,7 +149,7 @@ mod definitions {
             Ok(&self.data[col_idx * self.height + rol_idx])
         }
 
-        pub fn new() -> Self {
+        pub(crate) fn empty() -> Self {
             Self {
                 height: 0,
                 width: 0,

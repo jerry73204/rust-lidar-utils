@@ -203,7 +203,7 @@ pub(crate) fn convert_single_return_32_channel(
 
     //set lidar beam channel index
     let mut channel_vec =
-        convert_to_points_32_channel(lasers, distance_resolution, &mut blocks_iter).clone();
+        convert_to_points_32_channel(lasers, distance_resolution, &mut blocks_iter);
 
     // get index  array
     let corr_deg_index = consts::VLP_32C_ELEVAION_INDEX;
