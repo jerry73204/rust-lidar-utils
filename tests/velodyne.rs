@@ -38,11 +38,11 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
 
     //check if elevation angle is in order
     {
-        let original = consts::VLP_16_ELEVAION_DEGREES;
-        let mut sort = consts::VLP_16_ELEVAION_DEGREES;
+        let original = consts::vlp_16::ELEVAION_DEGREES;
+        let mut sort = consts::vlp_16::ELEVAION_DEGREES;
         sort.sort_by(|a, b| b.partial_cmp(a).unwrap());
 
-        let idx_order = consts::VLP_16_ELEVAION_INDEX;
+        let idx_order = consts::vlp_16::ELEVAION_INDEX;
 
         for i in 0..idx_order.len() {
             assert!(sort[i] == original[idx_order[i]]);
@@ -76,7 +76,7 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
                         )
                     }
                     //check if elevion(laser id) is in order
-                    let deg = consts::VLP_16_ELEVAION_INDEX;
+                    let deg = consts::vlp_16::ELEVAION_INDEX;
                     for i in 0..(frame.data.len() - 1) {
                         assert!(
                             (deg[frame.data[i].laser_id as usize]
@@ -123,11 +123,11 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
 
     //check if elevation angle is in order
     {
-        let original = consts::VLP_32C_ELEVAION_DEGREES;
-        let mut sort = consts::VLP_32C_ELEVAION_DEGREES;
+        let original = consts::vlp_32c::ELEVAION_DEGREES;
+        let mut sort = consts::vlp_32c::ELEVAION_DEGREES;
         sort.sort_by(|a, b| b.partial_cmp(a).unwrap());
 
-        let idx_order = consts::VLP_32C_ELEVAION_INDEX;
+        let idx_order = consts::vlp_32c::ELEVAION_INDEX;
 
         for i in 0..idx_order.len() {
             assert!(sort[i] == original[idx_order[i]]);
@@ -162,7 +162,7 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
                         )
                     }
                     //check if elevion(laser id) is in order
-                    let deg = consts::VLP_32C_ELEVAION_INDEX;
+                    let deg = consts::vlp_32c::ELEVAION_INDEX;
                     for i in 0..(frame.data.len() - 1) {
                         assert!(
                             (deg[frame.data[i].laser_id as usize]

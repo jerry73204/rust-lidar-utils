@@ -56,7 +56,7 @@ pub(crate) fn convert_single_return_16_channel(
         convert_to_points_16_channel(lasers, distance_resolution, &mut blocks_iter);
 
     // get index  array
-    let corr_deg_index = consts::VLP_16_ELEVAION_INDEX;
+    let corr_deg_index = consts::vlp_16::ELEVAION_INDEX;
 
     // set channel_index
     for i in 0..channel_vec.len() {
@@ -135,7 +135,7 @@ pub(crate) fn convert_dual_return_16_channel(
     };
 
     // get index  array
-    let corr_deg_index = consts::VLP_16_ELEVAION_INDEX;
+    let corr_deg_index = consts::vlp_16::ELEVAION_INDEX;
 
     let mut strongest_points =
         convert_to_points_16_channel(lasers, distance_resolution, &mut strongest_blocks_iter);
@@ -209,7 +209,7 @@ pub(crate) fn convert_single_return_32_channel(
         convert_to_points_32_channel(lasers, distance_resolution, &mut blocks_iter);
 
     // get index  array
-    let corr_deg_index = consts::VLP_32C_ELEVAION_INDEX;
+    let corr_deg_index = consts::vlp_32c::ELEVAION_INDEX;
 
     // set channel_index
     for i in 0..channel_vec.len() {
@@ -291,7 +291,7 @@ pub(crate) fn convert_dual_return_32_channel(
         convert_to_points_32_channel(lasers, distance_resolution, &mut strongest_blocks_iter);
 
     // get index  array
-    let corr_deg_index = consts::VLP_32C_ELEVAION_INDEX;
+    let corr_deg_index = consts::vlp_32c::ELEVAION_INDEX;
 
     // set channel_index
     for i in 0..strongest_points.len() {

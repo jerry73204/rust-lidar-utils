@@ -77,7 +77,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: vlp_16_laser_params(),
-                distance_resolution: *consts::VLP_16_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::vlp_16::DISTANCE_RESOLUTION,
                 return_type: LastReturn,
             }
         }
@@ -86,7 +86,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_hires_laser_params(),
-                distance_resolution: *consts::PUCK_HIRES_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::puck_hires::DISTANCE_RESOLUTION,
                 return_type: LastReturn,
             }
         }
@@ -95,7 +95,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_lite_laser_params(),
-                distance_resolution: *consts::PUCK_LITE_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::puck_lite::DISTANCE_RESOLUTION,
                 return_type: LastReturn,
             }
         }
@@ -106,7 +106,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: vlp_16_laser_params(),
-                distance_resolution: *consts::VLP_16_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::vlp_16::DISTANCE_RESOLUTION,
                 return_type: StrongestReturn,
             }
         }
@@ -115,7 +115,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_hires_laser_params(),
-                distance_resolution: *consts::PUCK_HIRES_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::puck_hires::DISTANCE_RESOLUTION,
                 return_type: StrongestReturn,
             }
         }
@@ -124,7 +124,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_lite_laser_params(),
-                distance_resolution: *consts::PUCK_LITE_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::puck_lite::DISTANCE_RESOLUTION,
                 return_type: StrongestReturn,
             }
         }
@@ -135,7 +135,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: vlp_16_laser_params(),
-                distance_resolution: *consts::VLP_16_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::vlp_16::DISTANCE_RESOLUTION,
                 return_type: DualReturn,
             }
         }
@@ -144,7 +144,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_hires_laser_params(),
-                distance_resolution: *consts::PUCK_HIRES_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::puck_hires::DISTANCE_RESOLUTION,
                 return_type: DualReturn,
             }
         }
@@ -153,7 +153,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_lite_laser_params(),
-                distance_resolution: *consts::PUCK_LITE_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::puck_lite::DISTANCE_RESOLUTION,
                 return_type: DualReturn,
             }
         }
@@ -164,7 +164,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: vlp_16_laser_params(),
-                distance_resolution: *consts::VLP_16_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::vlp_16::DISTANCE_RESOLUTION,
                 return_type: DynamicReturn::from(return_mode),
             }
         }
@@ -173,7 +173,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_hires_laser_params(),
-                distance_resolution: *consts::PUCK_HIRES_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::puck_hires::DISTANCE_RESOLUTION,
                 return_type: DynamicReturn::from(return_mode),
             }
         }
@@ -182,7 +182,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_lite_laser_params(),
-                distance_resolution: *consts::PUCK_LITE_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::puck_lite::DISTANCE_RESOLUTION,
                 return_type: DynamicReturn::from(return_mode),
             }
         }
@@ -193,7 +193,7 @@ mod config_ {
             Config {
                 model: Vlp32,
                 lasers: vlp_32c_laser_params(),
-                distance_resolution: *consts::VLP_32C_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::vlp_32c::DISTANCE_RESOLUTION,
                 return_type: LastReturn,
             }
         }
@@ -204,7 +204,7 @@ mod config_ {
             Config {
                 model: Vlp32,
                 lasers: vlp_32c_laser_params(),
-                distance_resolution: *consts::VLP_32C_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::vlp_32c::DISTANCE_RESOLUTION,
                 return_type: StrongestReturn,
             }
         }
@@ -215,7 +215,7 @@ mod config_ {
             Config {
                 model: Vlp32,
                 lasers: vlp_32c_laser_params(),
-                distance_resolution: *consts::VLP_32C_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::vlp_32c::DISTANCE_RESOLUTION,
                 return_type: DualReturn,
             }
         }
@@ -226,7 +226,7 @@ mod config_ {
             Config {
                 model: Vlp32,
                 lasers: vlp_32c_laser_params(),
-                distance_resolution: *consts::VLP_32C_DISTANCE_RESOLUTION,
+                distance_resolution: *consts::vlp_32c::DISTANCE_RESOLUTION,
                 return_type: DynamicReturn::from(return_mode),
             }
         }
@@ -249,10 +249,10 @@ mod params {
             unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
             params.iter_mut(),
-            consts::VLP_16_ELEVAION_DEGREES.iter(),
-            consts::VLP_16_VERTICAL_OFFSETS.iter(),
-            consts::VLP_16_HORIZONTAL_OFFSETS.iter(),
-            consts::VLP_16_AZIMUTH_OFFSETS.iter(),
+            consts::vlp_16::ELEVAION_DEGREES.iter(),
+            consts::vlp_16::VERTICAL_OFFSETS.iter(),
+            consts::vlp_16::HORIZONTAL_OFFSETS.iter(),
+            consts::vlp_16::AZIMUTH_OFFSETS.iter(),
         )
         .for_each(
             |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
@@ -273,10 +273,10 @@ mod params {
             unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
             params.iter_mut(),
-            consts::PUCK_HIRES_ELEVAION_DEGREES.iter(),
-            consts::PUCK_HIRES_VERTICAL_OFFSETS.iter(),
-            consts::PUCK_HIRES_HORIZONTAL_OFFSETS.iter(),
-            consts::PUCK_HIRES_AZIMUTH_OFFSETS.iter(),
+            consts::puck_hires::ELEVAION_DEGREES.iter(),
+            consts::puck_hires::VERTICAL_OFFSETS.iter(),
+            consts::puck_hires::HORIZONTAL_OFFSETS.iter(),
+            consts::puck_hires::AZIMUTH_OFFSETS.iter(),
         )
         .for_each(
             |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
@@ -297,10 +297,10 @@ mod params {
             unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
             params.iter_mut(),
-            consts::PUCK_LITE_ELEVAION_DEGREES.iter(),
-            consts::PUCK_LITE_VERTICAL_OFFSETS.iter(),
-            consts::PUCK_LITE_HORIZONTAL_OFFSETS.iter(),
-            consts::PUCK_LITE_AZIMUTH_OFFSETS.iter(),
+            consts::puck_lite::ELEVAION_DEGREES.iter(),
+            consts::puck_lite::VERTICAL_OFFSETS.iter(),
+            consts::puck_lite::HORIZONTAL_OFFSETS.iter(),
+            consts::puck_lite::AZIMUTH_OFFSETS.iter(),
         )
         .for_each(
             |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
@@ -321,10 +321,10 @@ mod params {
             unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
             params.iter_mut(),
-            consts::VLP_32C_ELEVAION_DEGREES.iter(),
-            consts::VLP_32C_VERTICAL_OFFSETS.iter(),
-            consts::VLP_32C_HORIZONTAL_OFFSETS.iter(),
-            consts::VLP_32C_AZIMUTH_OFFSETS.iter(),
+            consts::vlp_32c::ELEVAION_DEGREES.iter(),
+            consts::vlp_32c::VERTICAL_OFFSETS.iter(),
+            consts::vlp_32c::HORIZONTAL_OFFSETS.iter(),
+            consts::vlp_32c::AZIMUTH_OFFSETS.iter(),
         )
         .for_each(
             |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
