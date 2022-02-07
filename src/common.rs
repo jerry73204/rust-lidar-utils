@@ -1,7 +1,7 @@
 pub use anyhow::{bail, ensure, format_err, Error, Result};
 pub use chrono::NaiveDateTime;
 pub use derivative::Derivative;
-pub use itertools::{chain, izip};
+pub use itertools::{chain, izip, Itertools as _};
 pub use measurements::{Angle, Length};
 pub use noisy_float::types::R64;
 pub use num_traits::{Float, Num};

@@ -1,12 +1,10 @@
 //! Provides `C-packed` structs for Velodyne data packets.
 
-use super::consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK};
+use super::consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK, FIRING_PERIOD};
 
 use crate::common::*;
 
 pub use data_packet::*;
-pub use position_packet::*;
-
 mod data_packet {
     use super::*;
 
@@ -135,9 +133,157 @@ mod data_packet {
         pub fn time(&self) -> Duration {
             Duration::from_micros(self.timestamp as u64)
         }
+
+        pub fn single_16_firings(&self) -> Result<impl Iterator<Item = SingleFiring16<'_>>> {
+            use ProductID as P;
+            use ReturnMode as R;
+
+            ensure!(
+                [R::StrongestReturn, R::LastReturn].contains(&self.return_mode),
+                "expect strongest or last return mode, but get dual mode"
+            );
+            ensure!([P::VLP16, P::PuckLite, P::PuckHiRes].contains(&self.product_id));
+
+            let block_period = FIRING_PERIOD.mul_f64(2.0);
+            let times = iter::successors(Some(self.time()), move |prev| Some(*prev + block_period));
+
+            let iter = izip!(times, &self.blocks).flat_map(move |(block_time, block)| {
+                let former_time = block_time;
+                let latter_time = former_time + FIRING_PERIOD;
+
+                let (former_channels, latter_channels) = block.channels.split_at(16);
+
+                let former = SingleFiring16 {
+                    time: former_time,
+                    block,
+                    channels: former_channels
+                        .try_into()
+                        .unwrap_or_else(|_| unreachable!()),
+                };
+                let latter = SingleFiring16 {
+                    time: latter_time,
+                    block,
+                    channels: latter_channels
+                        .try_into()
+                        .unwrap_or_else(|_| unreachable!()),
+                };
+
+                [former, latter]
+            });
+
+            Ok(iter)
+        }
+
+        pub fn dual_16_firings(&self) -> Result<impl Iterator<Item = DualFiring16<'_>>> {
+            use ProductID as P;
+            use ReturnMode as R;
+
+            ensure!(
+                self.return_mode == R::DualReturn,
+                "expect dual mode, but get {:?}",
+                self.return_mode
+            );
+            ensure!([P::VLP16, P::PuckLite, P::PuckHiRes].contains(&self.product_id));
+
+            let block_period = FIRING_PERIOD.mul_f64(2.0);
+            let times = iter::successors(Some(self.time()), move |prev| Some(*prev + block_period));
+
+            let firings = izip!(times, self.blocks.iter().tuple_windows()).flat_map(
+                |(block_time, (block_strongest, block_last))| {
+                    let former_time = block_time;
+                    let latter_time = former_time + FIRING_PERIOD;
+
+                    let (former_strongest, latter_strongest) =
+                        block_strongest.channels.split_at(16);
+                    let (former_last, latter_last) = block_last.channels.split_at(16);
+
+                    [
+                        DualFiring16 {
+                            time: former_time,
+                            block_strongest,
+                            block_last,
+                            channels_strongest: former_strongest
+                                .try_into()
+                                .unwrap_or_else(|_| unreachable!()),
+                            channels_last: former_last
+                                .try_into()
+                                .unwrap_or_else(|_| unreachable!()),
+                        },
+                        DualFiring16 {
+                            time: latter_time,
+                            block_strongest,
+                            block_last,
+                            channels_strongest: latter_strongest
+                                .try_into()
+                                .unwrap_or_else(|_| unreachable!()),
+                            channels_last: latter_last
+                                .try_into()
+                                .unwrap_or_else(|_| unreachable!()),
+                        },
+                    ]
+                },
+            );
+
+            Ok(firings)
+        }
+
+        pub fn single_32_firings(&self) -> Result<impl Iterator<Item = SingleFiring32<'_>>> {
+            use ProductID as P;
+            use ReturnMode as R;
+
+            ensure!(
+                [R::StrongestReturn, R::LastReturn].contains(&self.return_mode),
+                "expect strongest or last return mode, but get dual mode"
+            );
+            ensure!([P::HDL32E, P::VLP32C].contains(&self.product_id));
+
+            let times =
+                iter::successors(Some(self.time()), move |prev| Some(*prev + FIRING_PERIOD));
+
+            let iter = izip!(times, &self.blocks).map(move |(block_time, block)| {
+                let former_time = block_time;
+                let latter_time = former_time + FIRING_PERIOD;
+
+                SingleFiring32 {
+                    time: latter_time,
+                    block,
+                    channels: &block.channels,
+                }
+            });
+
+            Ok(iter)
+        }
+
+        pub fn dual_32_firings(&self) -> Result<impl Iterator<Item = DualFiring32<'_>>> {
+            use ProductID as P;
+            use ReturnMode as R;
+
+            ensure!(
+                self.return_mode == R::DualReturn,
+                "expect dual mode, but get {:?}",
+                self.return_mode
+            );
+            ensure!([P::HDL32E, P::VLP32C].contains(&self.product_id));
+
+            let times =
+                iter::successors(Some(self.time()), move |prev| Some(*prev + FIRING_PERIOD));
+
+            let iter = izip!(times, self.blocks.iter().tuple_windows()).map(
+                move |(block_time, (block_strongest, block_last))| DualFiring32 {
+                    time: block_time,
+                    block_strongest,
+                    block_last,
+                    channels_strongest: &block_strongest.channels,
+                    channels_last: &block_last.channels,
+                },
+            );
+
+            Ok(iter)
+        }
     }
 }
 
+pub use position_packet::*;
 mod position_packet {
     use super::*;
 
@@ -232,6 +378,43 @@ mod position_packet {
     pub enum ThermalStatus {
         Ok = 0,
         ThermalShutdown = 1,
+    }
+}
+
+pub(crate) use firing::*;
+mod firing {
+    use super::*;
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct SingleFiring16<'a> {
+        pub time: Duration,
+        pub block: &'a Block,
+        pub channels: &'a [Channel; 16],
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct DualFiring16<'a> {
+        pub time: Duration,
+        pub block_strongest: &'a Block,
+        pub block_last: &'a Block,
+        pub channels_strongest: &'a [Channel; 16],
+        pub channels_last: &'a [Channel; 16],
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct SingleFiring32<'a> {
+        pub time: Duration,
+        pub block: &'a Block,
+        pub channels: &'a [Channel; 32],
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct DualFiring32<'a> {
+        pub time: Duration,
+        pub block_strongest: &'a Block,
+        pub block_last: &'a Block,
+        pub channels_strongest: &'a [Channel; 32],
+        pub channels_last: &'a [Channel; 32],
     }
 }
 
