@@ -101,7 +101,7 @@ where
     let mut beam_num = 0;
 
     points.into_iter().for_each(|mut point| {
-        let curr_azimuth = point.original_azimuth_angle();
+        let curr_azimuth = point.original_azimuth();
         let pass_zero_azimuth = prev_azimuth.map_or(false, |prev| curr_azimuth < prev);
 
         // pass 0 azimuth, and remaining point need to be more than 0, in case the first few points is the left points of previous frame

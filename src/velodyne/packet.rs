@@ -63,17 +63,17 @@ mod data_packet {
     }
 
     impl Block {
-        pub fn azimuth_angle_radian(&self) -> f64 {
+        pub fn azimuth_radians(&self) -> f64 {
             2.0 * std::f64::consts::PI * self.azimuth_count as f64
                 / (AZIMUTH_COUNT_PER_REV - 1) as f64
         }
 
-        pub fn azimuth_angle_degree(&self) -> f64 {
+        pub fn azimuth_degrees(&self) -> f64 {
             360.0 * self.azimuth_count as f64 / (AZIMUTH_COUNT_PER_REV - 1) as f64
         }
 
-        pub fn azimuth_angle(&self) -> Angle {
-            Angle::from_radians(self.azimuth_angle_radian())
+        pub fn azimuth(&self) -> Angle {
+            Angle::from_radians(self.azimuth_radians())
         }
     }
 

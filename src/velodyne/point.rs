@@ -11,8 +11,8 @@ pub use single_return_point::*;
 pub trait VelodynePoint {
     fn laser_id(&self) -> u32;
     fn timestamp(&self) -> Duration;
-    fn original_azimuth_angle(&self) -> Angle;
-    fn corrected_azimuth_angle(&self) -> Angle;
+    fn original_azimuth(&self) -> Angle;
+    fn corrected_azimuth(&self) -> Angle;
 }
 
 /// Point in strongest or last return mode.
@@ -76,11 +76,11 @@ mod single_return_point {
             self.timestamp
         }
 
-        fn original_azimuth_angle(&self) -> Angle {
+        fn original_azimuth(&self) -> Angle {
             self.original_azimuth_angle
         }
 
-        fn corrected_azimuth_angle(&self) -> Angle {
+        fn corrected_azimuth(&self) -> Angle {
             self.corrected_azimuth_angle
         }
     }
@@ -179,11 +179,11 @@ mod dual_return_point {
             self.timestamp
         }
 
-        fn original_azimuth_angle(&self) -> Angle {
+        fn original_azimuth(&self) -> Angle {
             self.original_azimuth_angle
         }
 
-        fn corrected_azimuth_angle(&self) -> Angle {
+        fn corrected_azimuth(&self) -> Angle {
             self.corrected_azimuth_angle
         }
     }
@@ -330,14 +330,14 @@ mod dynamic_return_points {
             }
         }
 
-        pub fn original_azimuth_angle(&self) -> Angle {
+        pub fn original_azimuth(&self) -> Angle {
             match self {
                 Self::Single(point) => point.original_azimuth_angle,
                 Self::Dual(point) => point.original_azimuth_angle,
             }
         }
 
-        pub fn corrected_azimuth_angle(&self) -> Angle {
+        pub fn corrected_azimuth(&self) -> Angle {
             match self {
                 Self::Single(point) => point.corrected_azimuth_angle,
                 Self::Dual(point) => point.corrected_azimuth_angle,

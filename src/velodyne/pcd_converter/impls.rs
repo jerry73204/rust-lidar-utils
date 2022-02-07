@@ -342,10 +342,10 @@ where
 
         let mid_timestamp = prev_timestamp + FIRING_PERIOD;
 
-        let prev_azimuth_angle = prev_block.azimuth_angle();
+        let prev_azimuth_angle = prev_block.azimuth();
         let curr_azimuth_angle = {
             // fix roll-over case
-            let curr_angle = curr_block.azimuth_angle();
+            let curr_angle = curr_block.azimuth();
             if curr_angle < prev_azimuth_angle {
                 curr_angle + Angle::from_radians(PI * 2.0)
             } else {
@@ -449,9 +449,9 @@ where
         let (prev_timestamp, prev_block) = *prev_pair;
         *prev_pair = (curr_timestamp, curr_block);
 
-        let prev_azimuth_angle = prev_block.azimuth_angle();
+        let prev_azimuth_angle = prev_block.azimuth();
         let curr_azimuth_angle = {
-            let curr_angle = curr_block.azimuth_angle();
+            let curr_angle = curr_block.azimuth();
             // fix roll-over case
             if curr_angle < prev_azimuth_angle {
                 curr_angle + Angle::from_radians(PI * 2.0)
