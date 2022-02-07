@@ -133,7 +133,9 @@ mod data_packet {
             Duration::from_micros(self.timestamp as u64)
         }
 
-        pub fn single_16_firings(&self) -> Result<impl Iterator<Item = SingleFiring16<'_>>> {
+        pub fn single_16_firings(
+            &self,
+        ) -> Result<impl Iterator<Item = SingleFiring16<'_>> + Clone> {
             use ProductID as P;
             use ReturnMode as R;
 
@@ -145,35 +147,60 @@ mod data_packet {
 
             let block_period = FIRING_PERIOD.mul_f64(2.0);
             let times = iter::successors(Some(self.time()), move |prev| Some(*prev + block_period));
+            let firing_azimuths = {
+                let block_azimuths: Vec<_> =
+                    self.blocks.iter().map(|block| block.azimuth()).collect();
+                let block_azimuth_diffs: Vec<_> = block_azimuths
+                    .iter()
+                    .cloned()
+                    .tuple_windows()
+                    .map(|(curr, next)| (next - curr).wrap_to_2pi())
+                    .collect();
+                let last_block_azimuth_diff = *block_azimuth_diffs.last().unwrap();
 
-            let iter = izip!(times, &self.blocks).flat_map(move |(block_time, block)| {
-                let former_time = block_time;
-                let latter_time = former_time + FIRING_PERIOD;
+                izip!(
+                    block_azimuths,
+                    chain!(block_azimuth_diffs, [last_block_azimuth_diff])
+                )
+                .map(|(block_azimuth, block_azimuth_diff)| {
+                    let mid_azimuth = block_azimuth + block_azimuth_diff / 2.0;
+                    let last_azimuth = block_azimuth + block_azimuth_diff;
+                    [block_azimuth..mid_azimuth, mid_azimuth..last_azimuth]
+                })
+            };
 
-                let (former_channels, latter_channels) = block.channels.split_at(16);
+            let iter = izip!(times, firing_azimuths, &self.blocks).flat_map(
+                move |(block_time, [former_azimuth, latter_azimuth], block)| {
+                    let former_time = block_time;
+                    let latter_time = former_time + FIRING_PERIOD;
 
-                let former = SingleFiring16 {
-                    time: former_time,
-                    block,
-                    channels: former_channels
-                        .try_into()
-                        .unwrap_or_else(|_| unreachable!()),
-                };
-                let latter = SingleFiring16 {
-                    time: latter_time,
-                    block,
-                    channels: latter_channels
-                        .try_into()
-                        .unwrap_or_else(|_| unreachable!()),
-                };
+                    let (former_channels, latter_channels) = block.channels.split_at(16);
 
-                [former, latter]
-            });
+                    let former = SingleFiring16 {
+                        time: former_time,
+                        azimuth_range: former_azimuth,
+                        block,
+                        channels: former_channels
+                            .try_into()
+                            .unwrap_or_else(|_| unreachable!()),
+                    };
+                    let latter = SingleFiring16 {
+                        time: latter_time,
+                        azimuth_range: latter_azimuth,
+                        block,
+                        channels: latter_channels
+                            .try_into()
+                            .unwrap_or_else(|_| unreachable!()),
+                    };
+
+                    [former, latter]
+                },
+            );
 
             Ok(iter)
         }
 
-        pub fn dual_16_firings(&self) -> Result<impl Iterator<Item = DualFiring16<'_>>> {
+        pub fn dual_16_firings(&self) -> Result<impl Iterator<Item = DualFiring16<'_>> + Clone> {
             use ProductID as P;
             use ReturnMode as R;
 
@@ -186,9 +213,39 @@ mod data_packet {
 
             let block_period = FIRING_PERIOD.mul_f64(2.0);
             let times = iter::successors(Some(self.time()), move |prev| Some(*prev + block_period));
+            let firing_azimuths = {
+                let block_azimuths: Vec<_> = self
+                    .blocks
+                    .iter()
+                    .step_by(2)
+                    .map(|block| block.azimuth())
+                    .collect();
+                let block_azimuth_diffs: Vec<_> = block_azimuths
+                    .iter()
+                    .cloned()
+                    .tuple_windows()
+                    .map(|(curr, next)| (next - curr).wrap_to_2pi())
+                    .collect();
+                let last_block_azimuth_diff = *block_azimuth_diffs.last().unwrap();
 
-            let firings = izip!(times, self.blocks.iter().tuple_windows()).flat_map(
-                |(block_time, (block_strongest, block_last))| {
+                izip!(
+                    block_azimuths,
+                    chain!(block_azimuth_diffs, [last_block_azimuth_diff])
+                )
+                .map(|(block_azimuth, block_azimuth_diff)| {
+                    let mid_azimuth = block_azimuth + block_azimuth_diff / 2.0;
+                    let last_azimuth = block_azimuth + block_azimuth_diff;
+                    [block_azimuth..mid_azimuth, mid_azimuth..last_azimuth]
+                })
+            };
+
+            let firings = izip!(times, firing_azimuths, self.blocks.chunks(2)).flat_map(
+                |(block_time, [former_azimuth, latter_azimuth], block_pair)| {
+                    let [block_strongest, block_last] = match block_pair {
+                        [first, second] => [first, second],
+                        _ => unreachable!(),
+                    };
+
                     let former_time = block_time;
                     let latter_time = former_time + FIRING_PERIOD;
 
@@ -199,6 +256,7 @@ mod data_packet {
                     [
                         DualFiring16 {
                             time: former_time,
+                            azimuth_range: former_azimuth,
                             block_strongest,
                             block_last,
                             channels_strongest: former_strongest
@@ -210,6 +268,7 @@ mod data_packet {
                         },
                         DualFiring16 {
                             time: latter_time,
+                            azimuth_range: latter_azimuth,
                             block_strongest,
                             block_last,
                             channels_strongest: latter_strongest
@@ -226,7 +285,9 @@ mod data_packet {
             Ok(firings)
         }
 
-        pub fn single_32_firings(&self) -> Result<impl Iterator<Item = SingleFiring32<'_>>> {
+        pub fn single_32_firings(
+            &self,
+        ) -> Result<impl Iterator<Item = SingleFiring32<'_>> + Clone> {
             use ProductID as P;
             use ReturnMode as R;
 
@@ -238,22 +299,45 @@ mod data_packet {
 
             let times =
                 iter::successors(Some(self.time()), move |prev| Some(*prev + FIRING_PERIOD));
+            let azimuths = {
+                let block_azimuths: Vec<_> =
+                    self.blocks.iter().map(|block| block.azimuth()).collect();
+                let block_azimuth_diffs: Vec<_> = block_azimuths
+                    .iter()
+                    .cloned()
+                    .tuple_windows()
+                    .map(|(curr, next)| (next - curr).wrap_to_2pi())
+                    .collect();
+                let last_block_azimuth_diff = *block_azimuth_diffs.last().unwrap();
 
-            let iter = izip!(times, &self.blocks).map(move |(block_time, block)| {
-                let former_time = block_time;
-                let latter_time = former_time + FIRING_PERIOD;
+                izip!(
+                    block_azimuths,
+                    chain!(block_azimuth_diffs, [last_block_azimuth_diff])
+                )
+                .map(|(former_azimuth, azimuth_diff)| {
+                    let latter_azimuth = former_azimuth + azimuth_diff;
+                    former_azimuth..latter_azimuth
+                })
+            };
 
-                SingleFiring32 {
-                    time: latter_time,
-                    block,
-                    channels: &block.channels,
-                }
-            });
+            let iter = izip!(times, azimuths, &self.blocks).map(
+                move |(block_time, azimuth_range, block)| {
+                    let former_time = block_time;
+                    let latter_time = former_time + FIRING_PERIOD;
+
+                    SingleFiring32 {
+                        time: latter_time,
+                        azimuth_range,
+                        block,
+                        channels: &block.channels,
+                    }
+                },
+            );
 
             Ok(iter)
         }
 
-        pub fn dual_32_firings(&self) -> Result<impl Iterator<Item = DualFiring32<'_>>> {
+        pub fn dual_32_firings(&self) -> Result<impl Iterator<Item = DualFiring32<'_>> + Clone> {
             use ProductID as P;
             use ReturnMode as R;
 
@@ -266,14 +350,44 @@ mod data_packet {
 
             let times =
                 iter::successors(Some(self.time()), move |prev| Some(*prev + FIRING_PERIOD));
+            let azimuths = {
+                let azimuths: Vec<_> = self
+                    .blocks
+                    .iter()
+                    .step_by(2)
+                    .map(|block| block.azimuth())
+                    .collect();
+                let azimuth_diffs: Vec<_> = azimuths
+                    .iter()
+                    .cloned()
+                    .tuple_windows()
+                    .map(|(curr, next)| (next - curr).wrap_to_2pi())
+                    .collect();
+                let last_azimuth_diff = *azimuth_diffs.last().unwrap();
 
-            let iter = izip!(times, self.blocks.iter().tuple_windows()).map(
-                move |(block_time, (block_strongest, block_last))| DualFiring32 {
-                    time: block_time,
-                    block_strongest,
-                    block_last,
-                    channels_strongest: &block_strongest.channels,
-                    channels_last: &block_last.channels,
+                izip!(azimuths, chain!(azimuth_diffs, [last_azimuth_diff])).map(
+                    |(former_azimuth, azimuth_diff)| {
+                        let latter_azimuth = former_azimuth + azimuth_diff;
+                        former_azimuth..latter_azimuth
+                    },
+                )
+            };
+
+            let iter = izip!(times, azimuths, self.blocks.chunks(2)).map(
+                move |(block_time, azimuth_range, chunk)| {
+                    let [block_strongest, block_last] = match chunk {
+                        [first, second] => [first, second],
+                        _ => unreachable!(),
+                    };
+
+                    DualFiring32 {
+                        time: block_time,
+                        azimuth_range,
+                        block_strongest,
+                        block_last,
+                        channels_strongest: &block_strongest.channels,
+                        channels_last: &block_last.channels,
+                    }
                 },
             );
 
@@ -387,6 +501,7 @@ mod firing {
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct SingleFiring16<'a> {
         pub time: Duration,
+        pub azimuth_range: Range<Angle>,
         pub block: &'a Block,
         pub channels: &'a [Channel; 16],
     }
@@ -394,6 +509,7 @@ mod firing {
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct DualFiring16<'a> {
         pub time: Duration,
+        pub azimuth_range: Range<Angle>,
         pub block_strongest: &'a Block,
         pub block_last: &'a Block,
         pub channels_strongest: &'a [Channel; 16],
@@ -403,6 +519,7 @@ mod firing {
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct SingleFiring32<'a> {
         pub time: Duration,
+        pub azimuth_range: Range<Angle>,
         pub block: &'a Block,
         pub channels: &'a [Channel; 32],
     }
@@ -410,6 +527,7 @@ mod firing {
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct DualFiring32<'a> {
         pub time: Duration,
+        pub azimuth_range: Range<Angle>,
         pub block_strongest: &'a Block,
         pub block_last: &'a Block,
         pub channels_strongest: &'a [Channel; 32],
