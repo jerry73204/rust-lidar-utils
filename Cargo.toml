@@ -2,7 +2,7 @@
 name = "lidar-utils"
 version = "0.13.1"
 authors = ["jerry73204 <jerry73204@gmail.com>"]
-edition = "2018"
+edition = "2021"
 description = "Utilities for Velodyne and Ouster LIDARs"
 documentation = "https://docs.rs/lidar-utils/"
 homepage = "https://github.com/jerry73204/rust-lidar-utils"
