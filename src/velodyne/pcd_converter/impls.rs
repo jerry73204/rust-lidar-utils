@@ -382,7 +382,7 @@ where
         debug_assert_eq!(firing.len(), 16);
         debug_assert!(lower_azimuth_angle <= upper_azimuth_angle);
 
-        izip!(firing.iter(), lasers.iter(), 0..).enumerate().map(
+        izip!(firing, lasers, 0..).enumerate().map(
             move |(channel_idx, (channel, laser_params, laser_id))| {
                 let timestamp = lower_timestamp + CHANNEL_PERIOD.mul_f64(channel_idx as f64);
                 let ratio = CHANNEL_PERIOD
@@ -478,7 +478,7 @@ where
 
         debug_assert_eq!(firing.len(), 32);
 
-        izip!(firing.iter(), lasers.iter(), 0..).enumerate().map(
+        izip!(firing, lasers, 0..).enumerate().map(
             move |(channel_idx, (channel, laser_params, laser_id))| {
                 let timestamp = lower_timestamp + CHANNEL_PERIOD.mul_f64((channel_idx / 2) as f64);
                 let ratio = CHANNEL_PERIOD

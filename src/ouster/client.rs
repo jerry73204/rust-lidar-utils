@@ -5,6 +5,7 @@ use super::{
     enums::{LidarMode, MultipurposeIoMode, NmeaBaudRate, OnOffMode, Polarity, TimestampMode},
 };
 use crate::common::*;
+pub use serde_big_array::big_array;
 
 // TODO: This workaround handles large array for serde.
 //       We'll remove is it once the const generics is introduced.
@@ -36,10 +37,8 @@ pub struct ConfigText {
 #[derivative(Debug)]
 pub struct BeamIntrinsics {
     #[serde(with = "BigArray")]
-    #[derivative(Debug(format_with = "self::large_array_fmt"))]
     pub beam_altitude_angles: [R64; PIXELS_PER_COLUMN],
     #[serde(with = "BigArray")]
-    #[derivative(Debug(format_with = "self::large_array_fmt"))]
     pub beam_azimuth_angles: [R64; PIXELS_PER_COLUMN],
 }
 
@@ -304,11 +303,4 @@ mod serde_bool_to_int {
             }
         }
     }
-}
-
-fn large_array_fmt<T: Debug>(
-    array: &[T; PIXELS_PER_COLUMN],
-    formatter: &mut Formatter,
-) -> Result<(), fmt::Error> {
-    write!(formatter, "{:?}", &array[..])
 }

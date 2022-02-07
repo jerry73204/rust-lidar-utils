@@ -6,11 +6,9 @@ pub use measurements::{Angle, Length};
 pub use noisy_float::types::R64;
 pub use num_traits::{Float, Num};
 pub use serde::{Deserialize, Deserializer, Serialize, Serializer};
-pub use serde_big_array::big_array;
 pub use std::{
     borrow::Borrow,
     cmp::Ordering,
-    convert::TryInto,
     fmt::{self, Debug, Display, Formatter},
     fs::File,
     io::{prelude::*, BufReader, LineWriter, Lines},

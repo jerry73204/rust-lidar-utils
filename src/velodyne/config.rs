@@ -15,7 +15,6 @@ pub use param_config::*;
 pub use params::*;
 
 mod config_ {
-
     use super::*;
 
     /// Config type for Velodyne LiDARs.
@@ -33,20 +32,28 @@ mod config_ {
 
     #[allow(non_camel_case_types)]
     pub type Vlp16_Strongest_Config = Config<Vlp16, StrongestReturn>;
+
     #[allow(non_camel_case_types)]
     pub type Vlp16_Last_Config = Config<Vlp16, LastReturn>;
+
     #[allow(non_camel_case_types)]
     pub type Vlp16_Dual_Config = Config<Vlp16, DualReturn>;
+
     #[allow(non_camel_case_types)]
     pub type Vlp16_Dynamic_Config = Config<Vlp16, DynamicReturn>;
+
     #[allow(non_camel_case_types)]
     pub type Vlp32_Strongest_Config = Config<Vlp32, StrongestReturn>;
+
     #[allow(non_camel_case_types)]
     pub type Vlp32_Last_Config = Config<Vlp32, LastReturn>;
+
     #[allow(non_camel_case_types)]
     pub type Vlp32_Dual_Config = Config<Vlp32, DualReturn>;
+
     #[allow(non_camel_case_types)]
     pub type Vlp32_Dynamic_Config = Config<Vlp32, DynamicReturn>;
+
     #[allow(non_camel_case_types)]
     pub type Dynamic_Config = Config<DynamicModel, DynamicReturn>;
 
@@ -249,13 +256,13 @@ mod params {
             unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
             params.iter_mut(),
-            consts::vlp_16::ELEVAION_DEGREES.iter(),
-            consts::vlp_16::VERTICAL_OFFSETS.iter(),
-            consts::vlp_16::HORIZONTAL_OFFSETS.iter(),
-            consts::vlp_16::AZIMUTH_OFFSETS.iter(),
+            consts::vlp_16::ELEVAION_DEGREES,
+            consts::vlp_16::VERTICAL_OFFSETS,
+            consts::vlp_16::HORIZONTAL_OFFSETS,
+            consts::vlp_16::AZIMUTH_OFFSETS,
         )
         .for_each(
-            |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
+            |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
                 *param = MaybeUninit::new(LaserParameter {
                     elevation_angle: Angle::from_degrees(elevation_angle),
                     vertical_offset: Length::from_millimeters(vertical_offset),
@@ -273,13 +280,13 @@ mod params {
             unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
             params.iter_mut(),
-            consts::puck_hires::ELEVAION_DEGREES.iter(),
-            consts::puck_hires::VERTICAL_OFFSETS.iter(),
-            consts::puck_hires::HORIZONTAL_OFFSETS.iter(),
-            consts::puck_hires::AZIMUTH_OFFSETS.iter(),
+            consts::puck_hires::ELEVAION_DEGREES,
+            consts::puck_hires::VERTICAL_OFFSETS,
+            consts::puck_hires::HORIZONTAL_OFFSETS,
+            consts::puck_hires::AZIMUTH_OFFSETS,
         )
         .for_each(
-            |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
+            |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
                 *param = MaybeUninit::new(LaserParameter {
                     elevation_angle: Angle::from_degrees(elevation_angle),
                     vertical_offset: Length::from_millimeters(vertical_offset),
@@ -297,13 +304,13 @@ mod params {
             unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
             params.iter_mut(),
-            consts::puck_lite::ELEVAION_DEGREES.iter(),
-            consts::puck_lite::VERTICAL_OFFSETS.iter(),
-            consts::puck_lite::HORIZONTAL_OFFSETS.iter(),
-            consts::puck_lite::AZIMUTH_OFFSETS.iter(),
+            consts::puck_lite::ELEVAION_DEGREES,
+            consts::puck_lite::VERTICAL_OFFSETS,
+            consts::puck_lite::HORIZONTAL_OFFSETS,
+            consts::puck_lite::AZIMUTH_OFFSETS,
         )
         .for_each(
-            |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
+            |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
                 *param = MaybeUninit::new(LaserParameter {
                     elevation_angle: Angle::from_degrees(elevation_angle),
                     vertical_offset: Length::from_millimeters(vertical_offset),
@@ -321,13 +328,13 @@ mod params {
             unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
             params.iter_mut(),
-            consts::vlp_32c::ELEVAION_DEGREES.iter(),
-            consts::vlp_32c::VERTICAL_OFFSETS.iter(),
-            consts::vlp_32c::HORIZONTAL_OFFSETS.iter(),
-            consts::vlp_32c::AZIMUTH_OFFSETS.iter(),
+            consts::vlp_32c::ELEVAION_DEGREES,
+            consts::vlp_32c::VERTICAL_OFFSETS,
+            consts::vlp_32c::HORIZONTAL_OFFSETS,
+            consts::vlp_32c::AZIMUTH_OFFSETS,
         )
         .for_each(
-            |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
+            |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
                 *param = MaybeUninit::new(LaserParameter {
                     elevation_angle: Angle::from_degrees(elevation_angle),
                     vertical_offset: Length::from_millimeters(vertical_offset),
