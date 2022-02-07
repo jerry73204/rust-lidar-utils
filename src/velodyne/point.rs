@@ -2,10 +2,6 @@
 
 use crate::common::*;
 
-pub use dual_return_point::*;
-pub use dynamic_return_points::*;
-pub use single_return_point::*;
-
 /// Generic point from Velodyne LiDAR device.
 
 pub trait VelodynePoint {
@@ -53,6 +49,7 @@ impl LidarFrameMsg for LidarFrameEntry {
     }
 }
 
+pub use single_return_point::*;
 mod single_return_point {
     use super::*;
 
@@ -101,6 +98,7 @@ mod single_return_point {
     }
 }
 
+pub use dual_return_point::*;
 mod dual_return_point {
     use super::*;
 
@@ -204,6 +202,7 @@ mod dual_return_point {
     }
 }
 
+pub use dynamic_return_points::*;
 mod dynamic_return_points {
     use crate::velodyne::PcdFrame;
 
@@ -257,12 +256,12 @@ mod dynamic_return_points {
             }
         }
 
-        pub(crate) fn empty_like(&self) -> Self {
-            match self {
-                Self::Single(_) => Self::Single(vec![]),
-                Self::Dual(_) => Self::Dual(vec![]),
-            }
-        }
+        // pub(crate) fn empty_like(&self) -> Self {
+        //     match self {
+        //         Self::Single(_) => Self::Single(vec![]),
+        //         Self::Dual(_) => Self::Dual(vec![]),
+        //     }
+        // }
     }
 
     impl IntoIterator for DynamicReturnPoints {

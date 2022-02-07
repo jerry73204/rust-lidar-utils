@@ -1,9 +1,7 @@
 use anyhow::{ensure, Result};
 use itertools::izip;
 use lidar_utils::velodyne::{
-    consts, Config, DataPacket, FrameConverter, PointCloudConverter, PositionPacket,
-    Vlp16_Strongest_FrameConverter, Vlp16_Strongest_PcdConverter, Vlp32_Strongest_FrameConverter,
-    Vlp32_Strongest_PcdConverter,
+    self, consts, DataPacket, FrameConverter, PcdConverter, PositionPacket,
 };
 
 use pcap::Capture;
@@ -51,8 +49,7 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
 
     // convert to point cloud
     {
-        let config = Config::vlp_16_strongest_return();
-        let mut converter = Vlp16_Strongest_PcdConverter::from_config(config);
+        let mut converter = velodyne::vlp_16_strongest_return_config().build_pcd_converter();
         data_packets.iter().try_for_each(|packet| -> Result<_> {
             converter.convert(packet)?;
             Ok(())
@@ -62,31 +59,27 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
     // convert to frames
     {
         let beam_num = 16;
-        let config = Config::vlp_16_strongest_return();
-        let mut converter = Vlp16_Strongest_FrameConverter::from_config(config);
+        let mut converter = velodyne::vlp_16_strongest_return_config().build_frame_converter();
         data_packets.iter().try_for_each(|packet| -> Result<_> {
             let frame_return = converter.convert(packet);
-            match frame_return {
-                Some(frame) => {
-                    // check if azimuth is in order
-                    for i in 1..((frame.data.len() / beam_num) - 1) {
-                        assert!(
-                            frame.data[i * beam_num].original_azimuth_angle
-                                < frame.data[(i + 1) * beam_num].original_azimuth_angle
-                        )
-                    }
-                    //check if elevion(laser id) is in order
-                    let deg = consts::vlp_16::ELEVAION_INDEX;
-                    for i in 0..(frame.data.len() - 1) {
-                        assert!(
-                            (deg[frame.data[i].laser_id as usize]
-                                < deg[frame.data[i + 1].laser_id as usize])
-                                || (deg[frame.data[i].laser_id as usize] == 15
-                                    && deg[frame.data[i + 1].laser_id as usize] == 0)
-                        );
-                    }
+            if let Some(frame) = frame_return {
+                // check if azimuth is in order
+                for i in 1..((frame.data.len() / beam_num) - 1) {
+                    assert!(
+                        frame.data[i * beam_num].original_azimuth_angle
+                            < frame.data[(i + 1) * beam_num].original_azimuth_angle
+                    )
                 }
-                None => (),
+                //check if elevion(laser id) is in order
+                let deg = consts::vlp_16::ELEVAION_INDEX;
+                for i in 0..(frame.data.len() - 1) {
+                    assert!(
+                        (deg[frame.data[i].laser_id as usize]
+                            < deg[frame.data[i + 1].laser_id as usize])
+                            || (deg[frame.data[i].laser_id as usize] == 15
+                                && deg[frame.data[i + 1].laser_id as usize] == 0)
+                    );
+                }
             }
 
             Ok(())
@@ -136,8 +129,7 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
 
     // convert to point cloud
     {
-        let config = Config::vlp_32c_strongest_return();
-        let mut converter = Vlp32_Strongest_PcdConverter::from_config(config);
+        let mut converter = velodyne::vlp_32c_strongest_return_config().build_pcd_converter();
         data_packets.iter().try_for_each(|packet| -> Result<_> {
             converter.convert(packet)?;
             Ok(())
@@ -147,32 +139,28 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
     // convert to frames
     {
         let beam_num = 32;
-        let config = Config::vlp_32c_strongest_return();
-        let mut converter = Vlp32_Strongest_FrameConverter::from_config(config);
+        let mut converter = velodyne::vlp_32c_strongest_return_config().build_frame_converter();
         data_packets.iter().try_for_each(|packet| -> Result<_> {
             let frame_return = converter.convert(packet);
 
-            match frame_return {
-                Some(frame) => {
-                    // check if azimuth is in order
-                    for i in 1..((frame.data.len() / beam_num) - 1) {
-                        assert!(
-                            frame.data[i * beam_num].original_azimuth_angle
-                                < frame.data[(i + 1) * beam_num].original_azimuth_angle
-                        )
-                    }
-                    //check if elevion(laser id) is in order
-                    let deg = consts::vlp_32c::ELEVAION_INDEX;
-                    for i in 0..(frame.data.len() - 1) {
-                        assert!(
-                            (deg[frame.data[i].laser_id as usize]
-                                < deg[frame.data[i + 1].laser_id as usize])
-                                || (deg[frame.data[i].laser_id as usize] == 31
-                                    && deg[frame.data[i + 1].laser_id as usize] == 0)
-                        );
-                    }
+            if let Some(frame) = frame_return {
+                // check if azimuth is in order
+                for i in 1..((frame.data.len() / beam_num) - 1) {
+                    assert!(
+                        frame.data[i * beam_num].original_azimuth_angle
+                            < frame.data[(i + 1) * beam_num].original_azimuth_angle
+                    )
                 }
-                None => (),
+                //check if elevion(laser id) is in order
+                let deg = consts::vlp_32c::ELEVAION_INDEX;
+                for i in 0..(frame.data.len() - 1) {
+                    assert!(
+                        (deg[frame.data[i].laser_id as usize]
+                            < deg[frame.data[i + 1].laser_id as usize])
+                            || (deg[frame.data[i].laser_id as usize] == 31
+                                && deg[frame.data[i + 1].laser_id as usize] == 0)
+                    );
+                }
             }
 
             Ok(())

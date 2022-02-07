@@ -3,133 +3,321 @@ use crate::{
     common::*,
     velodyne::{
         config::{
-            Config, Dynamic_Config, Vlp16_Dual_Config, Vlp16_Dynamic_Config, Vlp16_Last_Config,
-            Vlp16_Strongest_Config, Vlp32_Dual_Config, Vlp32_Dynamic_Config, Vlp32_Last_Config,
-            Vlp32_Strongest_Config,
-        },
-        marker::{
-            DualReturn, DynamicModel, DynamicReturn, LastReturn, ModelMarker, ReturnTypeMarker,
-            StrongestReturn, Vlp16, Vlp32,
+            DConfig, DualReturn, LastReturn, ModelMarker, ReturnModeMarker, SConfig,
+            StrongestReturn,
         },
         packet::DataPacket,
-        pcd_converter::{
-            Dynamic_PcdConverter, PointCloudConverter, Vlp16_Dual_PcdConverter,
-            Vlp16_Dynamic_PcdConverter, Vlp16_Last_PcdConverter, Vlp16_Strongest_PcdConverter,
-            Vlp32_Dual_PcdConverter, Vlp32_Dynamic_PcdConverter, Vlp32_Last_PcdConverter,
-            Vlp32_Strongest_PcdConverter,
-        },
+        pcd_converter::{DPcdConverter, DualPcdConverter, SinglePcdConverter},
         point::{DualReturnPoint, DynamicReturnFrame, DynamicReturnPoints, SingleReturnPoint},
+        PcdConverter, ReturnMode, PUCK_HIRES, PUCK_LITE, VLP_16, VLP_32C,
     },
 };
 
-pub use converter_impls::*;
-pub use definitions::*;
+pub trait FrameConverter {
+    type Output;
+    type State;
 
-mod definitions {
+    /// Converts a packet into a collection of frames of points.
+    fn convert<P>(&mut self, packet: P) -> Option<Self::Output>
+    where
+        P: Borrow<DataPacket>;
+
+    fn pop_remaining(&mut self) -> Option<Self::State>;
+}
+
+pub use s_type::*;
+mod s_type {
+    #![allow(non_camel_case_types)]
 
     use super::*;
 
-    /// The trait is implemented by all variants of frame converters.
-    pub trait FrameConverter<Model, ReturnType>
+    pub struct SingleFrameConverter<Model, Return>
     where
         Model: ModelMarker,
-        ReturnType: ReturnTypeMarker,
+        Return: ReturnModeMarker,
+        Self: FrameConverter,
+        SinglePcdConverter<Model, Return>: PcdConverter,
     {
-        type Frame;
-        type Remain;
-
-        /// Construct a frame converter from a config type.
-        fn from_config(config: Config<Model, ReturnType>) -> Self;
-
-        /// Converts a packet into a collection of frames of points.
-        fn convert<P>(&mut self, packet: P) -> Option<Self::Frame>
-        where
-            P: Borrow<DataPacket>;
-
-        fn pop_remaining(&mut self) -> Option<Self::Remain>;
+        pub(crate) pcd_converter: SinglePcdConverter<Model, Return>,
+        pub(crate) state: Vec<SingleReturnPoint>,
     }
 
-    #[derive(Debug)]
-    pub(crate) struct RemainingPoints(pub(crate) DynamicReturnPoints);
+    pub struct DualFrameConverter<Model, Return>
+    where
+        Model: ModelMarker,
+        Return: ReturnModeMarker,
+        Self: FrameConverter,
+        DualPcdConverter<Model, Return>: PcdConverter,
+    {
+        pub(crate) pcd_converter: DualPcdConverter<Model, Return>,
+        pub(crate) state: Vec<DualReturnPoint>,
+    }
 
-    impl RemainingPoints {
-        pub fn new(return_type: DynamicReturn) -> Self {
-            Self(match return_type {
-                DynamicReturn::LastReturn | DynamicReturn::StrongestReturn => {
+    // aliases
+
+    pub type Vlp16_Strongest_FrameConverter = SingleFrameConverter<VLP_16, StrongestReturn>;
+    pub type Vlp16_Last_FrameConverter = SingleFrameConverter<VLP_16, LastReturn>;
+    pub type Vlp16_Dual_FrameConverter = DualFrameConverter<VLP_16, DualReturn>;
+
+    pub type Vlp32c_Strongest_FrameConverter = SingleFrameConverter<VLP_32C, StrongestReturn>;
+    pub type Vlp32c_Last_FrameConverter = SingleFrameConverter<VLP_32C, LastReturn>;
+    pub type Vlp32c_Dual_FrameConverter = DualFrameConverter<VLP_32C, DualReturn>;
+
+    pub type PuckLite_Strongest_FrameConverter = SingleFrameConverter<PUCK_LITE, StrongestReturn>;
+    pub type PuckLite_Last_FrameConverter = SingleFrameConverter<PUCK_LITE, LastReturn>;
+    pub type PuckLite_Dual_FrameConverter = DualFrameConverter<PUCK_LITE, DualReturn>;
+
+    pub type PuckHires_Strongest_FrameConverter = SingleFrameConverter<PUCK_HIRES, StrongestReturn>;
+    pub type PuckHires_Last_FrameConverter = SingleFrameConverter<PUCK_HIRES, LastReturn>;
+    pub type PuckHires_Dual_FrameConverter = DualFrameConverter<PUCK_HIRES, DualReturn>;
+
+    // impls
+
+    impl<Model, Return> SingleFrameConverter<Model, Return>
+    where
+        Model: ModelMarker,
+        Return: ReturnModeMarker,
+        Self: FrameConverter,
+        SinglePcdConverter<Model, Return>: PcdConverter,
+    {
+        pub fn from_config(config: SConfig<Model, Return>) -> Self {
+            Self {
+                pcd_converter: SinglePcdConverter::from_config(config),
+                state: vec![],
+            }
+        }
+    }
+
+    impl<Model> DualFrameConverter<Model, DualReturn>
+    where
+        Model: ModelMarker,
+        Self: FrameConverter,
+        DualPcdConverter<Model, DualReturn>: PcdConverter,
+    {
+        pub fn from_config(config: SConfig<Model, DualReturn>) -> Self {
+            Self {
+                pcd_converter: DualPcdConverter::from_config(config),
+                state: vec![],
+            }
+        }
+    }
+
+    impl FrameConverter for Vlp16_Last_FrameConverter {
+        type Output = PcdFrame<SingleReturnPoint>;
+        type State = Vec<SingleReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Option<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let Self {
+                pcd_converter,
+                state,
+            } = self;
+
+            impls::convert_single_return(pcd_converter, state, packet.borrow())
+        }
+
+        fn pop_remaining(&mut self) -> Option<Self::State> {
+            if self.state.is_empty() {
+                None
+            } else {
+                Some(mem::take(&mut self.state))
+            }
+        }
+    }
+
+    impl FrameConverter for Vlp16_Strongest_FrameConverter {
+        type Output = PcdFrame<SingleReturnPoint>;
+        type State = Vec<SingleReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Option<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let Self {
+                pcd_converter,
+                state,
+            } = self;
+
+            impls::convert_single_return(pcd_converter, state, packet.borrow())
+        }
+
+        fn pop_remaining(&mut self) -> Option<Self::State> {
+            if self.state.is_empty() {
+                None
+            } else {
+                Some(mem::take(&mut self.state))
+            }
+        }
+    }
+
+    impl FrameConverter for Vlp16_Dual_FrameConverter {
+        type Output = PcdFrame<DualReturnPoint>;
+        type State = Vec<DualReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Option<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let Self {
+                pcd_converter,
+                state,
+            } = self;
+
+            impls::convert_dual_return(pcd_converter, state, packet.borrow())
+        }
+
+        fn pop_remaining(&mut self) -> Option<Self::State> {
+            if self.state.is_empty() {
+                None
+            } else {
+                Some(mem::take(&mut self.state))
+            }
+        }
+    }
+
+    impl FrameConverter for Vlp32c_Last_FrameConverter {
+        type Output = PcdFrame<SingleReturnPoint>;
+        type State = Vec<SingleReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Option<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let Self {
+                pcd_converter,
+                state,
+            } = self;
+
+            impls::convert_single_return(pcd_converter, state, packet.borrow())
+        }
+
+        fn pop_remaining(&mut self) -> Option<Self::State> {
+            if self.state.is_empty() {
+                None
+            } else {
+                Some(mem::take(&mut self.state))
+            }
+        }
+    }
+
+    impl FrameConverter for Vlp32c_Strongest_FrameConverter {
+        type Output = PcdFrame<SingleReturnPoint>;
+        type State = Vec<SingleReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Option<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let Self {
+                pcd_converter,
+                state,
+            } = self;
+
+            impls::convert_single_return(pcd_converter, state, packet.borrow())
+        }
+
+        fn pop_remaining(&mut self) -> Option<Self::State> {
+            if self.state.is_empty() {
+                None
+            } else {
+                Some(mem::take(&mut self.state))
+            }
+        }
+    }
+
+    impl FrameConverter for Vlp32c_Dual_FrameConverter {
+        type Output = PcdFrame<DualReturnPoint>;
+        type State = Vec<DualReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Option<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let Self {
+                pcd_converter,
+                state,
+            } = self;
+
+            impls::convert_dual_return(pcd_converter, state, packet.borrow())
+        }
+
+        fn pop_remaining(&mut self) -> Option<Self::State> {
+            if self.state.is_empty() {
+                None
+            } else {
+                Some(mem::take(&mut self.state))
+            }
+        }
+    }
+}
+
+pub use d_type::*;
+
+mod d_type {
+    use super::*;
+
+    #[derive(Debug)]
+    pub struct DFrameConverter
+    where
+        Self: FrameConverter,
+    {
+        pub(crate) pcd_converter: DPcdConverter,
+        pub(crate) state: <Self as FrameConverter>::State,
+    }
+
+    impl DFrameConverter {
+        pub fn from_config(config: DConfig) -> Self {
+            let state = match config.return_mode {
+                ReturnMode::StrongestReturn | ReturnMode::LastReturn => {
                     DynamicReturnPoints::Single(vec![])
                 }
-                DynamicReturn::DualReturn => DynamicReturnPoints::Dual(vec![]),
-            })
+                ReturnMode::DualReturn => DynamicReturnPoints::Dual(vec![]),
+            };
+
+            Self {
+                pcd_converter: DPcdConverter::from_config(config),
+                state,
+            }
+        }
+    }
+
+    impl FrameConverter for DFrameConverter {
+        type Output = DynamicReturnFrame;
+        type State = DynamicReturnPoints;
+
+        fn convert<P>(&mut self, packet: P) -> Option<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let Self {
+                pcd_converter,
+                state,
+            } = self;
+
+            impls::convert_dynamic_return(pcd_converter, state, packet.borrow())
         }
 
-        pub fn take(&mut self) -> DynamicReturnPoints {
-            let empty = self.0.empty_like();
-            mem::replace(&mut self.0, empty)
+        fn pop_remaining(&mut self) -> Option<Self::State> {
+            match &mut self.state {
+                DynamicReturnPoints::Single(points) => {
+                    let points = mem::take(points);
+
+                    (!points.is_empty()).then(|| DynamicReturnPoints::Single(points))
+                }
+                DynamicReturnPoints::Dual(points) => {
+                    let points = mem::take(points);
+                    (!points.is_empty()).then(|| DynamicReturnPoints::Dual(points))
+                }
+            }
         }
     }
+}
 
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Dynamic_FrameConverter {
-        pub(crate) pcd_converter: Dynamic_PcdConverter,
-        pub(crate) remaining_points: RemainingPoints,
-    }
-
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp16_Last_FrameConverter {
-        pub(crate) pcd_converter: Vlp16_Last_PcdConverter,
-        pub(crate) remaining_points: Vec<SingleReturnPoint>,
-    }
-
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp16_Strongest_FrameConverter {
-        pub(crate) pcd_converter: Vlp16_Strongest_PcdConverter,
-        pub(crate) remaining_points: Vec<SingleReturnPoint>,
-    }
-
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp16_Dual_FrameConverter {
-        pub(crate) pcd_converter: Vlp16_Dual_PcdConverter,
-        pub(crate) remaining_points: Vec<DualReturnPoint>,
-    }
-
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp16_Dynamic_FrameConverter {
-        pub(crate) pcd_converter: Vlp16_Dynamic_PcdConverter,
-        pub(crate) remaining_points: RemainingPoints,
-    }
-
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp32_Last_FrameConverter {
-        pub(crate) pcd_converter: Vlp32_Last_PcdConverter,
-        pub(crate) remaining_points: Vec<SingleReturnPoint>,
-    }
-
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp32_Strongest_FrameConverter {
-        pub(crate) pcd_converter: Vlp32_Strongest_PcdConverter,
-        pub(crate) remaining_points: Vec<SingleReturnPoint>,
-    }
-
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp32_Dual_FrameConverter {
-        pub(crate) pcd_converter: Vlp32_Dual_PcdConverter,
-        pub(crate) remaining_points: Vec<DualReturnPoint>,
-    }
-
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp32_Dynamic_FrameConverter {
-        pub(crate) pcd_converter: Vlp32_Dynamic_PcdConverter,
-        pub(crate) remaining_points: RemainingPoints,
-    }
+pub use definitions::*;
+mod definitions {
+    use super::*;
 
     #[derive(Debug, Clone)]
     pub struct PcdFrame<P>
@@ -154,304 +342,6 @@ mod definitions {
                 height: 0,
                 width: 0,
                 data: vec![],
-            }
-        }
-    }
-}
-
-mod converter_impls {
-    use super::*;
-
-    impl FrameConverter<DynamicModel, DynamicReturn> for Dynamic_FrameConverter {
-        type Frame = DynamicReturnFrame;
-        type Remain = DynamicReturnPoints;
-
-        fn from_config(config: Dynamic_Config) -> Self {
-            let remaining_points = RemainingPoints::new(config.return_type);
-            Self {
-                pcd_converter: Dynamic_PcdConverter::from_config(config),
-                remaining_points,
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Option<Self::Frame>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                pcd_converter,
-                remaining_points,
-            } = self;
-
-            impls::convert_dynamic_return(pcd_converter, remaining_points, packet.borrow())
-        }
-
-        fn pop_remaining(&mut self) -> Option<Self::Remain> {
-            let remaining = self.remaining_points.take();
-            if remaining.is_empty() {
-                None
-            } else {
-                Some(remaining)
-            }
-        }
-    }
-
-    impl FrameConverter<Vlp16, LastReturn> for Vlp16_Last_FrameConverter {
-        type Frame = PcdFrame<SingleReturnPoint>;
-        type Remain = Vec<SingleReturnPoint>;
-
-        fn from_config(config: Vlp16_Last_Config) -> Self {
-            Self {
-                pcd_converter: Vlp16_Last_PcdConverter::from_config(config),
-                remaining_points: vec![],
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Option<Self::Frame>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                pcd_converter,
-                remaining_points,
-            } = self;
-
-            impls::convert_single_return(pcd_converter, remaining_points, packet.borrow())
-        }
-
-        fn pop_remaining(&mut self) -> Option<Self::Remain> {
-            if self.remaining_points.is_empty() {
-                None
-            } else {
-                Some(mem::take(&mut self.remaining_points))
-            }
-        }
-    }
-
-    impl FrameConverter<Vlp16, StrongestReturn> for Vlp16_Strongest_FrameConverter {
-        type Frame = PcdFrame<SingleReturnPoint>;
-        type Remain = Vec<SingleReturnPoint>;
-
-        fn from_config(config: Vlp16_Strongest_Config) -> Self {
-            Self {
-                pcd_converter: Vlp16_Strongest_PcdConverter::from_config(config),
-                remaining_points: vec![],
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Option<Self::Frame>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                pcd_converter,
-                remaining_points,
-            } = self;
-
-            impls::convert_single_return(pcd_converter, remaining_points, packet.borrow())
-        }
-
-        fn pop_remaining(&mut self) -> Option<Self::Remain> {
-            if self.remaining_points.is_empty() {
-                None
-            } else {
-                Some(mem::take(&mut self.remaining_points))
-            }
-        }
-    }
-
-    impl FrameConverter<Vlp16, DualReturn> for Vlp16_Dual_FrameConverter {
-        type Frame = PcdFrame<DualReturnPoint>;
-        type Remain = Vec<DualReturnPoint>;
-
-        fn from_config(config: Vlp16_Dual_Config) -> Self {
-            Self {
-                pcd_converter: Vlp16_Dual_PcdConverter::from_config(config),
-                remaining_points: vec![],
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Option<Self::Frame>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                pcd_converter,
-                remaining_points,
-            } = self;
-
-            impls::convert_dual_return(pcd_converter, remaining_points, packet.borrow())
-        }
-
-        fn pop_remaining(&mut self) -> Option<Self::Remain> {
-            if self.remaining_points.is_empty() {
-                None
-            } else {
-                Some(mem::take(&mut self.remaining_points))
-            }
-        }
-    }
-
-    impl FrameConverter<Vlp16, DynamicReturn> for Vlp16_Dynamic_FrameConverter {
-        type Frame = DynamicReturnFrame;
-        type Remain = DynamicReturnPoints;
-
-        fn from_config(config: Vlp16_Dynamic_Config) -> Self {
-            let remaining_points = RemainingPoints::new(config.return_type);
-            Self {
-                pcd_converter: Vlp16_Dynamic_PcdConverter::from_config(config),
-                remaining_points,
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Option<Self::Frame>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                pcd_converter,
-                remaining_points,
-            } = self;
-
-            impls::convert_dynamic_return(pcd_converter, remaining_points, packet.borrow())
-        }
-
-        fn pop_remaining(&mut self) -> Option<Self::Remain> {
-            let remaining = self.remaining_points.take();
-            if remaining.is_empty() {
-                None
-            } else {
-                Some(remaining)
-            }
-        }
-    }
-
-    impl FrameConverter<Vlp32, LastReturn> for Vlp32_Last_FrameConverter {
-        type Frame = PcdFrame<SingleReturnPoint>;
-        type Remain = Vec<SingleReturnPoint>;
-
-        fn from_config(config: Vlp32_Last_Config) -> Self {
-            Self {
-                pcd_converter: Vlp32_Last_PcdConverter::from_config(config),
-                remaining_points: vec![],
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Option<Self::Frame>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                pcd_converter,
-                remaining_points,
-            } = self;
-
-            impls::convert_single_return(pcd_converter, remaining_points, packet.borrow())
-        }
-
-        fn pop_remaining(&mut self) -> Option<Self::Remain> {
-            if self.remaining_points.is_empty() {
-                None
-            } else {
-                Some(mem::take(&mut self.remaining_points))
-            }
-        }
-    }
-
-    impl FrameConverter<Vlp32, StrongestReturn> for Vlp32_Strongest_FrameConverter {
-        type Frame = PcdFrame<SingleReturnPoint>;
-        type Remain = Vec<SingleReturnPoint>;
-
-        fn from_config(config: Vlp32_Strongest_Config) -> Self {
-            Self {
-                pcd_converter: Vlp32_Strongest_PcdConverter::from_config(config),
-                remaining_points: vec![],
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Option<Self::Frame>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                pcd_converter,
-                remaining_points,
-            } = self;
-
-            impls::convert_single_return(pcd_converter, remaining_points, packet.borrow())
-        }
-
-        fn pop_remaining(&mut self) -> Option<Self::Remain> {
-            if self.remaining_points.is_empty() {
-                None
-            } else {
-                Some(mem::take(&mut self.remaining_points))
-            }
-        }
-    }
-
-    impl FrameConverter<Vlp32, DualReturn> for Vlp32_Dual_FrameConverter {
-        type Frame = PcdFrame<DualReturnPoint>;
-        type Remain = Vec<DualReturnPoint>;
-
-        fn from_config(config: Vlp32_Dual_Config) -> Self {
-            Self {
-                pcd_converter: Vlp32_Dual_PcdConverter::from_config(config),
-                remaining_points: vec![],
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Option<Self::Frame>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                pcd_converter,
-                remaining_points,
-            } = self;
-
-            impls::convert_dual_return(pcd_converter, remaining_points, packet.borrow())
-        }
-
-        fn pop_remaining(&mut self) -> Option<Self::Remain> {
-            if self.remaining_points.is_empty() {
-                None
-            } else {
-                Some(mem::take(&mut self.remaining_points))
-            }
-        }
-    }
-
-    impl FrameConverter<Vlp32, DynamicReturn> for Vlp32_Dynamic_FrameConverter {
-        type Frame = DynamicReturnFrame;
-        type Remain = DynamicReturnPoints;
-
-        fn from_config(config: Vlp32_Dynamic_Config) -> Self {
-            let remaining_points = RemainingPoints::new(config.return_type);
-            Self {
-                pcd_converter: Vlp32_Dynamic_PcdConverter::from_config(config),
-                remaining_points,
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Option<Self::Frame>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                pcd_converter,
-                remaining_points,
-            } = self;
-
-            impls::convert_dynamic_return(pcd_converter, remaining_points, packet.borrow())
-        }
-
-        fn pop_remaining(&mut self) -> Option<Self::Remain> {
-            let remaining = self.remaining_points.take();
-            if remaining.is_empty() {
-                None
-            } else {
-                Some(remaining)
             }
         }
     }

@@ -1,10 +1,9 @@
-use super::converter::RemainingPoints;
 use crate::{
     common::*,
     velodyne::{
-        marker::{ModelMarker, ReturnTypeMarker},
+        config::{ModelMarker, ReturnModeMarker},
         packet::DataPacket,
-        pcd_converter::PointCloudConverter,
+        pcd_converter::{DPcdConverter, DualPcdConverter, PcdConverter, SinglePcdConverter},
         point::{
             DualReturnPoint, DynamicReturnFrame, DynamicReturnPoints, SingleReturnPoint,
             VelodynePoint,
@@ -13,15 +12,15 @@ use crate::{
     },
 };
 
-pub(crate) fn convert_single_return<PcdConverter, Model, ReturnType>(
-    pcd_converter: &mut PcdConverter,
+pub(crate) fn convert_single_return<Model, Return>(
+    pcd_converter: &mut SinglePcdConverter<Model, Return>,
     remaining_points: &mut Vec<SingleReturnPoint>,
     packet: &DataPacket,
 ) -> Option<PcdFrame<SingleReturnPoint>>
 where
-    PcdConverter: PointCloudConverter<Model, ReturnType, Output = Vec<SingleReturnPoint>>,
     Model: ModelMarker,
-    ReturnType: ReturnTypeMarker,
+    Return: ReturnModeMarker,
+    SinglePcdConverter<Model, Return>: PcdConverter<Output = Vec<SingleReturnPoint>>,
 {
     let points = remaining_points
         .drain(..)
@@ -32,15 +31,15 @@ where
     frames
 }
 
-pub(crate) fn convert_dual_return<PcdConverter, Model, ReturnType>(
-    pcd_converter: &mut PcdConverter,
+pub(crate) fn convert_dual_return<Model, Return>(
+    pcd_converter: &mut DualPcdConverter<Model, Return>,
     remaining_points: &mut Vec<DualReturnPoint>,
     packet: &DataPacket,
 ) -> Option<PcdFrame<DualReturnPoint>>
 where
-    PcdConverter: PointCloudConverter<Model, ReturnType, Output = Vec<DualReturnPoint>>,
     Model: ModelMarker,
-    ReturnType: ReturnTypeMarker,
+    Return: ReturnModeMarker,
+    DualPcdConverter<Model, Return>: PcdConverter<Output = Vec<DualReturnPoint>>,
 {
     let points = remaining_points
         .drain(..)
@@ -50,20 +49,15 @@ where
     frames
 }
 
-pub(crate) fn convert_dynamic_return<PcdConverter, Model, ReturnType>(
-    pcd_converter: &mut PcdConverter,
-    remaining_points: &mut RemainingPoints,
+pub(crate) fn convert_dynamic_return(
+    pcd_converter: &mut DPcdConverter,
+    remaining_points: &mut DynamicReturnPoints,
     packet: &DataPacket,
-) -> Option<DynamicReturnFrame>
-where
-    PcdConverter: PointCloudConverter<Model, ReturnType, Output = DynamicReturnPoints>,
-    Model: ModelMarker,
-    ReturnType: ReturnTypeMarker,
-{
+) -> Option<DynamicReturnFrame> {
     let new_points = pcd_converter.convert(packet).unwrap();
     match (remaining_points, new_points) {
         (
-            RemainingPoints(DynamicReturnPoints::Single(remaining_points)),
+            DynamicReturnPoints::Single(remaining_points),
             DynamicReturnPoints::Single(new_points),
         ) => {
             let points = remaining_points.drain(..).chain(new_points.into_iter());
@@ -71,10 +65,7 @@ where
             let _ = mem::replace(remaining_points, new_remaining_points);
             frame.map(DynamicReturnFrame::Single)
         }
-        (
-            RemainingPoints(DynamicReturnPoints::Dual(remaining_points)),
-            DynamicReturnPoints::Dual(new_points),
-        ) => {
+        (DynamicReturnPoints::Dual(remaining_points), DynamicReturnPoints::Dual(new_points)) => {
             let points = remaining_points.drain(..).chain(new_points.into_iter());
             let (frame, new_remaining_points) = points_to_frames(points);
             let _ = mem::replace(remaining_points, new_remaining_points);

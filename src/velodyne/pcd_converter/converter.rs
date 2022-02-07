@@ -1,590 +1,490 @@
-use super::impls;
+use super::impls::{self, DualState, DynState, SingleState};
 use crate::{
     common::*,
     velodyne::{
         config::{
-            Config, Dynamic_Config, LaserParameter, Vlp16_Dual_Config, Vlp16_Dynamic_Config,
-            Vlp16_Last_Config, Vlp16_Strongest_Config, Vlp32_Dual_Config, Vlp32_Dynamic_Config,
-            Vlp32_Last_Config, Vlp32_Strongest_Config,
+            Config, DConfig, DualReturn, LastReturn, ModelMarker, ReturnModeMarker, SConfig,
+            StrongestReturn, PUCK_HIRES, PUCK_LITE, VLP_16,
         },
-        marker::{
-            DualReturn, DynamicModel, DynamicReturn, LastReturn, ModelMarker, ReturnTypeMarker,
-            StrongestReturn, Vlp16, Vlp32,
-        },
-        packet::{Block, DataPacket, ReturnMode},
+        packet::{DataPacket, ReturnMode},
         point::{DualReturnPoint, DynamicReturnPoints, SingleReturnPoint},
+        ProductID, VLP_32C,
     },
 };
 
-pub use converter_impls::*;
-pub use definition::*;
+pub trait PcdConverter {
+    type Output;
 
-mod definition {
+    /// Converts a packet into a collection points.
+    fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+    where
+        P: Borrow<DataPacket>;
+}
+
+pub use s_type::*;
+mod s_type {
+    #![allow(non_camel_case_types)]
+
     use super::*;
 
-    /// The trait is implemented by all variants of point cloud converters.
-    pub trait PointCloudConverter<Model, ReturnType>
+    pub struct SinglePcdConverter<Model, Return>
     where
         Model: ModelMarker,
-        ReturnType: ReturnTypeMarker,
+        Return: ReturnModeMarker,
+        Self: PcdConverter,
     {
-        type Output;
+        config: SConfig<Model, Return>,
+        last_block: Option<SingleState>,
+    }
 
+    pub struct DualPcdConverter<Model, Return>
+    where
+        Model: ModelMarker,
+        Return: ReturnModeMarker,
+        Self: PcdConverter,
+    {
+        config: SConfig<Model, Return>,
+        last_block: Option<DualState>,
+    }
+
+    // aliases
+
+    pub type Vlp16_Strongest_PcdConverter = SinglePcdConverter<VLP_16, StrongestReturn>;
+    pub type Vlp16_Last_PcdConverter = SinglePcdConverter<VLP_16, LastReturn>;
+    pub type Vlp16_Dual_PcdConverter = DualPcdConverter<VLP_16, DualReturn>;
+
+    pub type Vlp32c_Strongest_PcdConverter = SinglePcdConverter<VLP_32C, StrongestReturn>;
+    pub type Vlp32c_Last_PcdConverter = SinglePcdConverter<VLP_32C, LastReturn>;
+    pub type Vlp32c_Dual_PcdConverter = DualPcdConverter<VLP_32C, DualReturn>;
+
+    pub type PuckLite_Strongest_PcdConverter = SinglePcdConverter<PUCK_LITE, StrongestReturn>;
+    pub type PuckLite_Last_PcdConverter = SinglePcdConverter<PUCK_LITE, LastReturn>;
+    pub type PuckLite_Dual_PcdConverter = DualPcdConverter<PUCK_LITE, DualReturn>;
+
+    pub type PuckHires_Strongest_PcdConverter = SinglePcdConverter<PUCK_HIRES, StrongestReturn>;
+    pub type PuckHires_Last_PcdConverter = SinglePcdConverter<PUCK_HIRES, LastReturn>;
+    pub type PuckHires_Dual_PcdConverter = DualPcdConverter<PUCK_HIRES, DualReturn>;
+
+    impl<Model, Return> SinglePcdConverter<Model, Return>
+    where
+        Model: ModelMarker,
+        Return: ReturnModeMarker,
+        Self: PcdConverter,
+    {
         /// Construct a point cloud converter from a config type.
-        fn from_config(config: Config<Model, ReturnType>) -> Self;
+        pub fn from_config(config: SConfig<Model, Return>) -> Self {
+            Self {
+                config,
+                last_block: None,
+            }
+        }
 
-        /// Converts a packet into a collection points.
+        pub fn config(&self) -> &SConfig<Model, Return> {
+            &self.config
+        }
+    }
+
+    impl<Model> DualPcdConverter<Model, DualReturn>
+    where
+        Model: ModelMarker,
+        Self: PcdConverter,
+    {
+        /// Construct a point cloud converter from a config type.
+        pub fn from_config(config: SConfig<Model, DualReturn>) -> Self {
+            Self {
+                config,
+                last_block: None,
+            }
+        }
+
+        pub fn config(&self) -> &SConfig<Model, DualReturn> {
+            &self.config
+        }
+    }
+
+    // vlp 16
+
+    impl PcdConverter for Vlp16_Strongest_PcdConverter {
+        type Output = Vec<SingleReturnPoint>;
+
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
-            P: Borrow<DataPacket>;
-    }
+            P: Borrow<DataPacket>,
+        {
+            let packet = packet.borrow();
+            ensure!(
+                packet.return_mode == ReturnMode::StrongestReturn,
+                "return mode does not match"
+            );
 
-    #[derive(Debug)]
-    pub(crate) enum LastBlock {
-        Single(Option<(Duration, Block)>),
-        Dual(Option<(Duration, Block, Block)>),
-    }
+            let output = impls::convert_single_return_16_channel(
+                &self.config.lasers,
+                self.config.distance_resolution(),
+                &mut self.last_block,
+                packet,
+            );
 
-    impl LastBlock {
-        pub fn new(return_type: DynamicReturn) -> Self {
-            match return_type {
-                DynamicReturn::LastReturn | DynamicReturn::StrongestReturn => Self::Single(None),
-                DynamicReturn::DualReturn => Self::Dual(None),
-            }
-        }
-
-        pub fn single(&mut self) -> &mut Option<(Duration, Block)> {
-            match self {
-                Self::Single(last_block) => last_block,
-                _ => unreachable!(),
-            }
-        }
-
-        pub fn dual(&mut self) -> &mut Option<(Duration, Block, Block)> {
-            match self {
-                Self::Dual(last_block) => last_block,
-                _ => unreachable!(),
-            }
+            Ok(output)
         }
     }
 
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Dynamic_PcdConverter {
-        pub(crate) model: DynamicModel,
-        pub(crate) return_type: DynamicReturn,
-        pub(crate) lasers: Vec<LaserParameter>,
-        pub(crate) distance_resolution: Length,
-        pub(crate) last_block: LastBlock,
+    impl PcdConverter for Vlp16_Last_PcdConverter {
+        type Output = Vec<SingleReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let packet = packet.borrow();
+            ensure!(
+                packet.return_mode == ReturnMode::LastReturn,
+                "return mode does not match"
+            );
+
+            let output = impls::convert_single_return_16_channel(
+                &self.config.lasers,
+                self.config.distance_resolution(),
+                &mut self.last_block,
+                packet,
+            );
+
+            Ok(output)
+        }
     }
 
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp16_Strongest_PcdConverter {
-        pub(crate) lasers: [LaserParameter; 16],
-        pub(crate) distance_resolution: Length,
-        pub(crate) last_block: Option<(Duration, Block)>,
+    impl PcdConverter for Vlp16_Dual_PcdConverter {
+        type Output = Vec<DualReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let packet = packet.borrow();
+            ensure!(
+                packet.return_mode == ReturnMode::DualReturn,
+                "return mode does not match"
+            );
+
+            let output = impls::convert_dual_return_16_channel(
+                &self.config.lasers,
+                self.config.distance_resolution(),
+                &mut self.last_block,
+                packet,
+            );
+
+            Ok(output)
+        }
     }
 
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp16_Last_PcdConverter {
-        pub(crate) lasers: [LaserParameter; 16],
-        pub(crate) distance_resolution: Length,
-        pub(crate) last_block: Option<(Duration, Block)>,
+    // vlp 32c
+
+    impl PcdConverter for Vlp32c_Strongest_PcdConverter {
+        type Output = Vec<SingleReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let packet = packet.borrow();
+            ensure!(
+                packet.return_mode == ReturnMode::StrongestReturn,
+                "return mode does not match"
+            );
+
+            let output = impls::convert_single_return_32_channel(
+                &self.config.lasers,
+                self.config.distance_resolution(),
+                &mut self.last_block,
+                packet,
+            );
+
+            Ok(output)
+        }
     }
 
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp16_Dual_PcdConverter {
-        pub(crate) lasers: [LaserParameter; 16],
-        pub(crate) distance_resolution: Length,
-        pub(crate) last_block: Option<(Duration, Block, Block)>,
+    impl PcdConverter for Vlp32c_Last_PcdConverter {
+        type Output = Vec<SingleReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let packet = packet.borrow();
+            ensure!(
+                packet.return_mode == ReturnMode::LastReturn,
+                "return mode does not match"
+            );
+
+            let output = impls::convert_single_return_32_channel(
+                &self.config.lasers,
+                self.config.distance_resolution(),
+                &mut self.last_block,
+                packet,
+            );
+
+            Ok(output)
+        }
     }
 
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp16_Dynamic_PcdConverter {
-        pub(crate) return_type: DynamicReturn,
-        pub(crate) lasers: [LaserParameter; 16],
-        pub(crate) distance_resolution: Length,
-        pub(crate) last_block: LastBlock,
+    impl PcdConverter for Vlp32c_Dual_PcdConverter {
+        type Output = Vec<DualReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let packet = packet.borrow();
+            ensure!(
+                packet.return_mode == ReturnMode::DualReturn,
+                "return mode does not match"
+            );
+
+            let output = impls::convert_dual_return_32_channel(
+                &self.config.lasers,
+                self.config.distance_resolution(),
+                &mut self.last_block,
+                packet,
+            );
+
+            Ok(output)
+        }
     }
 
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp32_Strongest_PcdConverter {
-        pub(crate) lasers: [LaserParameter; 32],
-        pub(crate) distance_resolution: Length,
-        pub(crate) last_block: Option<(Duration, Block)>,
+    // puck lite
+
+    impl PcdConverter for PuckLite_Strongest_PcdConverter {
+        type Output = Vec<SingleReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let packet = packet.borrow();
+            ensure!(
+                packet.return_mode == ReturnMode::StrongestReturn,
+                "return mode does not match"
+            );
+
+            let output = impls::convert_single_return_16_channel(
+                &self.config.lasers,
+                self.config.distance_resolution(),
+                &mut self.last_block,
+                packet,
+            );
+
+            Ok(output)
+        }
     }
 
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp32_Last_PcdConverter {
-        pub(crate) lasers: [LaserParameter; 32],
-        pub(crate) distance_resolution: Length,
-        pub(crate) last_block: Option<(Duration, Block)>,
+    impl PcdConverter for PuckLite_Last_PcdConverter {
+        type Output = Vec<SingleReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let packet = packet.borrow();
+            ensure!(
+                packet.return_mode == ReturnMode::LastReturn,
+                "return mode does not match"
+            );
+
+            let output = impls::convert_single_return_16_channel(
+                &self.config.lasers,
+                self.config.distance_resolution(),
+                &mut self.last_block,
+                packet,
+            );
+
+            Ok(output)
+        }
     }
 
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp32_Dual_PcdConverter {
-        pub(crate) lasers: [LaserParameter; 32],
-        pub(crate) distance_resolution: Length,
-        pub(crate) last_block: Option<(Duration, Block, Block)>,
+    impl PcdConverter for PuckLite_Dual_PcdConverter {
+        type Output = Vec<DualReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let packet = packet.borrow();
+            ensure!(
+                packet.return_mode == ReturnMode::DualReturn,
+                "return mode does not match"
+            );
+
+            let output = impls::convert_dual_return_16_channel(
+                &self.config.lasers,
+                self.config.distance_resolution(),
+                &mut self.last_block,
+                packet,
+            );
+
+            Ok(output)
+        }
     }
 
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    pub struct Vlp32_Dynamic_PcdConverter {
-        pub(crate) return_type: DynamicReturn,
-        pub(crate) lasers: [LaserParameter; 32],
-        pub(crate) distance_resolution: Length,
-        pub(crate) last_block: LastBlock,
+    // puck lite
+
+    impl PcdConverter for PuckHires_Strongest_PcdConverter {
+        type Output = Vec<SingleReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let packet = packet.borrow();
+            ensure!(
+                packet.return_mode == ReturnMode::StrongestReturn,
+                "return mode does not match"
+            );
+
+            let output = impls::convert_single_return_16_channel(
+                &self.config.lasers,
+                self.config.distance_resolution(),
+                &mut self.last_block,
+                packet,
+            );
+
+            Ok(output)
+        }
+    }
+
+    impl PcdConverter for PuckHires_Last_PcdConverter {
+        type Output = Vec<SingleReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let packet = packet.borrow();
+            ensure!(
+                packet.return_mode == ReturnMode::LastReturn,
+                "return mode does not match"
+            );
+
+            let output = impls::convert_single_return_16_channel(
+                &self.config.lasers,
+                self.config.distance_resolution(),
+                &mut self.last_block,
+                packet,
+            );
+
+            Ok(output)
+        }
+    }
+
+    impl PcdConverter for PuckHires_Dual_PcdConverter {
+        type Output = Vec<DualReturnPoint>;
+
+        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
+        where
+            P: Borrow<DataPacket>,
+        {
+            let packet = packet.borrow();
+            ensure!(
+                packet.return_mode == ReturnMode::DualReturn,
+                "return mode does not match"
+            );
+
+            let output = impls::convert_dual_return_16_channel(
+                &self.config.lasers,
+                self.config.distance_resolution(),
+                &mut self.last_block,
+                packet,
+            );
+
+            Ok(output)
+        }
     }
 }
 
-mod converter_impls {
+pub use d_type::*;
+mod d_type {
     use super::*;
 
-    impl PointCloudConverter<Vlp16, StrongestReturn> for Vlp16_Strongest_PcdConverter {
-        type Output = Vec<SingleReturnPoint>;
-
-        fn from_config(config: Vlp16_Strongest_Config) -> Self {
-            let Config {
-                lasers,
-                distance_resolution,
-                ..
-            } = config;
-
-            Self {
-                lasers,
-                distance_resolution,
-                last_block: None,
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                ref lasers,
-                distance_resolution,
-                ref mut last_block,
-            } = *self;
-
-            let packet = packet.borrow();
-            ensure!(
-                packet.return_mode == ReturnMode::StrongestReturn,
-                "return mode does not match"
-            );
-            Ok(impls::convert_single_return_16_channel(
-                lasers,
-                distance_resolution,
-                last_block,
-                packet,
-            ))
-        }
+    #[derive(Debug)]
+    pub struct DPcdConverter
+    where
+        Self: PcdConverter,
+    {
+        pub(crate) config: DConfig,
+        pub(crate) last_block: DynState,
     }
 
-    impl PointCloudConverter<Vlp16, LastReturn> for Vlp16_Last_PcdConverter {
-        type Output = Vec<SingleReturnPoint>;
+    impl DPcdConverter
+    where
+        Self: PcdConverter,
+    {
+        pub fn from_config(config: DConfig) -> Self {
+            use ReturnMode as R;
 
-        fn from_config(config: Vlp16_Last_Config) -> Self {
-            let Config {
-                lasers,
-                distance_resolution,
-                ..
-            } = config;
-
-            Self {
-                lasers,
-                distance_resolution,
-                last_block: None,
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                ref lasers,
-                distance_resolution,
-                ref mut last_block,
-            } = *self;
-
-            let packet = packet.borrow();
-            ensure!(
-                packet.return_mode == ReturnMode::LastReturn,
-                "return mode does not match"
-            );
-            Ok(impls::convert_single_return_16_channel(
-                lasers,
-                distance_resolution,
-                last_block,
-                packet,
-            ))
-        }
-    }
-
-    impl PointCloudConverter<Vlp16, DualReturn> for Vlp16_Dual_PcdConverter {
-        type Output = Vec<DualReturnPoint>;
-
-        fn from_config(config: Vlp16_Dual_Config) -> Self {
-            let Config {
-                lasers,
-                distance_resolution,
-                ..
-            } = config;
-
-            Self {
-                lasers,
-                distance_resolution,
-                last_block: None,
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                ref lasers,
-                distance_resolution,
-                ref mut last_block,
-            } = *self;
-
-            let packet = packet.borrow();
-            ensure!(
-                packet.return_mode == ReturnMode::DualReturn,
-                "return mode does not match"
-            );
-            Ok(impls::convert_dual_return_16_channel(
-                lasers,
-                distance_resolution,
-                last_block,
-                packet,
-            ))
-        }
-    }
-
-    impl PointCloudConverter<Vlp16, DynamicReturn> for Vlp16_Dynamic_PcdConverter {
-        type Output = DynamicReturnPoints;
-
-        fn from_config(config: Vlp16_Dynamic_Config) -> Self {
-            let Config {
-                lasers,
-                return_type,
-                distance_resolution,
-                ..
-            } = config;
-
-            Self {
-                lasers,
-                return_type,
-                distance_resolution,
-                last_block: LastBlock::new(return_type),
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                return_type,
-                ref lasers,
-                distance_resolution,
-                ref mut last_block,
-            } = *self;
-
-            let packet = packet.borrow();
-
-            let points: DynamicReturnPoints = match return_type {
-                DynamicReturn::LastReturn | DynamicReturn::StrongestReturn => {
-                    impls::convert_single_return_16_channel(
-                        lasers,
-                        distance_resolution,
-                        last_block.single(),
-                        packet,
-                    )
-                    .into()
-                }
-                DynamicReturn::DualReturn => impls::convert_dual_return_16_channel(
-                    lasers,
-                    distance_resolution,
-                    last_block.dual(),
-                    packet,
-                )
-                .into(),
+            let last_block = match config.return_mode {
+                R::StrongestReturn | R::LastReturn => DynState::Single(None),
+                R::DualReturn => DynState::Dual(None),
             };
 
-            Ok(points)
+            Self { config, last_block }
+        }
+
+        pub fn config(&self) -> &DConfig {
+            &self.config
         }
     }
 
-    impl PointCloudConverter<Vlp32, StrongestReturn> for Vlp32_Strongest_PcdConverter {
-        type Output = Vec<SingleReturnPoint>;
-
-        fn from_config(config: Vlp32_Strongest_Config) -> Self {
-            let Config {
-                lasers,
-                distance_resolution,
-                ..
-            } = config;
-
-            Self {
-                lasers,
-                distance_resolution,
-                last_block: None,
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                ref lasers,
-                distance_resolution,
-                ref mut last_block,
-            } = *self;
-
-            let packet = packet.borrow();
-            ensure!(
-                packet.return_mode == ReturnMode::StrongestReturn,
-                "return mode does not match"
-            );
-            Ok(impls::convert_single_return_32_channel(
-                lasers,
-                distance_resolution,
-                last_block,
-                packet,
-            ))
-        }
-    }
-
-    impl PointCloudConverter<Vlp32, LastReturn> for Vlp32_Last_PcdConverter {
-        type Output = Vec<SingleReturnPoint>;
-
-        fn from_config(config: Vlp32_Last_Config) -> Self {
-            let Config {
-                lasers,
-                distance_resolution,
-                ..
-            } = config;
-
-            Self {
-                lasers,
-                distance_resolution,
-                last_block: None,
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                ref lasers,
-                distance_resolution,
-                ref mut last_block,
-            } = *self;
-
-            let packet = packet.borrow();
-            ensure!(
-                packet.return_mode == ReturnMode::LastReturn,
-                "return mode does not match"
-            );
-            Ok(impls::convert_single_return_32_channel(
-                lasers,
-                distance_resolution,
-                last_block,
-                packet,
-            ))
-        }
-    }
-
-    impl PointCloudConverter<Vlp32, DualReturn> for Vlp32_Dual_PcdConverter {
-        type Output = Vec<DualReturnPoint>;
-
-        fn from_config(config: Vlp32_Dual_Config) -> Self {
-            let Config {
-                lasers,
-                distance_resolution,
-                ..
-            } = config;
-
-            Self {
-                lasers,
-                distance_resolution,
-                last_block: None,
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                ref lasers,
-                distance_resolution,
-                ref mut last_block,
-            } = *self;
-
-            let packet = packet.borrow();
-            ensure!(
-                packet.return_mode == ReturnMode::DualReturn,
-                "return mode does not match"
-            );
-            Ok(impls::convert_dual_return_32_channel(
-                lasers,
-                distance_resolution,
-                last_block,
-                packet,
-            ))
-        }
-    }
-
-    impl PointCloudConverter<Vlp32, DynamicReturn> for Vlp32_Dynamic_PcdConverter {
+    impl PcdConverter for DPcdConverter {
         type Output = DynamicReturnPoints;
 
-        fn from_config(config: Vlp32_Dynamic_Config) -> Self {
-            let Config {
-                lasers,
-                return_type,
-                distance_resolution,
-                ..
-            } = config;
-
-            Self {
-                lasers,
-                return_type,
-                distance_resolution,
-                last_block: LastBlock::new(return_type),
-            }
-        }
-
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
             P: Borrow<DataPacket>,
         {
-            let Self {
-                return_type,
-                ref lasers,
-                distance_resolution,
-                ref mut last_block,
-            } = *self;
+            use ProductID as M;
+            use ReturnMode as R;
 
             let packet = packet.borrow();
 
-            let points: DynamicReturnPoints = match return_type {
-                DynamicReturn::LastReturn | DynamicReturn::StrongestReturn => {
-                    impls::convert_single_return_32_channel(
-                        lasers,
-                        distance_resolution,
-                        last_block.single(),
-                        packet,
-                    )
-                    .into()
-                }
-                DynamicReturn::DualReturn => impls::convert_dual_return_32_channel(
-                    lasers,
-                    distance_resolution,
-                    last_block.dual(),
-                    packet,
-                )
-                .into(),
-            };
-
-            Ok(points)
-        }
-    }
-
-    impl PointCloudConverter<DynamicModel, DynamicReturn> for Dynamic_PcdConverter {
-        type Output = DynamicReturnPoints;
-
-        fn from_config(config: Dynamic_Config) -> Self {
-            let Config {
-                model,
-                lasers,
-                return_type,
-                distance_resolution,
-                ..
-            } = config;
-
-            Self {
-                model,
-                lasers,
-                return_type,
-                distance_resolution,
-                last_block: LastBlock::new(return_type),
-            }
-        }
-
-        fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
-        where
-            P: Borrow<DataPacket>,
-        {
-            let Self {
-                model,
-                return_type,
-                ref lasers,
-                distance_resolution,
-                ref mut last_block,
-            } = *self;
-
-            let packet = packet.borrow();
-
-            let points: DynamicReturnPoints = match (model, return_type) {
-                (DynamicModel::Vlp16, DynamicReturn::LastReturn)
-                | (DynamicModel::Vlp16, DynamicReturn::StrongestReturn) => {
-                    let lasers: &[_; 16] = lasers.as_slice().try_into().unwrap();
+            let output = match (self.config.product_id, self.config.return_mode) {
+                (M::VLP16 | M::PuckLite | M::PuckHiRes, R::StrongestReturn | R::LastReturn) => {
                     impls::convert_single_return_16_channel(
-                        lasers,
-                        distance_resolution,
-                        last_block.single(),
+                        self.config.lasers.as_slice().try_into().unwrap(),
+                        self.config.distance_resolution(),
+                        self.last_block.assume_single(),
                         packet,
                     )
                     .into()
                 }
-                (DynamicModel::Vlp16, DynamicReturn::DualReturn) => {
-                    let lasers: &[_; 16] = lasers.as_slice().try_into().unwrap();
+                (M::VLP16 | M::PuckLite | M::PuckHiRes, R::DualReturn) => {
                     impls::convert_dual_return_16_channel(
-                        lasers,
-                        distance_resolution,
-                        last_block.dual(),
+                        self.config.lasers.as_slice().try_into().unwrap(),
+                        self.config.distance_resolution(),
+                        self.last_block.assume_dual(),
                         packet,
                     )
                     .into()
                 }
-                (DynamicModel::Vlp32, DynamicReturn::LastReturn)
-                | (DynamicModel::Vlp32, DynamicReturn::StrongestReturn) => {
-                    let lasers: &[_; 32] = lasers.as_slice().try_into().unwrap();
+                (M::VLP32C, R::StrongestReturn | R::LastReturn) => {
                     impls::convert_single_return_32_channel(
-                        lasers,
-                        distance_resolution,
-                        last_block.single(),
+                        self.config.lasers.as_slice().try_into().unwrap(),
+                        self.config.distance_resolution(),
+                        self.last_block.assume_single(),
                         packet,
                     )
                     .into()
                 }
-                (DynamicModel::Vlp32, DynamicReturn::DualReturn) => {
-                    let lasers: &[_; 32] = lasers.as_slice().try_into().unwrap();
-                    impls::convert_dual_return_32_channel(
-                        lasers,
-                        distance_resolution,
-                        last_block.dual(),
-                        packet,
-                    )
-                    .into()
+                (M::VLP32C, R::DualReturn) => impls::convert_dual_return_32_channel(
+                    self.config.lasers.as_slice().try_into().unwrap(),
+                    self.config.distance_resolution(),
+                    self.last_block.assume_dual(),
+                    packet,
+                )
+                .into(),
+                (product_id, _return_mode) => {
+                    bail!("unsupported model {:?}", product_id);
                 }
             };
 
-            Ok(points)
+            Ok(output)
         }
     }
 }

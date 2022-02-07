@@ -19,10 +19,50 @@ struct FiringInfo<'a> {
     firing: &'a [Channel],
 }
 
+pub(crate) use state::*;
+mod state {
+    use super::*;
+
+    #[derive(Debug)]
+    pub(crate) struct SingleState {
+        pub time: Duration,
+        pub block: Block,
+    }
+
+    #[derive(Debug)]
+    pub(crate) struct DualState {
+        pub time: Duration,
+        pub strongest_block: Block,
+        pub last_block: Block,
+    }
+
+    #[derive(Debug)]
+    pub(crate) enum DynState {
+        Single(Option<SingleState>),
+        Dual(Option<DualState>),
+    }
+
+    impl DynState {
+        pub fn assume_single(&mut self) -> &mut Option<SingleState> {
+            match self {
+                Self::Single(v) => v,
+                _ => unreachable!(),
+            }
+        }
+
+        pub fn assume_dual(&mut self) -> &mut Option<DualState> {
+            match self {
+                Self::Dual(v) => v,
+                _ => unreachable!(),
+            }
+        }
+    }
+}
+
 pub(crate) fn convert_single_return_16_channel(
     lasers: &[LaserParameter; 16],
     distance_resolution: Length,
-    last_block: &mut Option<(Duration, Block)>,
+    last_block: &mut Option<SingleState>,
     packet: &DataPacket,
 ) -> Vec<SingleReturnPoint> {
     debug_assert!(
@@ -38,7 +78,11 @@ pub(crate) fn convert_single_return_16_channel(
         let new_timestamp =
             packet_timestamp + block_period.mul_f64((packet.blocks.len() - 1) as f64);
         let new_block = *packet.blocks.last().unwrap();
-        last_block.replace((new_timestamp, new_block))
+
+        last_block.replace(SingleState {
+            time: new_timestamp,
+            block: new_block,
+        })
     };
 
     let packet_blocks_iter = packet.blocks.iter().enumerate().map(|(idx, block)| {
@@ -48,7 +92,7 @@ pub(crate) fn convert_single_return_16_channel(
 
     let mut blocks_iter = prev_last_block
         .iter()
-        .map(|(block_timestamp, block)| (*block_timestamp, block))
+        .map(|state| (state.time, &state.block))
         .chain(packet_blocks_iter);
 
     //set lidar beam channel index
@@ -70,7 +114,7 @@ pub(crate) fn convert_single_return_16_channel(
 pub(crate) fn convert_dual_return_16_channel(
     lasers: &[LaserParameter; 16],
     distance_resolution: Length,
-    last_block: &mut Option<(Duration, Block, Block)>,
+    last_block: &mut Option<DualState>,
     packet: &DataPacket,
 ) -> Vec<DualReturnPoint> {
     debug_assert_eq!(packet.return_mode, ReturnMode::DualReturn);
@@ -89,10 +133,14 @@ pub(crate) fn convert_dual_return_16_channel(
         let last_timestamp =
             packet_timestamp + block_period.mul_f64((packet.blocks.len() / 2 - 1) as f64);
 
-        match last_block.replace((last_timestamp, last_strongest_block, last_last_block)) {
-            Some((prev_last_timestamp, prev_strongest_block, prev_last_block)) => (
-                Some((prev_last_timestamp, prev_strongest_block)),
-                Some((prev_last_timestamp, prev_last_block)),
+        match last_block.replace(DualState {
+            time: last_timestamp,
+            strongest_block: last_strongest_block,
+            last_block: last_last_block,
+        }) {
+            Some(state) => (
+                Some((state.time, state.strongest_block)),
+                Some((state.time, state.last_block)),
             ),
             None => (None, None),
         }
@@ -176,7 +224,7 @@ pub(crate) fn convert_dual_return_16_channel(
 pub(crate) fn convert_single_return_32_channel(
     lasers: &[LaserParameter; 32],
     distance_resolution: Length,
-    last_block: &mut Option<(Duration, Block)>,
+    last_block: &mut Option<SingleState>,
     packet: &DataPacket,
 ) -> Vec<SingleReturnPoint> {
     debug_assert!(
@@ -196,12 +244,15 @@ pub(crate) fn convert_single_return_32_channel(
         let new_timestamp =
             packet_timestamp + block_period.mul_f64((packet.blocks.len() - 1) as f64);
         let new_block = *packet.blocks.last().unwrap();
-        last_block.replace((new_timestamp, new_block))
+        last_block.replace(SingleState {
+            time: new_timestamp,
+            block: new_block,
+        })
     };
 
     let mut blocks_iter = prev_last_block
         .iter()
-        .map(|(block_timestamp, block)| (*block_timestamp, block))
+        .map(|state| (state.time, &state.block))
         .chain(packet_blocks_iter);
 
     //set lidar beam channel index
@@ -223,7 +274,7 @@ pub(crate) fn convert_single_return_32_channel(
 pub(crate) fn convert_dual_return_32_channel(
     lasers: &[LaserParameter; 32],
     distance_resolution: Length,
-    last_block: &mut Option<(Duration, Block, Block)>,
+    last_block: &mut Option<DualState>,
     packet: &DataPacket,
 ) -> Vec<DualReturnPoint> {
     debug_assert_eq!(packet.return_mode, ReturnMode::DualReturn);
@@ -242,10 +293,14 @@ pub(crate) fn convert_dual_return_32_channel(
         let last_timestamp =
             packet_timestamp + block_period.mul_f64((packet.blocks.len() / 2 - 1) as f64);
 
-        match last_block.replace((last_timestamp, last_strongest_block, last_last_block)) {
-            Some((prev_last_timestamp, prev_strongest_block, prev_last_block)) => (
-                Some((prev_last_timestamp, prev_strongest_block)),
-                Some((prev_last_timestamp, prev_last_block)),
+        match last_block.replace(DualState {
+            time: last_timestamp,
+            strongest_block: last_strongest_block,
+            last_block: last_last_block,
+        }) {
+            Some(state) => (
+                Some((state.time, state.strongest_block)),
+                Some((state.time, state.last_block)),
             ),
             None => (None, None),
         }
