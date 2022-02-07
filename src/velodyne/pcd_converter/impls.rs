@@ -90,14 +90,13 @@ pub(crate) fn convert_single_return_16_channel(
         (block_timestamp, block)
     });
 
-    let mut blocks_iter = prev_last_block
+    let blocks_iter = prev_last_block
         .iter()
         .map(|state| (state.time, &state.block))
         .chain(packet_blocks_iter);
 
     //set lidar beam channel index
-    let mut channel_vec =
-        convert_to_points_16_channel(lasers, distance_resolution, &mut blocks_iter);
+    let mut channel_vec = convert_to_points_16_channel(lasers, distance_resolution, blocks_iter);
 
     // get index  array
     let corr_deg_index = consts::vlp_16::ELEVAION_INDEX;
@@ -146,7 +145,7 @@ pub(crate) fn convert_dual_return_16_channel(
         }
     };
 
-    let mut strongest_blocks_iter = {
+    let strongest_blocks_iter = {
         let packet_strongest_blocks_iter =
             packet
                 .blocks
@@ -164,7 +163,7 @@ pub(crate) fn convert_dual_return_16_channel(
             .chain(packet_strongest_blocks_iter)
     };
 
-    let mut last_blocks_iter = {
+    let last_blocks_iter = {
         let packet_last_blocks_iter =
             packet
                 .blocks
@@ -186,7 +185,7 @@ pub(crate) fn convert_dual_return_16_channel(
     let corr_deg_index = consts::vlp_16::ELEVAION_INDEX;
 
     let mut strongest_points =
-        convert_to_points_16_channel(lasers, distance_resolution, &mut strongest_blocks_iter);
+        convert_to_points_16_channel(lasers, distance_resolution, strongest_blocks_iter);
 
     // set channel_index
     for i in 0..strongest_points.len() {
@@ -195,7 +194,7 @@ pub(crate) fn convert_dual_return_16_channel(
     }
 
     let mut last_points =
-        convert_to_points_16_channel(lasers, distance_resolution, &mut last_blocks_iter);
+        convert_to_points_16_channel(lasers, distance_resolution, last_blocks_iter);
 
     // set channel_index
     for i in 0..last_points.len() {
@@ -250,14 +249,13 @@ pub(crate) fn convert_single_return_32_channel(
         })
     };
 
-    let mut blocks_iter = prev_last_block
+    let blocks_iter = prev_last_block
         .iter()
         .map(|state| (state.time, &state.block))
         .chain(packet_blocks_iter);
 
     //set lidar beam channel index
-    let mut channel_vec =
-        convert_to_points_32_channel(lasers, distance_resolution, &mut blocks_iter);
+    let mut channel_vec = convert_to_points_32_channel(lasers, distance_resolution, blocks_iter);
 
     // get index  array
     let corr_deg_index = consts::vlp_32c::ELEVAION_INDEX;
@@ -306,7 +304,7 @@ pub(crate) fn convert_dual_return_32_channel(
         }
     };
 
-    let mut strongest_blocks_iter = {
+    let strongest_blocks_iter = {
         let packet_strongest_blocks_iter =
             packet
                 .blocks
@@ -324,7 +322,7 @@ pub(crate) fn convert_dual_return_32_channel(
             .chain(packet_strongest_blocks_iter)
     };
 
-    let mut last_blocks_iter = {
+    let last_blocks_iter = {
         let packet_last_blocks_iter =
             packet
                 .blocks
@@ -343,7 +341,7 @@ pub(crate) fn convert_dual_return_32_channel(
     };
 
     let mut strongest_points =
-        convert_to_points_32_channel(lasers, distance_resolution, &mut strongest_blocks_iter);
+        convert_to_points_32_channel(lasers, distance_resolution, strongest_blocks_iter);
 
     // get index  array
     let corr_deg_index = consts::vlp_32c::ELEVAION_INDEX;
@@ -355,7 +353,7 @@ pub(crate) fn convert_dual_return_32_channel(
     }
 
     let mut last_points =
-        convert_to_points_32_channel(lasers, distance_resolution, &mut last_blocks_iter);
+        convert_to_points_32_channel(lasers, distance_resolution, last_blocks_iter);
 
     // set channel_index
     for i in 0..last_points.len() {
@@ -384,11 +382,12 @@ pub(crate) fn convert_dual_return_32_channel(
 pub(crate) fn convert_to_points_16_channel<'a, I>(
     lasers: &[LaserParameter; 16],
     distance_resolution: Length,
-    iter: &mut I,
+    iter: I,
 ) -> Vec<SingleReturnPoint>
 where
-    I: Iterator<Item = (Duration, &'a Block)>,
+    I: IntoIterator<Item = (Duration, &'a Block)>,
 {
+    let mut iter = iter.into_iter();
     let first_item = iter.next().unwrap();
 
     iter.scan(first_item, |prev_pair, (curr_timestamp, curr_block)| {
@@ -455,11 +454,11 @@ where
                     let azimuth = lower_azimuth_angle
                         + ((upper_azimuth_angle - lower_azimuth_angle) * ratio)
                         + *azimuth_offset;
-                    azimuth.normalize()
+                    azimuth.wrap_to_2pi()
                 };
                 let corrected_azimuth_angle = {
                     let azimuth = original_azimuth_angle + *azimuth_offset;
-                    azimuth.normalize()
+                    azimuth.wrap_to_2pi()
                 };
                 let distance = distance_resolution * channel.distance as f64;
                 let position = compute_position(
@@ -494,11 +493,12 @@ where
 pub(crate) fn convert_to_points_32_channel<'a, I>(
     lasers: &[LaserParameter; 32],
     distance_resolution: Length,
-    iter: &mut I,
+    iter: I,
 ) -> Vec<SingleReturnPoint>
 where
-    I: Iterator<Item = (Duration, &'a Block)>,
+    I: IntoIterator<Item = (Duration, &'a Block)>,
 {
+    let mut iter = iter.into_iter();
     let first_item = iter.next().unwrap();
     iter.scan(first_item, |prev_pair, (curr_timestamp, curr_block)| {
         let (prev_timestamp, prev_block) = *prev_pair;
@@ -550,11 +550,11 @@ where
                 let original_azimuth_angle = {
                     let azimuth =
                         lower_azimuth_angle + ((upper_azimuth_angle - lower_azimuth_angle) * ratio);
-                    azimuth.normalize()
+                    azimuth.wrap_to_2pi()
                 };
                 let corrected_azimuth_angle = {
                     let azimuth = original_azimuth_angle + *azimuth_offset;
-                    azimuth.normalize()
+                    azimuth.wrap_to_2pi()
                 };
                 let distance = distance_resolution * channel.distance as f64;
                 let position = compute_position(

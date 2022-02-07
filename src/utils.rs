@@ -4,7 +4,7 @@ use std::f64::consts::PI;
 pub(crate) trait AngleExt {
     fn sin(self) -> f64;
     fn cos(self) -> f64;
-    fn normalize(self) -> Self;
+    fn wrap_to_2pi(self) -> Self;
 }
 
 impl AngleExt for Angle {
@@ -16,8 +16,14 @@ impl AngleExt for Angle {
         self.as_radians().cos()
     }
 
-    fn normalize(self) -> Self {
-        Self::from_radians(self.as_radians() % (PI * 2.0))
+    fn wrap_to_2pi(self) -> Self {
+        let radians = self.as_radians() % (PI * 2.0);
+        let radians = if radians >= 0.0 {
+            radians
+        } else {
+            radians + PI * 2.0
+        };
+        Self::from_radians(radians)
     }
 }
 

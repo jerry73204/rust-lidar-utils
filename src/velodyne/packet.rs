@@ -1,8 +1,8 @@
 //! Provides `C-packed` structs for Velodyne data packets.
 
 use super::consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK, FIRING_PERIOD};
-
-use crate::common::*;
+use crate::{common::*, utils::AngleExt as _};
+use std::f64::consts::PI;
 
 pub use data_packet::*;
 mod data_packet {
@@ -62,8 +62,7 @@ mod data_packet {
 
     impl Block {
         pub fn azimuth_radians(&self) -> f64 {
-            2.0 * std::f64::consts::PI * self.azimuth_count as f64
-                / (AZIMUTH_COUNT_PER_REV - 1) as f64
+            2.0 * PI * self.azimuth_count as f64 / (AZIMUTH_COUNT_PER_REV - 1) as f64
         }
 
         pub fn azimuth_degrees(&self) -> f64 {
