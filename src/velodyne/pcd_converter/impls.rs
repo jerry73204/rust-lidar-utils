@@ -1,5 +1,8 @@
+use std::f64::consts::PI;
+
 use crate::{
     common::*,
+    utils::{AngleExt as _, DurationExt as _},
     velodyne::{
         config::LaserParameter,
         consts::{self, CHANNEL_PERIOD, FIRING_PERIOD},
@@ -10,7 +13,7 @@ use crate::{
 
 #[derive(Debug, Clone)]
 struct FiringInfo<'a> {
-    lower_timestamp: Time,
+    lower_timestamp: Duration,
     lower_azimuth_angle: Angle,
     upper_azimuth_angle: Angle,
     firing: &'a [Channel],
@@ -19,7 +22,7 @@ struct FiringInfo<'a> {
 pub(crate) fn convert_single_return_16_channel(
     lasers: &[LaserParameter; 16],
     distance_resolution: Length,
-    last_block: &mut Option<(Time, Block)>,
+    last_block: &mut Option<(Duration, Block)>,
     packet: &DataPacket,
 ) -> Vec<SingleReturnPoint> {
     debug_assert!(
@@ -27,19 +30,19 @@ pub(crate) fn convert_single_return_16_channel(
     );
 
     // consts
-    let firing_period = Time::new::<microsecond>(FIRING_PERIOD);
-    let block_period = firing_period * 2.0;
-    let packet_timestamp = Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
+    let block_period = FIRING_PERIOD.mul_f64(2.0);
+    let packet_timestamp = packet.time();
 
     // update last seen block
     let prev_last_block = {
-        let new_timestamp = packet_timestamp + block_period * (packet.blocks.len() - 1) as f64;
+        let new_timestamp =
+            packet_timestamp + block_period.mul_f64((packet.blocks.len() - 1) as f64);
         let new_block = *packet.blocks.last().unwrap();
         last_block.replace((new_timestamp, new_block))
     };
 
     let packet_blocks_iter = packet.blocks.iter().enumerate().map(|(idx, block)| {
-        let block_timestamp = packet_timestamp + block_period * idx as f64;
+        let block_timestamp = packet_timestamp + block_period.mul_f64(idx as f64);
         (block_timestamp, block)
     });
 
@@ -67,15 +70,14 @@ pub(crate) fn convert_single_return_16_channel(
 pub(crate) fn convert_dual_return_16_channel(
     lasers: &[LaserParameter; 16],
     distance_resolution: Length,
-    last_block: &mut Option<(Time, Block, Block)>,
+    last_block: &mut Option<(Duration, Block, Block)>,
     packet: &DataPacket,
 ) -> Vec<DualReturnPoint> {
     debug_assert_eq!(packet.return_mode, ReturnMode::DualReturn);
 
     // consts
-    let firing_period = Time::new::<microsecond>(FIRING_PERIOD);
-    let block_period = firing_period * 2.0;
-    let packet_timestamp = Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
+    let block_period = FIRING_PERIOD.mul_f64(2.0);
+    let packet_timestamp = packet.time();
 
     // update last blocks
     let (prev_strongest_block, prev_last_block) = {
@@ -84,7 +86,8 @@ pub(crate) fn convert_dual_return_16_channel(
                 [strongest_block, last_block] => (strongest_block, last_block),
                 _ => unreachable!(),
             };
-        let last_timestamp = packet_timestamp + block_period * (packet.blocks.len() / 2 - 1) as f64;
+        let last_timestamp =
+            packet_timestamp + block_period.mul_f64((packet.blocks.len() / 2 - 1) as f64);
 
         match last_block.replace((last_timestamp, last_strongest_block, last_last_block)) {
             Some((prev_last_timestamp, prev_strongest_block, prev_last_block)) => (
@@ -103,7 +106,7 @@ pub(crate) fn convert_dual_return_16_channel(
                 .step_by(2)
                 .enumerate()
                 .map(|(idx, block)| {
-                    let block_timestamp = packet_timestamp + block_period * idx as f64;
+                    let block_timestamp = packet_timestamp + block_period.mul_f64(idx as f64);
                     (block_timestamp, block)
                 });
 
@@ -121,7 +124,7 @@ pub(crate) fn convert_dual_return_16_channel(
                 .step_by(2)
                 .enumerate()
                 .map(|(idx, block)| {
-                    let block_timestamp = packet_timestamp + block_period * idx as f64;
+                    let block_timestamp = packet_timestamp + block_period.mul_f64(idx as f64);
                     (block_timestamp, block)
                 });
 
@@ -173,7 +176,7 @@ pub(crate) fn convert_dual_return_16_channel(
 pub(crate) fn convert_single_return_32_channel(
     lasers: &[LaserParameter; 32],
     distance_resolution: Length,
-    last_block: &mut Option<(Time, Block)>,
+    last_block: &mut Option<(Duration, Block)>,
     packet: &DataPacket,
 ) -> Vec<SingleReturnPoint> {
     debug_assert!(
@@ -181,17 +184,17 @@ pub(crate) fn convert_single_return_32_channel(
     );
 
     // consts
-    let firing_period = Time::new::<microsecond>(FIRING_PERIOD);
-    let block_period = firing_period;
-    let packet_timestamp = Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
+    let block_period = FIRING_PERIOD;
+    let packet_timestamp = packet.time();
 
     let packet_blocks_iter = packet.blocks.iter().enumerate().map(|(idx, block)| {
-        let block_timestamp = packet_timestamp + block_period * idx as f64;
+        let block_timestamp = packet_timestamp + block_period.mul_f64(idx as f64);
         (block_timestamp, block)
     });
 
     let prev_last_block = {
-        let new_timestamp = packet_timestamp + block_period * (packet.blocks.len() - 1) as f64;
+        let new_timestamp =
+            packet_timestamp + block_period.mul_f64((packet.blocks.len() - 1) as f64);
         let new_block = *packet.blocks.last().unwrap();
         last_block.replace((new_timestamp, new_block))
     };
@@ -220,15 +223,14 @@ pub(crate) fn convert_single_return_32_channel(
 pub(crate) fn convert_dual_return_32_channel(
     lasers: &[LaserParameter; 32],
     distance_resolution: Length,
-    last_block: &mut Option<(Time, Block, Block)>,
+    last_block: &mut Option<(Duration, Block, Block)>,
     packet: &DataPacket,
 ) -> Vec<DualReturnPoint> {
     debug_assert_eq!(packet.return_mode, ReturnMode::DualReturn);
 
     // consts
-    let firing_period = Time::new::<microsecond>(FIRING_PERIOD);
-    let block_period = firing_period;
-    let packet_timestamp = Time::new::<microsecond>(packet.time().get::<microsecond>() as f64);
+    let block_period = FIRING_PERIOD;
+    let packet_timestamp = packet.time();
 
     // update last blocks
     let (prev_strongest_block, prev_last_block) = {
@@ -237,7 +239,8 @@ pub(crate) fn convert_dual_return_32_channel(
                 [strongest_block, last_block] => (strongest_block, last_block),
                 _ => unreachable!(),
             };
-        let last_timestamp = packet_timestamp + block_period * (packet.blocks.len() / 2 - 1) as f64;
+        let last_timestamp =
+            packet_timestamp + block_period.mul_f64((packet.blocks.len() / 2 - 1) as f64);
 
         match last_block.replace((last_timestamp, last_strongest_block, last_last_block)) {
             Some((prev_last_timestamp, prev_strongest_block, prev_last_block)) => (
@@ -256,7 +259,7 @@ pub(crate) fn convert_dual_return_32_channel(
                 .step_by(2)
                 .enumerate()
                 .map(|(idx, block)| {
-                    let block_timestamp = packet_timestamp + block_period * idx as f64;
+                    let block_timestamp = packet_timestamp + block_period.mul_f64(idx as f64);
                     (block_timestamp, block)
                 });
 
@@ -274,7 +277,7 @@ pub(crate) fn convert_dual_return_32_channel(
                 .step_by(2)
                 .enumerate()
                 .map(|(idx, block)| {
-                    let block_timestamp = packet_timestamp + block_period * idx as f64;
+                    let block_timestamp = packet_timestamp + block_period.mul_f64(idx as f64);
                     (block_timestamp, block)
                 });
 
@@ -329,25 +332,22 @@ pub(crate) fn convert_to_points_16_channel<'a, I>(
     iter: &mut I,
 ) -> Vec<SingleReturnPoint>
 where
-    I: Iterator<Item = (Time, &'a Block)>,
+    I: Iterator<Item = (Duration, &'a Block)>,
 {
-    let channel_period = Time::new::<microsecond>(CHANNEL_PERIOD);
-    let firing_period = Time::new::<microsecond>(FIRING_PERIOD);
-
     let first_item = iter.next().unwrap();
 
     iter.scan(first_item, |prev_pair, (curr_timestamp, curr_block)| {
         let (prev_timestamp, prev_block) = *prev_pair;
         *prev_pair = (curr_timestamp, curr_block);
 
-        let mid_timestamp = prev_timestamp + firing_period;
+        let mid_timestamp = prev_timestamp + FIRING_PERIOD;
 
         let prev_azimuth_angle = prev_block.azimuth_angle();
         let curr_azimuth_angle = {
             // fix roll-over case
             let curr_angle = curr_block.azimuth_angle();
             if curr_angle < prev_azimuth_angle {
-                curr_angle + Angle::new::<radian>(std::f64::consts::PI * 2.0)
+                curr_angle + Angle::from_radians(PI * 2.0)
             } else {
                 curr_angle
             }
@@ -384,8 +384,10 @@ where
 
         izip!(firing.iter(), lasers.iter(), 0..).enumerate().map(
             move |(channel_idx, (channel, laser_params, laser_id))| {
-                let timestamp = lower_timestamp + channel_period * channel_idx as f64;
-                let ratio = channel_period * channel_idx as f64 / firing_period;
+                let timestamp = lower_timestamp + CHANNEL_PERIOD.mul_f64(channel_idx as f64);
+                let ratio = CHANNEL_PERIOD
+                    .mul_f64(channel_idx as f64)
+                    .div_duration(FIRING_PERIOD);
                 let LaserParameter {
                     elevation_angle,
                     azimuth_offset,
@@ -395,20 +397,14 @@ where
 
                 // clockwise angle with origin points to front of sensor
                 let original_azimuth_angle = {
-                    let mut azimuth = lower_azimuth_angle
-                        + Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio)
+                    let azimuth = lower_azimuth_angle
+                        + ((upper_azimuth_angle - lower_azimuth_angle) * ratio)
                         + *azimuth_offset;
-                    if azimuth >= Angle::new::<radian>(std::f64::consts::PI * 2.0) {
-                        azimuth -= Angle::new::<radian>(std::f64::consts::PI * 2.0);
-                    }
-                    azimuth
+                    azimuth.normalize()
                 };
                 let corrected_azimuth_angle = {
-                    let mut azimuth = original_azimuth_angle + *azimuth_offset;
-                    if azimuth >= Angle::new::<radian>(std::f64::consts::PI * 2.0) {
-                        azimuth -= Angle::new::<radian>(std::f64::consts::PI * 2.0);
-                    }
-                    azimuth
+                    let azimuth = original_azimuth_angle + *azimuth_offset;
+                    azimuth.normalize()
                 };
                 let distance = distance_resolution * channel.distance as f64;
                 let position = compute_position(
@@ -446,11 +442,8 @@ pub(crate) fn convert_to_points_32_channel<'a, I>(
     iter: &mut I,
 ) -> Vec<SingleReturnPoint>
 where
-    I: Iterator<Item = (Time, &'a Block)>,
+    I: Iterator<Item = (Duration, &'a Block)>,
 {
-    let channel_period = Time::new::<microsecond>(CHANNEL_PERIOD);
-    let firing_period = Time::new::<microsecond>(FIRING_PERIOD);
-
     let first_item = iter.next().unwrap();
     iter.scan(first_item, |prev_pair, (curr_timestamp, curr_block)| {
         let (prev_timestamp, prev_block) = *prev_pair;
@@ -461,7 +454,7 @@ where
             let curr_angle = curr_block.azimuth_angle();
             // fix roll-over case
             if curr_angle < prev_azimuth_angle {
-                curr_angle + Angle::new::<radian>(std::f64::consts::PI * 2.0)
+                curr_angle + Angle::from_radians(PI * 2.0)
             } else {
                 curr_angle
             }
@@ -487,8 +480,10 @@ where
 
         izip!(firing.iter(), lasers.iter(), 0..).enumerate().map(
             move |(channel_idx, (channel, laser_params, laser_id))| {
-                let timestamp = lower_timestamp + channel_period * (channel_idx / 2) as f64;
-                let ratio: Ratio = channel_period * (channel_idx / 2) as f64 / firing_period;
+                let timestamp = lower_timestamp + CHANNEL_PERIOD.mul_f64((channel_idx / 2) as f64);
+                let ratio = CHANNEL_PERIOD
+                    .mul_f64((channel_idx / 2) as f64)
+                    .div_duration(FIRING_PERIOD);
                 let LaserParameter {
                     elevation_angle,
                     azimuth_offset,
@@ -498,19 +493,13 @@ where
 
                 // clockwise angle with origin points to front of sensor
                 let original_azimuth_angle = {
-                    let mut azimuth = lower_azimuth_angle
-                        + Angle::from((upper_azimuth_angle - lower_azimuth_angle) * ratio);
-                    if azimuth >= Angle::new::<radian>(std::f64::consts::PI * 2.0) {
-                        azimuth -= Angle::new::<radian>(std::f64::consts::PI * 2.0);
-                    }
-                    azimuth
+                    let azimuth =
+                        lower_azimuth_angle + ((upper_azimuth_angle - lower_azimuth_angle) * ratio);
+                    azimuth.normalize()
                 };
                 let corrected_azimuth_angle = {
-                    let mut azimuth = original_azimuth_angle + *azimuth_offset;
-                    if azimuth >= Angle::new::<radian>(std::f64::consts::PI * 2.0) {
-                        azimuth -= Angle::new::<radian>(std::f64::consts::PI * 2.0);
-                    }
-                    azimuth
+                    let azimuth = original_azimuth_angle + *azimuth_offset;
+                    azimuth.normalize()
                 };
                 let distance = distance_resolution * channel.distance as f64;
                 let position = compute_position(

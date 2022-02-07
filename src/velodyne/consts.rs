@@ -1,5 +1,9 @@
 //! Useful constants for Velodyne data structures and calculations.
 
+use measurements::Length;
+use once_cell::sync::Lazy;
+use std::time::Duration;
+
 /// Default UDP data port used by Velodyne LiDARs.
 pub const DATA_PORT: u16 = 2368;
 
@@ -13,12 +17,23 @@ pub const BLOCKS_PER_PACKET: usize = 12;
 pub const AZIMUTH_COUNT_PER_REV: usize = 36001; // Extra last tick overlaps with first tick
 
 /// Period of one laser return in microseconds.
-pub const CHANNEL_PERIOD: f64 = 2.304; // microseconds
+const CHANNEL_PERIOD_MICROS: f64 = 2.304; // microseconds
+
+/// Period of one laser return.
+pub const CHANNEL_PERIOD: Duration = Duration::from_nanos((CHANNEL_PERIOD_MICROS * 1e3) as u64);
 
 /// Period of one vertical scan in microseconds.
-pub const FIRING_PERIOD: f64 = 55.296; // microseconds
+const FIRING_PERIOD_MICROS: f64 = 55.296; // microseconds
+
+/// Period of one vertical scan.
+pub const FIRING_PERIOD: Duration = Duration::from_nanos((FIRING_PERIOD_MICROS * 1e3) as u64);
 
 // VLP-16 parameters
+
+pub const VLP_16_DISTANCE_RESOLUTION_MILLIS: f64 = 2.0;
+
+pub static VLP_16_DISTANCE_RESOLUTION: Lazy<Length> =
+    Lazy::new(|| Length::from_millimeters(VLP_16_DISTANCE_RESOLUTION_MILLIS));
 
 /// Elevaion angles of VLP-16.
 pub const VLP_16_ELEVAION_DEGREES: [f64; 16] = [
@@ -44,6 +59,11 @@ pub const VLP_16_HORIZONTAL_OFFSETS: [f64; 16] = [
 
 // Puck-Lite parameters
 
+pub const PUCK_LITE_DISTANCE_RESOLUTION_MILLIS: f64 = 2.0;
+
+pub static PUCK_LITE_DISTANCE_RESOLUTION: Lazy<Length> =
+    Lazy::new(|| Length::from_millimeters(PUCK_LITE_DISTANCE_RESOLUTION_MILLIS));
+
 /// Elevaion angles of Puck Lite.
 pub const PUCK_LITE_ELEVAION_DEGREES: [f64; 16] = [
     -15.0, 1.0, -13.0, 3.0, -11.0, 5.0, -9.0, 7.0, -7.0, 9.0, -5.0, 11.0, -3.0, 13.0, -1.0, 15.0,
@@ -62,6 +82,11 @@ pub const PUCK_LITE_HORIZONTAL_OFFSETS: [f64; 16] = [
 ];
 
 // Puck Hi-Res parameters
+
+pub const PUCK_HIRES_DISTANCE_RESOLUTION_MILLIS: f64 = 2.0;
+
+pub static PUCK_HIRES_DISTANCE_RESOLUTION: Lazy<Length> =
+    Lazy::new(|| Length::from_millimeters(PUCK_HIRES_DISTANCE_RESOLUTION_MILLIS));
 
 /// Elevaion angles of Puck Hi-Res.
 pub const PUCK_HIRES_ELEVAION_DEGREES: [f64; 16] = [
@@ -82,6 +107,11 @@ pub const PUCK_HIRES_HORIZONTAL_OFFSETS: [f64; 16] = [
 ];
 
 // VLP-32C parameters
+
+pub const VLP_32C_DISTANCE_RESOLUTION_MILLIS: f64 = 4.0;
+
+pub static VLP_32C_DISTANCE_RESOLUTION: Lazy<Length> =
+    Lazy::new(|| Length::from_millimeters(VLP_32C_DISTANCE_RESOLUTION_MILLIS));
 
 /// Elevaion angles of VLP-32C.
 pub const VLP_32C_ELEVAION_DEGREES: [f64; 32] = [

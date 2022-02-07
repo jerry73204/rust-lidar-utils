@@ -73,7 +73,7 @@ mod data_packet {
         }
 
         pub fn azimuth_angle(&self) -> Angle {
-            Angle::new::<radian>(self.azimuth_angle_radian())
+            Angle::from_radians(self.azimuth_angle_radian())
         }
     }
 
@@ -132,8 +132,8 @@ mod data_packet {
             NaiveDateTime::from_timestamp(secs as i64, nsecs as u32)
         }
 
-        pub fn time(&self) -> Time {
-            Time::new::<microsecond>(self.timestamp as f64)
+        pub fn time(&self) -> Duration {
+            Duration::from_micros(self.timestamp as u64)
         }
     }
 }

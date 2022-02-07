@@ -1,5 +1,4 @@
 //! Provides a set of _C-packed_ structs for Ouster packets.
-
 use super::consts::{COLUMNS_PER_PACKET, ENCODER_TICKS_PER_REV, PIXELS_PER_COLUMN};
 use crate::common::*;
 
@@ -22,7 +21,7 @@ impl Pixel {
     }
 
     pub fn distance(&self) -> Length {
-        Length::new::<millimeter>(self.distance_millimeter() as f64)
+        Length::from_millimeters(self.distance_millimeter() as f64)
     }
 }
 
@@ -52,27 +51,28 @@ impl Column {
         NaiveDateTime::from_timestamp(secs as i64, nsecs as u32)
     }
 
-    pub fn time(&self) -> Time {
-        Time::new::<nanosecond>(self.timestamp as f64)
+    pub fn time(&self) -> Duration {
+        Duration::from_nanos(self.timestamp)
     }
 
-    /// Compute azimuth angle in degrees from encoder ticks.
-    pub fn azimuth_angle_degrees(&self) -> f64 {
-        360.0 * self.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64
-    }
-
-    /// Compute azimuth angle in radians from encoder ticks.
-    pub fn azimuth_angle_radians(&self) -> f64 {
-        2.0 * std::f64::consts::PI * self.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64
-    }
-
-    pub fn azimuth_angle(&self) -> Angle {
-        Angle::new::<radian>(self.azimuth_angle_radians())
+    /// Compute azimuth angle from encoder ticks.
+    pub fn azimuth(&self) -> Angle {
+        Angle::from_degrees(self.azimuth_degrees())
     }
 
     /// Return if this packet is marked valid.
     pub fn valid(&self) -> bool {
         self.raw_valid == 0xffffffff
+    }
+
+    /// Compute azimuth angle in degrees from encoder ticks.
+    pub fn azimuth_degrees(&self) -> f64 {
+        360.0 * self.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64
+    }
+
+    /// Compute azimuth angle in radians from encoder ticks.
+    pub fn azimuth_radians(&self) -> f64 {
+        2.0 * std::f64::consts::PI * self.encoder_ticks as f64 / ENCODER_TICKS_PER_REV as f64
     }
 }
 

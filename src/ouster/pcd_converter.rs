@@ -5,7 +5,8 @@ use super::{
     consts::PIXELS_PER_COLUMN,
     packet::{Column, Packet},
 };
-use crate::common::*;
+use crate::{common::*, utils::AngleExt as _};
+use std::f64::consts::PI;
 
 fn spherical_to_xyz(range: Length, azimuth_angle: Angle, altitude_angle: Angle) -> [Length; 3] {
     let x = range * altitude_angle.sin() * azimuth_angle.cos();
@@ -16,7 +17,7 @@ fn spherical_to_xyz(range: Length, azimuth_angle: Angle, altitude_angle: Angle) 
 
 #[derive(Clone, Debug)]
 pub struct Point {
-    pub timestamp: Time,
+    pub timestamp: Duration,
     pub azimuth_angle: Angle,
     pub distance: Length,
     pub reflectivity: u16,
@@ -45,24 +46,24 @@ impl PointCloudConverter {
         } = config;
 
         let altitude_angles = {
-            let mut array = [Angle::new::<radian>(0.0); PIXELS_PER_COLUMN];
+            let mut array = [Angle::from_radians(0.0); PIXELS_PER_COLUMN];
             debug_assert_eq!(array.len(), beam_altitude_angles.len());
 
             for idx in 0..(array.len()) {
                 let angle =
                     std::f64::consts::FRAC_PI_2 - beam_altitude_angles[idx].to_radians().raw();
-                array[idx] = Angle::new::<radian>(angle);
+                array[idx] = Angle::from_radians(angle);
             }
             array
         };
 
         let azimuth_angle_corrections = {
-            let mut array = [Angle::new::<radian>(0.0); PIXELS_PER_COLUMN];
+            let mut array = [Angle::from_radians(0.0); PIXELS_PER_COLUMN];
             debug_assert_eq!(array.len(), beam_azimuth_angle_corrections.len());
 
             for idx in 0..(array.len()) {
                 let angle = beam_azimuth_angle_corrections[idx].to_radians();
-                array[idx] = Angle::new::<radian>(angle.raw());
+                array[idx] = Angle::from_radians(angle.raw());
             }
             array
         };
@@ -113,9 +114,9 @@ impl PointCloudConverter {
         .map(
             |(pixel, altitude_angle, azimuth_angle_correction, laser_id)| {
                 // add correction according to manual
-                let clockwise_azimuth_angle = column.azimuth_angle() + *azimuth_angle_correction;
+                let clockwise_azimuth_angle = column.azimuth() + *azimuth_angle_correction;
                 let counter_clockwise_azimuth_angle =
-                    Angle::new::<radian>(std::f64::consts::PI * 2.0) - clockwise_azimuth_angle;
+                    Angle::from_radians(PI * 2.0) - clockwise_azimuth_angle;
                 let distance = pixel.distance();
                 let timestamp = column.time();
                 let point =

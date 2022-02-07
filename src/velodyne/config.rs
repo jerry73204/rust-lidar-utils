@@ -1,14 +1,7 @@
 //! Defines a set of Velodyne LiDAR configurations.
 
 use super::{
-    consts::{
-        PUCK_HIRES_AZIMUTH_OFFSETS, PUCK_HIRES_ELEVAION_DEGREES, PUCK_HIRES_HORIZONTAL_OFFSETS,
-        PUCK_HIRES_VERTICAL_OFFSETS, PUCK_LITE_AZIMUTH_OFFSETS, PUCK_LITE_ELEVAION_DEGREES,
-        PUCK_LITE_HORIZONTAL_OFFSETS, PUCK_LITE_VERTICAL_OFFSETS, VLP_16_AZIMUTH_OFFSETS,
-        VLP_16_ELEVAION_DEGREES, VLP_16_HORIZONTAL_OFFSETS, VLP_16_VERTICAL_OFFSETS,
-        VLP_32C_AZIMUTH_OFFSETS, VLP_32C_ELEVAION_DEGREES, VLP_32C_HORIZONTAL_OFFSETS,
-        VLP_32C_VERTICAL_OFFSETS,
-    },
+    consts,
     marker::{
         DualReturn, DynamicModel, DynamicReturn, LastReturn, ModelMarker, ReturnTypeMarker,
         StrongestReturn, Vlp16, Vlp32,
@@ -22,6 +15,7 @@ pub use param_config::*;
 pub use params::*;
 
 mod config_ {
+
     use super::*;
 
     /// Config type for Velodyne LiDARs.
@@ -83,7 +77,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: vlp_16_laser_params(),
-                distance_resolution: Length::new::<millimeter>(VLP_16_DISTANCE_RESOLUTION_MILLIS),
+                distance_resolution: *consts::VLP_16_DISTANCE_RESOLUTION,
                 return_type: LastReturn,
             }
         }
@@ -92,9 +86,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_hires_laser_params(),
-                distance_resolution: Length::new::<millimeter>(
-                    PUCK_HIRES_DISTANCE_RESOLUTION_MILLIS,
-                ),
+                distance_resolution: *consts::PUCK_HIRES_DISTANCE_RESOLUTION,
                 return_type: LastReturn,
             }
         }
@@ -103,9 +95,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_lite_laser_params(),
-                distance_resolution: Length::new::<millimeter>(
-                    PUCK_LITE_DISTANCE_RESOLUTION_MILLIS,
-                ),
+                distance_resolution: *consts::PUCK_LITE_DISTANCE_RESOLUTION,
                 return_type: LastReturn,
             }
         }
@@ -116,7 +106,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: vlp_16_laser_params(),
-                distance_resolution: Length::new::<millimeter>(VLP_16_DISTANCE_RESOLUTION_MILLIS),
+                distance_resolution: *consts::VLP_16_DISTANCE_RESOLUTION,
                 return_type: StrongestReturn,
             }
         }
@@ -125,9 +115,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_hires_laser_params(),
-                distance_resolution: Length::new::<millimeter>(
-                    PUCK_HIRES_DISTANCE_RESOLUTION_MILLIS,
-                ),
+                distance_resolution: *consts::PUCK_HIRES_DISTANCE_RESOLUTION,
                 return_type: StrongestReturn,
             }
         }
@@ -136,9 +124,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_lite_laser_params(),
-                distance_resolution: Length::new::<millimeter>(
-                    PUCK_LITE_DISTANCE_RESOLUTION_MILLIS,
-                ),
+                distance_resolution: *consts::PUCK_LITE_DISTANCE_RESOLUTION,
                 return_type: StrongestReturn,
             }
         }
@@ -149,7 +135,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: vlp_16_laser_params(),
-                distance_resolution: Length::new::<millimeter>(VLP_16_DISTANCE_RESOLUTION_MILLIS),
+                distance_resolution: *consts::VLP_16_DISTANCE_RESOLUTION,
                 return_type: DualReturn,
             }
         }
@@ -158,9 +144,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_hires_laser_params(),
-                distance_resolution: Length::new::<millimeter>(
-                    PUCK_HIRES_DISTANCE_RESOLUTION_MILLIS,
-                ),
+                distance_resolution: *consts::PUCK_HIRES_DISTANCE_RESOLUTION,
                 return_type: DualReturn,
             }
         }
@@ -169,9 +153,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_lite_laser_params(),
-                distance_resolution: Length::new::<millimeter>(
-                    PUCK_LITE_DISTANCE_RESOLUTION_MILLIS,
-                ),
+                distance_resolution: *consts::PUCK_LITE_DISTANCE_RESOLUTION,
                 return_type: DualReturn,
             }
         }
@@ -182,7 +164,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: vlp_16_laser_params(),
-                distance_resolution: Length::new::<millimeter>(VLP_16_DISTANCE_RESOLUTION_MILLIS),
+                distance_resolution: *consts::VLP_16_DISTANCE_RESOLUTION,
                 return_type: DynamicReturn::from(return_mode),
             }
         }
@@ -191,9 +173,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_hires_laser_params(),
-                distance_resolution: Length::new::<millimeter>(
-                    PUCK_HIRES_DISTANCE_RESOLUTION_MILLIS,
-                ),
+                distance_resolution: *consts::PUCK_HIRES_DISTANCE_RESOLUTION,
                 return_type: DynamicReturn::from(return_mode),
             }
         }
@@ -202,9 +182,7 @@ mod config_ {
             Config {
                 model: Vlp16,
                 lasers: puck_lite_laser_params(),
-                distance_resolution: Length::new::<millimeter>(
-                    PUCK_LITE_DISTANCE_RESOLUTION_MILLIS,
-                ),
+                distance_resolution: *consts::PUCK_LITE_DISTANCE_RESOLUTION,
                 return_type: DynamicReturn::from(return_mode),
             }
         }
@@ -215,7 +193,7 @@ mod config_ {
             Config {
                 model: Vlp32,
                 lasers: vlp_32c_laser_params(),
-                distance_resolution: Length::new::<millimeter>(VLP_32C_DISTANCE_RESOLUTION_MILLIS),
+                distance_resolution: *consts::VLP_32C_DISTANCE_RESOLUTION,
                 return_type: LastReturn,
             }
         }
@@ -226,7 +204,7 @@ mod config_ {
             Config {
                 model: Vlp32,
                 lasers: vlp_32c_laser_params(),
-                distance_resolution: Length::new::<millimeter>(VLP_32C_DISTANCE_RESOLUTION_MILLIS),
+                distance_resolution: *consts::VLP_32C_DISTANCE_RESOLUTION,
                 return_type: StrongestReturn,
             }
         }
@@ -237,7 +215,7 @@ mod config_ {
             Config {
                 model: Vlp32,
                 lasers: vlp_32c_laser_params(),
-                distance_resolution: Length::new::<millimeter>(VLP_32C_DISTANCE_RESOLUTION_MILLIS),
+                distance_resolution: *consts::VLP_32C_DISTANCE_RESOLUTION,
                 return_type: DualReturn,
             }
         }
@@ -248,7 +226,7 @@ mod config_ {
             Config {
                 model: Vlp32,
                 lasers: vlp_32c_laser_params(),
-                distance_resolution: Length::new::<millimeter>(VLP_32C_DISTANCE_RESOLUTION_MILLIS),
+                distance_resolution: *consts::VLP_32C_DISTANCE_RESOLUTION,
                 return_type: DynamicReturn::from(return_mode),
             }
         }
@@ -266,28 +244,23 @@ mod params {
         pub horizontal_offset: Length,
     }
 
-    pub const VLP_16_DISTANCE_RESOLUTION_MILLIS: f64 = 2.0;
-    pub const PUCK_HIRES_DISTANCE_RESOLUTION_MILLIS: f64 = 2.0;
-    pub const PUCK_LITE_DISTANCE_RESOLUTION_MILLIS: f64 = 2.0;
-    pub const VLP_32C_DISTANCE_RESOLUTION_MILLIS: f64 = 4.0;
-
     pub fn vlp_16_laser_params() -> [LaserParameter; 16] {
         let mut params: [MaybeUninit<LaserParameter>; 16] =
             unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
             params.iter_mut(),
-            VLP_16_ELEVAION_DEGREES.iter(),
-            VLP_16_VERTICAL_OFFSETS.iter(),
-            VLP_16_HORIZONTAL_OFFSETS.iter(),
-            VLP_16_AZIMUTH_OFFSETS.iter(),
+            consts::VLP_16_ELEVAION_DEGREES.iter(),
+            consts::VLP_16_VERTICAL_OFFSETS.iter(),
+            consts::VLP_16_HORIZONTAL_OFFSETS.iter(),
+            consts::VLP_16_AZIMUTH_OFFSETS.iter(),
         )
         .for_each(
             |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
                 *param = MaybeUninit::new(LaserParameter {
-                    elevation_angle: Angle::new::<degree>(elevation_angle),
-                    vertical_offset: Length::new::<millimeter>(vertical_offset),
-                    horizontal_offset: Length::new::<millimeter>(horizontal_offset),
-                    azimuth_offset: Angle::new::<degree>(azimuth_offset),
+                    elevation_angle: Angle::from_degrees(elevation_angle),
+                    vertical_offset: Length::from_millimeters(vertical_offset),
+                    horizontal_offset: Length::from_millimeters(horizontal_offset),
+                    azimuth_offset: Angle::from_degrees(azimuth_offset),
                 });
             },
         );
@@ -300,18 +273,18 @@ mod params {
             unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
             params.iter_mut(),
-            PUCK_HIRES_ELEVAION_DEGREES.iter(),
-            PUCK_HIRES_VERTICAL_OFFSETS.iter(),
-            PUCK_HIRES_HORIZONTAL_OFFSETS.iter(),
-            PUCK_HIRES_AZIMUTH_OFFSETS.iter(),
+            consts::PUCK_HIRES_ELEVAION_DEGREES.iter(),
+            consts::PUCK_HIRES_VERTICAL_OFFSETS.iter(),
+            consts::PUCK_HIRES_HORIZONTAL_OFFSETS.iter(),
+            consts::PUCK_HIRES_AZIMUTH_OFFSETS.iter(),
         )
         .for_each(
             |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
                 *param = MaybeUninit::new(LaserParameter {
-                    elevation_angle: Angle::new::<degree>(elevation_angle),
-                    vertical_offset: Length::new::<millimeter>(vertical_offset),
-                    horizontal_offset: Length::new::<millimeter>(horizontal_offset),
-                    azimuth_offset: Angle::new::<degree>(azimuth_offset),
+                    elevation_angle: Angle::from_degrees(elevation_angle),
+                    vertical_offset: Length::from_millimeters(vertical_offset),
+                    horizontal_offset: Length::from_millimeters(horizontal_offset),
+                    azimuth_offset: Angle::from_degrees(azimuth_offset),
                 });
             },
         );
@@ -324,18 +297,18 @@ mod params {
             unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
             params.iter_mut(),
-            PUCK_LITE_ELEVAION_DEGREES.iter(),
-            PUCK_LITE_VERTICAL_OFFSETS.iter(),
-            PUCK_LITE_HORIZONTAL_OFFSETS.iter(),
-            PUCK_LITE_AZIMUTH_OFFSETS.iter(),
+            consts::PUCK_LITE_ELEVAION_DEGREES.iter(),
+            consts::PUCK_LITE_VERTICAL_OFFSETS.iter(),
+            consts::PUCK_LITE_HORIZONTAL_OFFSETS.iter(),
+            consts::PUCK_LITE_AZIMUTH_OFFSETS.iter(),
         )
         .for_each(
             |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
                 *param = MaybeUninit::new(LaserParameter {
-                    elevation_angle: Angle::new::<degree>(elevation_angle),
-                    vertical_offset: Length::new::<millimeter>(vertical_offset),
-                    horizontal_offset: Length::new::<millimeter>(horizontal_offset),
-                    azimuth_offset: Angle::new::<degree>(azimuth_offset),
+                    elevation_angle: Angle::from_degrees(elevation_angle),
+                    vertical_offset: Length::from_millimeters(vertical_offset),
+                    horizontal_offset: Length::from_millimeters(horizontal_offset),
+                    azimuth_offset: Angle::from_degrees(azimuth_offset),
                 });
             },
         );
@@ -348,18 +321,18 @@ mod params {
             unsafe { MaybeUninit::uninit().assume_init() };
         izip!(
             params.iter_mut(),
-            VLP_32C_ELEVAION_DEGREES.iter(),
-            VLP_32C_VERTICAL_OFFSETS.iter(),
-            VLP_32C_HORIZONTAL_OFFSETS.iter(),
-            VLP_32C_AZIMUTH_OFFSETS.iter(),
+            consts::VLP_32C_ELEVAION_DEGREES.iter(),
+            consts::VLP_32C_VERTICAL_OFFSETS.iter(),
+            consts::VLP_32C_HORIZONTAL_OFFSETS.iter(),
+            consts::VLP_32C_AZIMUTH_OFFSETS.iter(),
         )
         .for_each(
             |(param, &elevation_angle, &vertical_offset, &horizontal_offset, &azimuth_offset)| {
                 *param = MaybeUninit::new(LaserParameter {
-                    elevation_angle: Angle::new::<degree>(elevation_angle),
-                    vertical_offset: Length::new::<millimeter>(vertical_offset),
-                    horizontal_offset: Length::new::<millimeter>(horizontal_offset),
-                    azimuth_offset: Angle::new::<degree>(azimuth_offset),
+                    elevation_angle: Angle::from_degrees(elevation_angle),
+                    vertical_offset: Length::from_millimeters(vertical_offset),
+                    horizontal_offset: Length::from_millimeters(horizontal_offset),
+                    azimuth_offset: Angle::from_degrees(azimuth_offset),
                 });
             },
         );

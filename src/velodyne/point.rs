@@ -10,7 +10,7 @@ pub use single_return_point::*;
 
 pub trait VelodynePoint {
     fn laser_id(&self) -> u32;
-    fn timestamp(&self) -> Time;
+    fn timestamp(&self) -> Duration;
     fn original_azimuth_angle(&self) -> Angle;
     fn corrected_azimuth_angle(&self) -> Angle;
 }
@@ -60,7 +60,7 @@ mod single_return_point {
     #[derive(Debug, Clone, Copy)]
     pub struct SingleReturnPoint {
         pub laser_id: u32,
-        pub timestamp: Time,
+        pub timestamp: Duration,
         pub original_azimuth_angle: Angle,
         pub corrected_azimuth_angle: Angle,
         pub data: PointData,
@@ -72,7 +72,7 @@ mod single_return_point {
             self.laser_id
         }
 
-        fn timestamp(&self) -> Time {
+        fn timestamp(&self) -> Duration {
             self.timestamp
         }
 
@@ -108,7 +108,7 @@ mod dual_return_point {
     #[derive(Debug, Clone, Copy)]
     pub struct DualReturnPoint {
         pub laser_id: u32,
-        pub timestamp: Time,
+        pub timestamp: Duration,
         pub original_azimuth_angle: Angle,
         pub corrected_azimuth_angle: Angle,
         pub strongest_return_data: PointData,
@@ -175,7 +175,7 @@ mod dual_return_point {
             self.laser_id
         }
 
-        fn timestamp(&self) -> Time {
+        fn timestamp(&self) -> Duration {
             self.timestamp
         }
 
@@ -323,7 +323,7 @@ mod dynamic_return_points {
             }
         }
 
-        pub fn timestamp(&self) -> Time {
+        pub fn timestamp(&self) -> Duration {
             match self {
                 Self::Single(point) => point.timestamp,
                 Self::Dual(point) => point.timestamp,

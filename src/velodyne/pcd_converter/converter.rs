@@ -41,8 +41,8 @@ mod definition {
 
     #[derive(Debug)]
     pub(crate) enum LastBlock {
-        Single(Option<(Time, Block)>),
-        Dual(Option<(Time, Block, Block)>),
+        Single(Option<(Duration, Block)>),
+        Dual(Option<(Duration, Block, Block)>),
     }
 
     impl LastBlock {
@@ -53,14 +53,14 @@ mod definition {
             }
         }
 
-        pub fn single(&mut self) -> &mut Option<(Time, Block)> {
+        pub fn single(&mut self) -> &mut Option<(Duration, Block)> {
             match self {
                 Self::Single(last_block) => last_block,
                 _ => unreachable!(),
             }
         }
 
-        pub fn dual(&mut self) -> &mut Option<(Time, Block, Block)> {
+        pub fn dual(&mut self) -> &mut Option<(Duration, Block, Block)> {
             match self {
                 Self::Dual(last_block) => last_block,
                 _ => unreachable!(),
@@ -83,7 +83,7 @@ mod definition {
     pub struct Vlp16_Strongest_PcdConverter {
         pub(crate) lasers: [LaserParameter; 16],
         pub(crate) distance_resolution: Length,
-        pub(crate) last_block: Option<(Time, Block)>,
+        pub(crate) last_block: Option<(Duration, Block)>,
     }
 
     #[derive(Debug)]
@@ -91,7 +91,7 @@ mod definition {
     pub struct Vlp16_Last_PcdConverter {
         pub(crate) lasers: [LaserParameter; 16],
         pub(crate) distance_resolution: Length,
-        pub(crate) last_block: Option<(Time, Block)>,
+        pub(crate) last_block: Option<(Duration, Block)>,
     }
 
     #[derive(Debug)]
@@ -99,7 +99,7 @@ mod definition {
     pub struct Vlp16_Dual_PcdConverter {
         pub(crate) lasers: [LaserParameter; 16],
         pub(crate) distance_resolution: Length,
-        pub(crate) last_block: Option<(Time, Block, Block)>,
+        pub(crate) last_block: Option<(Duration, Block, Block)>,
     }
 
     #[derive(Debug)]
@@ -116,7 +116,7 @@ mod definition {
     pub struct Vlp32_Strongest_PcdConverter {
         pub(crate) lasers: [LaserParameter; 32],
         pub(crate) distance_resolution: Length,
-        pub(crate) last_block: Option<(Time, Block)>,
+        pub(crate) last_block: Option<(Duration, Block)>,
     }
 
     #[derive(Debug)]
@@ -124,7 +124,7 @@ mod definition {
     pub struct Vlp32_Last_PcdConverter {
         pub(crate) lasers: [LaserParameter; 32],
         pub(crate) distance_resolution: Length,
-        pub(crate) last_block: Option<(Time, Block)>,
+        pub(crate) last_block: Option<(Duration, Block)>,
     }
 
     #[derive(Debug)]
@@ -132,7 +132,7 @@ mod definition {
     pub struct Vlp32_Dual_PcdConverter {
         pub(crate) lasers: [LaserParameter; 32],
         pub(crate) distance_resolution: Length,
-        pub(crate) last_block: Option<(Time, Block, Block)>,
+        pub(crate) last_block: Option<(Duration, Block, Block)>,
     }
 
     #[derive(Debug)]

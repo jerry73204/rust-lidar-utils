@@ -2,6 +2,7 @@ pub use anyhow::{bail, ensure, format_err, Error, Result};
 pub use chrono::NaiveDateTime;
 pub use derivative::Derivative;
 pub use itertools::{chain, izip};
+pub use measurements::{Angle, Length};
 pub use noisy_float::types::R64;
 pub use num_traits::{Float, Num};
 pub use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -21,13 +22,4 @@ pub use std::{
     path::Path,
     str::FromStr,
     time::Duration,
-};
-pub use uom::{
-    si::{
-        angle::{degree, radian},
-        f64::{Angle, Length, Ratio, Time},
-        length::millimeter,
-        time::{microsecond, nanosecond},
-    },
-    Conversion,
 };
