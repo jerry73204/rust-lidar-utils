@@ -76,9 +76,7 @@ pub(crate) fn convert_single_return_16_channel(
     last_block: &mut Option<SingleState>,
     packet: &DataPacket,
 ) -> Vec<SingleReturnPoint> {
-    debug_assert!(
-        [ReturnMode::StrongestReturn, ReturnMode::LastReturn].contains(&packet.return_mode)
-    );
+    debug_assert!([ReturnMode::Strongest, ReturnMode::Last].contains(&packet.return_mode));
 
     // consts
     let block_period = FIRING_PERIOD.mul_f64(2.0);
@@ -127,7 +125,7 @@ pub(crate) fn convert_dual_return_16_channel(
     last_block: &mut Option<DualState>,
     packet: &DataPacket,
 ) -> Vec<DualReturnPoint> {
-    debug_assert_eq!(packet.return_mode, ReturnMode::DualReturn);
+    debug_assert_eq!(packet.return_mode, ReturnMode::Dual);
 
     // consts
     let block_period = FIRING_PERIOD.mul_f64(2.0);
@@ -237,9 +235,7 @@ pub(crate) fn convert_single_return_32_channel(
     last_block: &mut Option<SingleState>,
     packet: &DataPacket,
 ) -> Vec<SingleReturnPoint> {
-    debug_assert!(
-        [ReturnMode::StrongestReturn, ReturnMode::LastReturn].contains(&packet.return_mode)
-    );
+    debug_assert!([ReturnMode::Strongest, ReturnMode::Last].contains(&packet.return_mode));
 
     // consts
     let block_period = FIRING_PERIOD;
@@ -286,7 +282,7 @@ pub(crate) fn convert_dual_return_32_channel(
     last_block: &mut Option<DualState>,
     packet: &DataPacket,
 ) -> Vec<DualReturnPoint> {
-    debug_assert_eq!(packet.return_mode, ReturnMode::DualReturn);
+    debug_assert_eq!(packet.return_mode, ReturnMode::Dual);
 
     // consts
     let block_period = FIRING_PERIOD;

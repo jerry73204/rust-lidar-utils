@@ -113,7 +113,7 @@ mod s_type {
         {
             let packet = packet.borrow();
             ensure!(
-                packet.return_mode == ReturnMode::StrongestReturn,
+                packet.return_mode == ReturnMode::Strongest,
                 "return mode does not match"
             );
 
@@ -137,7 +137,7 @@ mod s_type {
         {
             let packet = packet.borrow();
             ensure!(
-                packet.return_mode == ReturnMode::LastReturn,
+                packet.return_mode == ReturnMode::Last,
                 "return mode does not match"
             );
 
@@ -161,7 +161,7 @@ mod s_type {
         {
             let packet = packet.borrow();
             ensure!(
-                packet.return_mode == ReturnMode::DualReturn,
+                packet.return_mode == ReturnMode::Dual,
                 "return mode does not match"
             );
 
@@ -187,7 +187,7 @@ mod s_type {
         {
             let packet = packet.borrow();
             ensure!(
-                packet.return_mode == ReturnMode::StrongestReturn,
+                packet.return_mode == ReturnMode::Strongest,
                 "return mode does not match"
             );
 
@@ -211,7 +211,7 @@ mod s_type {
         {
             let packet = packet.borrow();
             ensure!(
-                packet.return_mode == ReturnMode::LastReturn,
+                packet.return_mode == ReturnMode::Last,
                 "return mode does not match"
             );
 
@@ -235,7 +235,7 @@ mod s_type {
         {
             let packet = packet.borrow();
             ensure!(
-                packet.return_mode == ReturnMode::DualReturn,
+                packet.return_mode == ReturnMode::Dual,
                 "return mode does not match"
             );
 
@@ -261,7 +261,7 @@ mod s_type {
         {
             let packet = packet.borrow();
             ensure!(
-                packet.return_mode == ReturnMode::StrongestReturn,
+                packet.return_mode == ReturnMode::Strongest,
                 "return mode does not match"
             );
 
@@ -285,7 +285,7 @@ mod s_type {
         {
             let packet = packet.borrow();
             ensure!(
-                packet.return_mode == ReturnMode::LastReturn,
+                packet.return_mode == ReturnMode::Last,
                 "return mode does not match"
             );
 
@@ -309,7 +309,7 @@ mod s_type {
         {
             let packet = packet.borrow();
             ensure!(
-                packet.return_mode == ReturnMode::DualReturn,
+                packet.return_mode == ReturnMode::Dual,
                 "return mode does not match"
             );
 
@@ -335,7 +335,7 @@ mod s_type {
         {
             let packet = packet.borrow();
             ensure!(
-                packet.return_mode == ReturnMode::StrongestReturn,
+                packet.return_mode == ReturnMode::Strongest,
                 "return mode does not match"
             );
 
@@ -359,7 +359,7 @@ mod s_type {
         {
             let packet = packet.borrow();
             ensure!(
-                packet.return_mode == ReturnMode::LastReturn,
+                packet.return_mode == ReturnMode::Last,
                 "return mode does not match"
             );
 
@@ -383,7 +383,7 @@ mod s_type {
         {
             let packet = packet.borrow();
             ensure!(
-                packet.return_mode == ReturnMode::DualReturn,
+                packet.return_mode == ReturnMode::Dual,
                 "return mode does not match"
             );
 
@@ -420,8 +420,8 @@ mod d_type {
             use ReturnMode as R;
 
             let last_block = match config.return_mode {
-                R::StrongestReturn | R::LastReturn => DynState::Single(None),
-                R::DualReturn => DynState::Dual(None),
+                R::Strongest | R::Last => DynState::Single(None),
+                R::Dual => DynState::Dual(None),
             };
 
             Self { config, last_block }
@@ -445,7 +445,7 @@ mod d_type {
             let packet = packet.borrow();
 
             let output = match (self.config.product_id, self.config.return_mode) {
-                (M::VLP16 | M::PuckLite | M::PuckHiRes, R::StrongestReturn | R::LastReturn) => {
+                (M::VLP16 | M::PuckLite | M::PuckHiRes, R::Strongest | R::Last) => {
                     impls::convert_single_return_16_channel(
                         self.config.lasers.as_slice().try_into().unwrap(),
                         self.config.distance_resolution(),
@@ -454,7 +454,7 @@ mod d_type {
                     )
                     .into()
                 }
-                (M::VLP16 | M::PuckLite | M::PuckHiRes, R::DualReturn) => {
+                (M::VLP16 | M::PuckLite | M::PuckHiRes, R::Dual) => {
                     impls::convert_dual_return_16_channel(
                         self.config.lasers.as_slice().try_into().unwrap(),
                         self.config.distance_resolution(),
@@ -463,7 +463,7 @@ mod d_type {
                     )
                     .into()
                 }
-                (M::VLP32C, R::StrongestReturn | R::LastReturn) => {
+                (M::VLP32C, R::Strongest | R::Last) => {
                     impls::convert_single_return_32_channel(
                         self.config.lasers.as_slice().try_into().unwrap(),
                         self.config.distance_resolution(),
@@ -472,7 +472,7 @@ mod d_type {
                     )
                     .into()
                 }
-                (M::VLP32C, R::DualReturn) => impls::convert_dual_return_32_channel(
+                (M::VLP32C, R::Dual) => impls::convert_dual_return_32_channel(
                     self.config.lasers.as_slice().try_into().unwrap(),
                     self.config.distance_resolution(),
                     self.last_block.assume_dual(),

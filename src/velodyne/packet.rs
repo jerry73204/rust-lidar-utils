@@ -20,9 +20,9 @@ mod data_packet {
     #[repr(u8)]
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub enum ReturnMode {
-        StrongestReturn = 0x37,
-        LastReturn = 0x38,
-        DualReturn = 0x39,
+        Strongest = 0x37,
+        Last = 0x38,
+        Dual = 0x39,
     }
 
     /// Represents the hardware model.
@@ -140,7 +140,7 @@ mod data_packet {
             use ReturnMode as R;
 
             ensure!(
-                [R::StrongestReturn, R::LastReturn].contains(&self.return_mode),
+                [R::Strongest, R::Last].contains(&self.return_mode),
                 "expect strongest or last return mode, but get dual mode"
             );
             ensure!([P::VLP16, P::PuckLite, P::PuckHiRes].contains(&self.product_id));
@@ -205,7 +205,7 @@ mod data_packet {
             use ReturnMode as R;
 
             ensure!(
-                self.return_mode == R::DualReturn,
+                self.return_mode == R::Dual,
                 "expect dual mode, but get {:?}",
                 self.return_mode
             );
@@ -292,7 +292,7 @@ mod data_packet {
             use ReturnMode as R;
 
             ensure!(
-                [R::StrongestReturn, R::LastReturn].contains(&self.return_mode),
+                [R::Strongest, R::Last].contains(&self.return_mode),
                 "expect strongest or last return mode, but get dual mode"
             );
             ensure!([P::HDL32E, P::VLP32C].contains(&self.product_id));
@@ -342,7 +342,7 @@ mod data_packet {
             use ReturnMode as R;
 
             ensure!(
-                self.return_mode == R::DualReturn,
+                self.return_mode == R::Dual,
                 "expect dual mode, but get {:?}",
                 self.return_mode
             );

@@ -320,7 +320,7 @@ mod return_mode_marker {
 
     impl ReturnModeMarker for StrongestReturn {
         fn return_mode() -> ReturnMode {
-            ReturnMode::StrongestReturn
+            ReturnMode::Strongest
         }
     }
 
@@ -331,7 +331,7 @@ mod return_mode_marker {
 
     impl ReturnModeMarker for LastReturn {
         fn return_mode() -> ReturnMode {
-            ReturnMode::LastReturn
+            ReturnMode::Last
         }
     }
 
@@ -342,7 +342,7 @@ mod return_mode_marker {
 
     impl ReturnModeMarker for DualReturn {
         fn return_mode() -> ReturnMode {
-            ReturnMode::DualReturn
+            ReturnMode::Dual
         }
     }
 }

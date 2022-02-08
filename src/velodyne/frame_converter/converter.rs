@@ -270,10 +270,10 @@ mod d_type {
     impl DFrameConverter {
         pub fn from_config(config: DConfig) -> Self {
             let state = match config.return_mode {
-                ReturnMode::StrongestReturn | ReturnMode::LastReturn => {
+                ReturnMode::Strongest | ReturnMode::Last => {
                     DynamicReturnPoints::Single(vec![])
                 }
-                ReturnMode::DualReturn => DynamicReturnPoints::Dual(vec![]),
+                ReturnMode::Dual => DynamicReturnPoints::Dual(vec![]),
             };
 
             Self {
