@@ -49,16 +49,57 @@ impl LidarFrameMsg for LidarFrameEntry {
     }
 }
 
-pub use point::*;
-mod point {
+pub use point_::*;
+mod point_ {
     use super::*;
 
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct SinglePoint2 {
+    pub struct PointSingle {
         pub laser_id: usize,
         pub time: Duration,
         pub azimuth: Angle,
         pub measurement: Measurement,
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct PointDual {
+        pub laser_id: usize,
+        pub time: Duration,
+        pub azimuth: Angle,
+        pub measurement_strongest: Measurement,
+        pub measurement_last: Measurement,
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct FiringXyzSingle16 {
+        pub time: Duration,
+        pub azimuth_count: u16,
+        pub azimuth_range: Range<Angle>,
+        pub points: [PointSingle; 16],
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct FiringXyzSingle32 {
+        pub time: Duration,
+        pub azimuth_count: u16,
+        pub azimuth_range: Range<Angle>,
+        pub points: [PointSingle; 32],
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct FiringXyzDual16 {
+        pub time: Duration,
+        pub azimuth_count: u16,
+        pub azimuth_range: Range<Angle>,
+        pub points: [PointDual; 16],
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct FiringXyzDual32 {
+        pub time: Duration,
+        pub azimuth_count: u16,
+        pub azimuth_range: Range<Angle>,
+        pub points: [PointDual; 32],
     }
 }
 
