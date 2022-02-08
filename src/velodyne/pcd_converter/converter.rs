@@ -463,15 +463,13 @@ mod d_type {
                     )
                     .into()
                 }
-                (M::VLP32C, R::Strongest | R::Last) => {
-                    impls::convert_single_return_32_channel(
-                        self.config.lasers.as_slice().try_into().unwrap(),
-                        self.config.distance_resolution(),
-                        self.last_block.assume_single(),
-                        packet,
-                    )
-                    .into()
-                }
+                (M::VLP32C, R::Strongest | R::Last) => impls::convert_single_return_32_channel(
+                    self.config.lasers.as_slice().try_into().unwrap(),
+                    self.config.distance_resolution(),
+                    self.last_block.assume_single(),
+                    packet,
+                )
+                .into(),
                 (M::VLP32C, R::Dual) => impls::convert_dual_return_32_channel(
                     self.config.lasers.as_slice().try_into().unwrap(),
                     self.config.distance_resolution(),

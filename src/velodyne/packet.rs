@@ -133,17 +133,54 @@ mod data_packet {
             Duration::from_micros(self.timestamp as u64)
         }
 
-        pub fn single_16_firings(
-            &self,
-        ) -> Result<impl Iterator<Item = SingleFiring16<'_>> + Clone> {
-            use ProductID as P;
-            use ReturnMode as R;
+        pub fn firing_format(&self) -> Option<FiringFormat> {
+            use FiringFormat::*;
+            use ProductID::*;
+            use ReturnMode::*;
 
-            ensure!(
-                [R::Strongest, R::Last].contains(&self.return_mode),
-                "expect strongest or last return mode, but get dual mode"
-            );
-            ensure!([P::VLP16, P::PuckLite, P::PuckHiRes].contains(&self.product_id));
+            Some(match (self.product_id, self.return_mode) {
+                (HDL32E | VLP32C, Strongest | Last) => Single32,
+                (HDL32E | VLP32C, Dual) => Dual32,
+                (VLP16 | PuckLite | PuckHiRes, Strongest | Last) => Single16,
+                (VLP16 | PuckLite | PuckHiRes, Dual) => Dual16,
+                (Velarray, Strongest | Last) => return None,
+                (Velarray, Dual) => return None,
+                (VLS128, Strongest | Last) => return None,
+                (VLS128, Dual) => return None,
+            })
+        }
+
+        pub fn firings(
+            &self,
+        ) -> Option<
+            Firings<
+                '_,
+                impl Iterator<Item = SingleFiring16<'_>> + Clone,
+                impl Iterator<Item = DualFiring16<'_>> + Clone,
+                impl Iterator<Item = SingleFiring32<'_>> + Clone,
+                impl Iterator<Item = DualFiring32<'_>> + Clone,
+            >,
+        > {
+            use FiringFormat::*;
+            use Firings as F;
+
+            Some(match self.firing_format()? {
+                Single16 => F::Single16(self.single_16_firings()),
+                Dual16 => F::Dual16(self.dual_16_firings()),
+                Single32 => F::Single32(self.single_32_firings()),
+                Dual32 => F::Dual32(self.dual_32_firings()),
+            })
+        }
+
+        pub fn single_16_firings(&self) -> impl Iterator<Item = SingleFiring16<'_>> + Clone {
+            // use ProductID as P;
+            // use ReturnMode as R;
+
+            // ensure!(
+            //     [R::Strongest, R::Last].contains(&self.return_mode),
+            //     "expect strongest or last return mode, but get dual mode"
+            // );
+            // ensure!([P::VLP16, P::PuckLite, P::PuckHiRes].contains(&self.product_id));
 
             let block_period = FIRING_PERIOD.mul_f64(2.0);
             let times = iter::successors(Some(self.time()), move |prev| Some(*prev + block_period));
@@ -197,19 +234,19 @@ mod data_packet {
                 },
             );
 
-            Ok(iter)
+            iter
         }
 
-        pub fn dual_16_firings(&self) -> Result<impl Iterator<Item = DualFiring16<'_>> + Clone> {
-            use ProductID as P;
-            use ReturnMode as R;
+        pub fn dual_16_firings(&self) -> impl Iterator<Item = DualFiring16<'_>> + Clone {
+            // use ProductID as P;
+            // use ReturnMode as R;
 
-            ensure!(
-                self.return_mode == R::Dual,
-                "expect dual mode, but get {:?}",
-                self.return_mode
-            );
-            ensure!([P::VLP16, P::PuckLite, P::PuckHiRes].contains(&self.product_id));
+            // ensure!(
+            //     self.return_mode == R::Dual,
+            //     "expect dual mode, but get {:?}",
+            //     self.return_mode
+            // );
+            // ensure!([P::VLP16, P::PuckLite, P::PuckHiRes].contains(&self.product_id));
 
             let block_period = FIRING_PERIOD.mul_f64(2.0);
             let times = iter::successors(Some(self.time()), move |prev| Some(*prev + block_period));
@@ -282,20 +319,18 @@ mod data_packet {
                 },
             );
 
-            Ok(firings)
+            firings
         }
 
-        pub fn single_32_firings(
-            &self,
-        ) -> Result<impl Iterator<Item = SingleFiring32<'_>> + Clone> {
-            use ProductID as P;
-            use ReturnMode as R;
+        pub fn single_32_firings(&self) -> impl Iterator<Item = SingleFiring32<'_>> + Clone {
+            // use ProductID as P;
+            // use ReturnMode as R;
 
-            ensure!(
-                [R::Strongest, R::Last].contains(&self.return_mode),
-                "expect strongest or last return mode, but get dual mode"
-            );
-            ensure!([P::HDL32E, P::VLP32C].contains(&self.product_id));
+            // ensure!(
+            //     [R::Strongest, R::Last].contains(&self.return_mode),
+            //     "expect strongest or last return mode, but get dual mode"
+            // );
+            // ensure!([P::HDL32E, P::VLP32C].contains(&self.product_id));
 
             let times =
                 iter::successors(Some(self.time()), move |prev| Some(*prev + FIRING_PERIOD));
@@ -334,19 +369,19 @@ mod data_packet {
                 },
             );
 
-            Ok(iter)
+            iter
         }
 
-        pub fn dual_32_firings(&self) -> Result<impl Iterator<Item = DualFiring32<'_>> + Clone> {
-            use ProductID as P;
-            use ReturnMode as R;
+        pub fn dual_32_firings(&self) -> impl Iterator<Item = DualFiring32<'_>> + Clone {
+            // use ProductID as P;
+            // use ReturnMode as R;
 
-            ensure!(
-                self.return_mode == R::Dual,
-                "expect dual mode, but get {:?}",
-                self.return_mode
-            );
-            ensure!([P::HDL32E, P::VLP32C].contains(&self.product_id));
+            // ensure!(
+            //     self.return_mode == R::Dual,
+            //     "expect dual mode, but get {:?}",
+            //     self.return_mode
+            // );
+            // ensure!([P::HDL32E, P::VLP32C].contains(&self.product_id));
 
             let times =
                 iter::successors(Some(self.time()), move |prev| Some(*prev + FIRING_PERIOD));
@@ -391,7 +426,7 @@ mod data_packet {
                 },
             );
 
-            Ok(iter)
+            iter
         }
     }
 }
@@ -494,9 +529,82 @@ mod position_packet {
     }
 }
 
-pub(crate) use firing::*;
+pub use firing::*;
 mod firing {
     use super::*;
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    pub enum FiringFormat {
+        Single16,
+        Dual16,
+        Single32,
+        Dual32,
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub enum Firings<'a, A, B, C, D>
+    where
+        A: Iterator<Item = SingleFiring16<'a>> + Clone,
+        B: Iterator<Item = DualFiring16<'a>> + Clone,
+        C: Iterator<Item = SingleFiring32<'a>> + Clone,
+        D: Iterator<Item = DualFiring32<'a>> + Clone,
+    {
+        Single16(A),
+        Dual16(B),
+        Single32(C),
+        Dual32(D),
+    }
+
+    impl<'a, A, B, C, D> Iterator for Firings<'a, A, B, C, D>
+    where
+        A: Iterator<Item = SingleFiring16<'a>> + Clone,
+        B: Iterator<Item = DualFiring16<'a>> + Clone,
+        C: Iterator<Item = SingleFiring32<'a>> + Clone,
+        D: Iterator<Item = DualFiring32<'a>> + Clone,
+    {
+        type Item = Firing<'a>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            Some(match self {
+                Firings::Single16(iter) => iter.next()?.into(),
+                Firings::Dual16(iter) => iter.next()?.into(),
+                Firings::Single32(iter) => iter.next()?.into(),
+                Firings::Dual32(iter) => iter.next()?.into(),
+            })
+        }
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub enum Firing<'a> {
+        Single16(SingleFiring16<'a>),
+        Dual16(DualFiring16<'a>),
+        Single32(SingleFiring32<'a>),
+        Dual32(DualFiring32<'a>),
+    }
+
+    impl<'a> From<DualFiring32<'a>> for Firing<'a> {
+        fn from(v: DualFiring32<'a>) -> Self {
+            Self::Dual32(v)
+        }
+    }
+
+    impl<'a> From<SingleFiring32<'a>> for Firing<'a> {
+        fn from(v: SingleFiring32<'a>) -> Self {
+            Self::Single32(v)
+        }
+    }
+
+    impl<'a> From<DualFiring16<'a>> for Firing<'a> {
+        fn from(v: DualFiring16<'a>) -> Self {
+            Self::Dual16(v)
+        }
+    }
+
+    impl<'a> From<SingleFiring16<'a>> for Firing<'a> {
+        fn from(v: SingleFiring16<'a>) -> Self {
+            Self::Single16(v)
+        }
+    }
 
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct SingleFiring16<'a> {
