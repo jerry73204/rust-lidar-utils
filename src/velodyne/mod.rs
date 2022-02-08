@@ -17,6 +17,9 @@ pub use pcd_converter::*;
 pub mod point;
 pub use point::*;
 
+mod functions;
+pub use functions::*;
+
 // pub mod prelude {
 //     pub use super::{pcd_converter::PointCloudConverter, point::VelodynePoint};
 // }

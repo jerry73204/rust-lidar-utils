@@ -457,7 +457,7 @@ mod params {
 
     #[derive(Debug, Clone)]
     pub struct LaserParameter {
-        pub elevation_angle: Angle,
+        pub elevation: Angle,
         pub azimuth_offset: Angle,
         pub vertical_offset: Length,
         pub horizontal_offset: Length,
@@ -475,9 +475,9 @@ mod params {
                 consts::vlp_16::AZIMUTH_OFFSETS,
             )
             .for_each(
-                |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
+                |(param, elevation, vertical_offset, horizontal_offset, azimuth_offset)| {
                     *param = MaybeUninit::new(LaserParameter {
-                        elevation_angle: Angle::from_degrees(elevation_angle),
+                        elevation: Angle::from_degrees(elevation),
                         vertical_offset: Length::from_millimeters(vertical_offset),
                         horizontal_offset: Length::from_millimeters(horizontal_offset),
                         azimuth_offset: Angle::from_degrees(azimuth_offset),
@@ -499,9 +499,9 @@ mod params {
                 consts::puck_hires::AZIMUTH_OFFSETS,
             )
             .for_each(
-                |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
+                |(param, elevation, vertical_offset, horizontal_offset, azimuth_offset)| {
                     *param = MaybeUninit::new(LaserParameter {
-                        elevation_angle: Angle::from_degrees(elevation_angle),
+                        elevation: Angle::from_degrees(elevation),
                         vertical_offset: Length::from_millimeters(vertical_offset),
                         horizontal_offset: Length::from_millimeters(horizontal_offset),
                         azimuth_offset: Angle::from_degrees(azimuth_offset),
@@ -523,9 +523,9 @@ mod params {
                 consts::puck_lite::AZIMUTH_OFFSETS,
             )
             .for_each(
-                |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
+                |(param, elevation, vertical_offset, horizontal_offset, azimuth_offset)| {
                     *param = MaybeUninit::new(LaserParameter {
-                        elevation_angle: Angle::from_degrees(elevation_angle),
+                        elevation: Angle::from_degrees(elevation),
                         vertical_offset: Length::from_millimeters(vertical_offset),
                         horizontal_offset: Length::from_millimeters(horizontal_offset),
                         azimuth_offset: Angle::from_degrees(azimuth_offset),
@@ -547,9 +547,9 @@ mod params {
                 consts::vlp_32c::AZIMUTH_OFFSETS,
             )
             .for_each(
-                |(param, elevation_angle, vertical_offset, horizontal_offset, azimuth_offset)| {
+                |(param, elevation, vertical_offset, horizontal_offset, azimuth_offset)| {
                     *param = MaybeUninit::new(LaserParameter {
-                        elevation_angle: Angle::from_degrees(elevation_angle),
+                        elevation: Angle::from_degrees(elevation),
                         vertical_offset: Length::from_millimeters(vertical_offset),
                         horizontal_offset: Length::from_millimeters(horizontal_offset),
                         azimuth_offset: Angle::from_degrees(azimuth_offset),
