@@ -8,7 +8,7 @@ use crate::{
         },
         packet::DataPacket,
         pcd_converter::{DPcdConverter, DualPcdConverter, SinglePcdConverter},
-        point::{DualPoint, DynamicReturnFrame, DPoints, SinglePoint},
+        point::{DPoints, DualPoint, DynamicReturnFrame, SinglePoint},
         PcdConverter, ReturnMode, PUCK_HIRES, PUCK_LITE, VLP_16, VLP_32C,
     },
 };
@@ -320,7 +320,7 @@ mod definitions {
     #[derive(Debug, Clone)]
     pub struct PcdFrame<P>
     where
-        P: Copy + Clone,
+        P: Clone,
     {
         pub height: usize,
         pub width: usize,
@@ -329,7 +329,7 @@ mod definitions {
 
     impl<P> PcdFrame<P>
     where
-        P: Copy,
+        P: Clone,
     {
         pub fn point_at(&self, rol_idx: usize, col_idx: usize) -> Result<&P> {
             Ok(&self.data[col_idx * self.height + rol_idx])

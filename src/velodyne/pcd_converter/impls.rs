@@ -7,20 +7,10 @@ use crate::{
         config::LaserParameter,
         consts::{self, CHANNEL_PERIOD, FIRING_PERIOD},
         packet::{Block, Channel, DataPacket, ReturnMode},
-        point::{DualPoint, LidarFrameEntry, Measurement, SinglePoint},
+        point::{DualPoint, LidarFrameEntry, Measurement, SinglePoint, SinglePoint2},
         SingleFiring16, SingleFiring32,
     },
 };
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Point {
-    pub laser_id: usize,
-    pub time: Duration,
-    pub azimuth: Angle,
-    pub distance: Length,
-    pub intensity: u8,
-    pub xyz: [Length; 3],
-}
 
 #[derive(Debug, Clone)]
 struct FiringInfo<'a> {
@@ -484,7 +474,7 @@ where
                     data: Measurement {
                         distance,
                         intensity: channel.intensity,
-                        position,
+                        xyz: position,
                     },
                     lidar_frame_entry: LidarFrameEntry {
                         row_idx: std::usize::MIN,
@@ -501,7 +491,7 @@ pub(crate) fn single_16_firing_to_xyz_points<'a>(
     lasers: &[LaserParameter; 16],
     distance_resolution: Length,
     firing: &SingleFiring16<'a>,
-) -> [Point; 16] {
+) -> [SinglePoint2; 16] {
     let SingleFiring16 {
         time: firing_time,
         ref azimuth_range,
@@ -537,13 +527,15 @@ pub(crate) fn single_16_firing_to_xyz_points<'a>(
                 horizontal_offset,
             );
 
-            Point {
+            SinglePoint2 {
                 laser_id,
                 time: channel_time,
                 azimuth,
-                distance,
-                intensity: channel.intensity,
-                xyz,
+                measurement: Measurement {
+                    distance,
+                    intensity: channel.intensity,
+                    xyz,
+                },
             }
         })
         .collect();
@@ -555,7 +547,7 @@ pub(crate) fn single_32_firing_to_xyz_points<'a>(
     lasers: &[LaserParameter; 32],
     distance_resolution: Length,
     firing: &SingleFiring32<'a>,
-) -> [Point; 32] {
+) -> [SinglePoint2; 32] {
     let SingleFiring32 {
         time: firing_time,
         ref azimuth_range,
@@ -594,13 +586,15 @@ pub(crate) fn single_32_firing_to_xyz_points<'a>(
                 horizontal_offset,
             );
 
-            Point {
+            SinglePoint2 {
                 laser_id,
                 time: channel_time,
                 azimuth,
-                distance,
-                intensity: channel.intensity,
-                xyz,
+                measurement: Measurement {
+                    distance,
+                    intensity: channel.intensity,
+                    xyz,
+                },
             }
         })
         .collect();
@@ -691,7 +685,7 @@ where
                     data: Measurement {
                         distance,
                         intensity: channel.intensity,
-                        position,
+                        xyz: position,
                     },
                     lidar_frame_entry: LidarFrameEntry {
                         row_idx: std::usize::MIN,

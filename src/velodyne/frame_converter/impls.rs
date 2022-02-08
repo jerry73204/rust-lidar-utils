@@ -4,10 +4,7 @@ use crate::{
         config::{ModelMarker, ReturnModeMarker},
         packet::DataPacket,
         pcd_converter::{DPcdConverter, DualPcdConverter, PcdConverter, SinglePcdConverter},
-        point::{
-            DualPoint, DynamicReturnFrame, DPoints, SinglePoint,
-            VelodynePoint,
-        },
+        point::{DPoints, DualPoint, DynamicReturnFrame, SinglePoint, VelodynePoint},
         LidarFrameMsg, PcdFrame,
     },
 };
@@ -56,10 +53,7 @@ pub(crate) fn convert_dynamic_return(
 ) -> Option<DynamicReturnFrame> {
     let new_points = pcd_converter.convert(packet).unwrap();
     match (remaining_points, new_points) {
-        (
-            DPoints::Single(remaining_points),
-            DPoints::Single(new_points),
-        ) => {
+        (DPoints::Single(remaining_points), DPoints::Single(new_points)) => {
             let points = remaining_points.drain(..).chain(new_points.into_iter());
             let (frame, new_remaining_points) = points_to_frames(points);
             let _ = mem::replace(remaining_points, new_remaining_points);
@@ -79,7 +73,7 @@ fn points_to_frames<Point>(
     points: impl IntoIterator<Item = Point>,
 ) -> (Option<PcdFrame<Point>>, Vec<Point>)
 where
-    Point: VelodynePoint + LidarFrameMsg + Copy,
+    Point: VelodynePoint + LidarFrameMsg + Clone,
 {
     let mut frames: Option<PcdFrame<Point>> = None;
     let mut remaining_points: Vec<Point> = vec![];

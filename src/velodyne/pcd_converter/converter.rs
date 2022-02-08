@@ -7,7 +7,7 @@ use crate::{
             StrongestReturn, PUCK_HIRES, PUCK_LITE, VLP_16,
         },
         packet::{DataPacket, ReturnMode},
-        point::{DualPoint, DPoints, SinglePoint},
+        point::{DPoints, DualPoint, SinglePoint},
         ProductID, VLP_32C,
     },
 };

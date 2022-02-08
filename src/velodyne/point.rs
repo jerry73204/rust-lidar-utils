@@ -12,11 +12,11 @@ pub trait VelodynePoint {
 }
 
 /// Point in strongest or last return mode.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Measurement {
     pub distance: Length,
     pub intensity: u8,
-    pub position: [Length; 3],
+    pub xyz: [Length; 3],
 }
 
 pub trait LidarFrameMsg {
@@ -49,12 +49,25 @@ impl LidarFrameMsg for LidarFrameEntry {
     }
 }
 
+pub use point::*;
+mod point {
+    use super::*;
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct SinglePoint2 {
+        pub laser_id: usize,
+        pub time: Duration,
+        pub azimuth: Angle,
+        pub measurement: Measurement,
+    }
+}
+
 pub use single_return_point::*;
 mod single_return_point {
     use super::*;
 
     /// Point in strongest or last return mode.
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone)]
     pub struct SinglePoint {
         pub laser_id: u32,
         pub timestamp: Duration,
@@ -103,7 +116,7 @@ mod dual_return_point {
     use super::*;
 
     /// Point in dual return mode.
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone)]
     pub struct DualPoint {
         pub laser_id: u32,
         pub timestamp: Duration,
@@ -230,12 +243,8 @@ mod dynamic_return_points {
 
         fn into_iter(self) -> Self::IntoIter {
             let iter: Box<dyn Iterator<Item = DPoint> + Sync + Send> = match self {
-                Self::Single(points) => {
-                    Box::new(points.data.into_iter().map(DPoint::Single))
-                }
-                Self::Dual(points) => {
-                    Box::new(points.data.into_iter().map(DPoint::Dual))
-                }
+                Self::Single(points) => Box::new(points.data.into_iter().map(DPoint::Single)),
+                Self::Dual(points) => Box::new(points.data.into_iter().map(DPoint::Dual)),
             };
             Self::IntoIter { iter }
         }
@@ -270,9 +279,7 @@ mod dynamic_return_points {
 
         fn into_iter(self) -> Self::IntoIter {
             let iter: Box<dyn Iterator<Item = DPoint> + Sync + Send> = match self {
-                Self::Single(points) => {
-                    Box::new(points.into_iter().map(DPoint::Single))
-                }
+                Self::Single(points) => Box::new(points.into_iter().map(DPoint::Single)),
                 Self::Dual(points) => Box::new(points.into_iter().map(DPoint::Dual)),
             };
             Self::IntoIter { iter }
@@ -308,7 +315,7 @@ mod dynamic_return_points {
     }
 
     /// collection of points in either single return or dual return mode.
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone)]
     pub enum DPoint {
         Single(SinglePoint),
         Dual(DualPoint),
