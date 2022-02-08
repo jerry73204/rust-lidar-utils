@@ -8,8 +8,19 @@ use crate::{
         consts::{self, CHANNEL_PERIOD, FIRING_PERIOD},
         packet::{Block, Channel, DataPacket, ReturnMode},
         point::{DualReturnPoint, LidarFrameEntry, PointData, SingleReturnPoint},
+        SingleFiring16, SingleFiring32,
     },
 };
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Point {
+    pub laser_id: usize,
+    pub time: Duration,
+    pub azimuth: Angle,
+    pub distance: Length,
+    pub intensity: u8,
+    pub xyz: [Length; 3],
+}
 
 #[derive(Debug, Clone)]
 struct FiringInfo<'a> {
@@ -488,6 +499,117 @@ where
         )
     })
     .collect()
+}
+
+pub(crate) fn single_16_firing_to_xyz_points<'a>(
+    lasers: &[LaserParameter; 16],
+    distance_resolution: Length,
+    firing: &SingleFiring16<'a>,
+) -> [Point; 16] {
+    let SingleFiring16 {
+        time: firing_time,
+        ref azimuth_range,
+        channels,
+        ..
+    } = *firing;
+
+    let channel_times = iter::successors(Some(firing_time), |&prev| Some(prev + CHANNEL_PERIOD));
+
+    let points: Vec<_> = izip!(0.., channel_times, channels, lasers)
+        .map(move |(laser_id, channel_time, channel, laser)| {
+            let ratio = (channel_time - firing_time).div_duration(FIRING_PERIOD);
+            let LaserParameter {
+                elevation_angle,
+                azimuth_offset,
+                vertical_offset,
+                horizontal_offset,
+            } = *laser;
+
+            // clockwise angle with origin points to front of sensor
+            let azimuth = {
+                let azimuth = azimuth_range.start
+                    + ((azimuth_range.end - azimuth_range.start) * ratio)
+                    + azimuth_offset;
+                azimuth.wrap_to_2pi()
+            };
+            let distance = distance_resolution * channel.distance as f64;
+            let xyz = compute_position(
+                distance,
+                elevation_angle,
+                azimuth,
+                vertical_offset,
+                horizontal_offset,
+            );
+
+            Point {
+                laser_id,
+                time: channel_time,
+                azimuth,
+                distance,
+                intensity: channel.intensity,
+                xyz,
+            }
+        })
+        .collect();
+
+    points.try_into().unwrap_or_else(|_| unreachable!())
+}
+
+pub(crate) fn single_32_firing_to_xyz_points<'a>(
+    lasers: &[LaserParameter; 32],
+    distance_resolution: Length,
+    firing: &SingleFiring32<'a>,
+) -> [Point; 32] {
+    let SingleFiring32 {
+        time: firing_time,
+        ref azimuth_range,
+        channels,
+        ..
+    } = *firing;
+
+    let channel_times = iter::successors(Some(firing_time), |&prev| Some(prev + CHANNEL_PERIOD))
+        .flat_map(|time| [time, time]);
+
+    let points: Vec<_> = izip!(0.., channel_times, channels, lasers)
+        .map(move |(laser_id, channel_time, channel, laser)| {
+            // let timestamp = lower_timestamp + CHANNEL_PERIOD.mul_f64((channel_idx / 2) as f64);
+
+            let ratio = (channel_time - firing_time).div_duration(FIRING_PERIOD);
+            let LaserParameter {
+                elevation_angle,
+                azimuth_offset,
+                vertical_offset,
+                horizontal_offset,
+            } = *laser;
+
+            // clockwise angle with origin points to front of sensor
+            let azimuth = {
+                let azimuth = azimuth_range.start
+                    + ((azimuth_range.end - azimuth_range.start) * ratio)
+                    + azimuth_offset;
+                azimuth.wrap_to_2pi()
+            };
+            let distance = distance_resolution * channel.distance as f64;
+            let xyz = compute_position(
+                distance,
+                elevation_angle,
+                azimuth,
+                vertical_offset,
+                horizontal_offset,
+            );
+
+            Point {
+                laser_id,
+                time: channel_time,
+                azimuth,
+                distance,
+                intensity: channel.intensity,
+                xyz,
+            }
+        })
+        .collect();
+
+    points.try_into().unwrap_or_else(|_| unreachable!())
 }
 
 pub(crate) fn convert_to_points_32_channel<'a, I>(
