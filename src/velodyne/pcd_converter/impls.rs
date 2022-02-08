@@ -7,7 +7,7 @@ use crate::{
         config::LaserParameter,
         consts::{self, CHANNEL_PERIOD, FIRING_PERIOD},
         packet::{Block, Channel, DataPacket, ReturnMode},
-        point::{DualReturnPoint, LidarFrameEntry, PointData, SingleReturnPoint},
+        point::{DualPoint, LidarFrameEntry, Measurement, SinglePoint},
         SingleFiring16, SingleFiring32,
     },
 };
@@ -75,7 +75,7 @@ pub(crate) fn convert_single_return_16_channel(
     distance_resolution: Length,
     last_block: &mut Option<SingleState>,
     packet: &DataPacket,
-) -> Vec<SingleReturnPoint> {
+) -> Vec<SinglePoint> {
     debug_assert!([ReturnMode::Strongest, ReturnMode::Last].contains(&packet.return_mode));
 
     // consts
@@ -124,7 +124,7 @@ pub(crate) fn convert_dual_return_16_channel(
     distance_resolution: Length,
     last_block: &mut Option<DualState>,
     packet: &DataPacket,
-) -> Vec<DualReturnPoint> {
+) -> Vec<DualPoint> {
     debug_assert_eq!(packet.return_mode, ReturnMode::Dual);
 
     // consts
@@ -224,7 +224,7 @@ pub(crate) fn convert_dual_return_16_channel(
         .into_iter()
         .zip(last_points.into_iter())
         .map(|(strongest_return_point, last_return_point)| {
-            DualReturnPoint::try_from_pair(strongest_return_point, last_return_point).unwrap()
+            DualPoint::try_from_pair(strongest_return_point, last_return_point).unwrap()
         })
         .collect()
 }
@@ -234,7 +234,7 @@ pub(crate) fn convert_single_return_32_channel(
     distance_resolution: Length,
     last_block: &mut Option<SingleState>,
     packet: &DataPacket,
-) -> Vec<SingleReturnPoint> {
+) -> Vec<SinglePoint> {
     debug_assert!([ReturnMode::Strongest, ReturnMode::Last].contains(&packet.return_mode));
 
     // consts
@@ -281,7 +281,7 @@ pub(crate) fn convert_dual_return_32_channel(
     distance_resolution: Length,
     last_block: &mut Option<DualState>,
     packet: &DataPacket,
-) -> Vec<DualReturnPoint> {
+) -> Vec<DualPoint> {
     debug_assert_eq!(packet.return_mode, ReturnMode::Dual);
 
     // consts
@@ -381,7 +381,7 @@ pub(crate) fn convert_dual_return_32_channel(
         .into_iter()
         .zip(last_points.into_iter())
         .map(|(strongest_return_point, last_return_point)| {
-            DualReturnPoint::try_from_pair(strongest_return_point, last_return_point).unwrap()
+            DualPoint::try_from_pair(strongest_return_point, last_return_point).unwrap()
         })
         .collect()
 }
@@ -390,7 +390,7 @@ pub(crate) fn convert_to_points_16_channel<'a, I>(
     lasers: &[LaserParameter; 16],
     distance_resolution: Length,
     iter: I,
-) -> Vec<SingleReturnPoint>
+) -> Vec<SinglePoint>
 where
     I: IntoIterator<Item = (Duration, &'a Block)>,
 {
@@ -476,12 +476,12 @@ where
                     *horizontal_offset,
                 );
 
-                SingleReturnPoint {
+                SinglePoint {
                     laser_id,
                     timestamp,
                     original_azimuth_angle,
                     corrected_azimuth_angle,
-                    data: PointData {
+                    data: Measurement {
                         distance,
                         intensity: channel.intensity,
                         position,
@@ -612,7 +612,7 @@ pub(crate) fn convert_to_points_32_channel<'a, I>(
     lasers: &[LaserParameter; 32],
     distance_resolution: Length,
     iter: I,
-) -> Vec<SingleReturnPoint>
+) -> Vec<SinglePoint>
 where
     I: IntoIterator<Item = (Duration, &'a Block)>,
 {
@@ -683,12 +683,12 @@ where
                     *horizontal_offset,
                 );
 
-                SingleReturnPoint {
+                SinglePoint {
                     laser_id,
                     timestamp,
                     original_azimuth_angle,
                     corrected_azimuth_angle,
-                    data: PointData {
+                    data: Measurement {
                         distance,
                         intensity: channel.intensity,
                         position,

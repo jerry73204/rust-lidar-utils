@@ -7,7 +7,7 @@ use crate::{
             StrongestReturn, PUCK_HIRES, PUCK_LITE, VLP_16,
         },
         packet::{DataPacket, ReturnMode},
-        point::{DualReturnPoint, DynamicReturnPoints, SingleReturnPoint},
+        point::{DualPoint, DPoints, SinglePoint},
         ProductID, VLP_32C,
     },
 };
@@ -105,7 +105,7 @@ mod s_type {
     // vlp 16
 
     impl PcdConverter for Vlp16_Strongest_PcdConverter {
-        type Output = Vec<SingleReturnPoint>;
+        type Output = Vec<SinglePoint>;
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
@@ -129,7 +129,7 @@ mod s_type {
     }
 
     impl PcdConverter for Vlp16_Last_PcdConverter {
-        type Output = Vec<SingleReturnPoint>;
+        type Output = Vec<SinglePoint>;
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
@@ -153,7 +153,7 @@ mod s_type {
     }
 
     impl PcdConverter for Vlp16_Dual_PcdConverter {
-        type Output = Vec<DualReturnPoint>;
+        type Output = Vec<DualPoint>;
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
@@ -179,7 +179,7 @@ mod s_type {
     // vlp 32c
 
     impl PcdConverter for Vlp32c_Strongest_PcdConverter {
-        type Output = Vec<SingleReturnPoint>;
+        type Output = Vec<SinglePoint>;
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
@@ -203,7 +203,7 @@ mod s_type {
     }
 
     impl PcdConverter for Vlp32c_Last_PcdConverter {
-        type Output = Vec<SingleReturnPoint>;
+        type Output = Vec<SinglePoint>;
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
@@ -227,7 +227,7 @@ mod s_type {
     }
 
     impl PcdConverter for Vlp32c_Dual_PcdConverter {
-        type Output = Vec<DualReturnPoint>;
+        type Output = Vec<DualPoint>;
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
@@ -253,7 +253,7 @@ mod s_type {
     // puck lite
 
     impl PcdConverter for PuckLite_Strongest_PcdConverter {
-        type Output = Vec<SingleReturnPoint>;
+        type Output = Vec<SinglePoint>;
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
@@ -277,7 +277,7 @@ mod s_type {
     }
 
     impl PcdConverter for PuckLite_Last_PcdConverter {
-        type Output = Vec<SingleReturnPoint>;
+        type Output = Vec<SinglePoint>;
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
@@ -301,7 +301,7 @@ mod s_type {
     }
 
     impl PcdConverter for PuckLite_Dual_PcdConverter {
-        type Output = Vec<DualReturnPoint>;
+        type Output = Vec<DualPoint>;
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
@@ -327,7 +327,7 @@ mod s_type {
     // puck lite
 
     impl PcdConverter for PuckHires_Strongest_PcdConverter {
-        type Output = Vec<SingleReturnPoint>;
+        type Output = Vec<SinglePoint>;
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
@@ -351,7 +351,7 @@ mod s_type {
     }
 
     impl PcdConverter for PuckHires_Last_PcdConverter {
-        type Output = Vec<SingleReturnPoint>;
+        type Output = Vec<SinglePoint>;
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
@@ -375,7 +375,7 @@ mod s_type {
     }
 
     impl PcdConverter for PuckHires_Dual_PcdConverter {
-        type Output = Vec<DualReturnPoint>;
+        type Output = Vec<DualPoint>;
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where
@@ -433,7 +433,7 @@ mod d_type {
     }
 
     impl PcdConverter for DPcdConverter {
-        type Output = DynamicReturnPoints;
+        type Output = DPoints;
 
         fn convert<P>(&mut self, packet: P) -> Result<Self::Output>
         where

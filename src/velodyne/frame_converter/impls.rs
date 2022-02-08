@@ -5,7 +5,7 @@ use crate::{
         packet::DataPacket,
         pcd_converter::{DPcdConverter, DualPcdConverter, PcdConverter, SinglePcdConverter},
         point::{
-            DualReturnPoint, DynamicReturnFrame, DynamicReturnPoints, SingleReturnPoint,
+            DualPoint, DynamicReturnFrame, DPoints, SinglePoint,
             VelodynePoint,
         },
         LidarFrameMsg, PcdFrame,
@@ -14,13 +14,13 @@ use crate::{
 
 pub(crate) fn convert_single_return<Model, Return>(
     pcd_converter: &mut SinglePcdConverter<Model, Return>,
-    remaining_points: &mut Vec<SingleReturnPoint>,
+    remaining_points: &mut Vec<SinglePoint>,
     packet: &DataPacket,
-) -> Option<PcdFrame<SingleReturnPoint>>
+) -> Option<PcdFrame<SinglePoint>>
 where
     Model: ModelMarker,
     Return: ReturnModeMarker,
-    SinglePcdConverter<Model, Return>: PcdConverter<Output = Vec<SingleReturnPoint>>,
+    SinglePcdConverter<Model, Return>: PcdConverter<Output = Vec<SinglePoint>>,
 {
     let points = remaining_points
         .drain(..)
@@ -33,13 +33,13 @@ where
 
 pub(crate) fn convert_dual_return<Model, Return>(
     pcd_converter: &mut DualPcdConverter<Model, Return>,
-    remaining_points: &mut Vec<DualReturnPoint>,
+    remaining_points: &mut Vec<DualPoint>,
     packet: &DataPacket,
-) -> Option<PcdFrame<DualReturnPoint>>
+) -> Option<PcdFrame<DualPoint>>
 where
     Model: ModelMarker,
     Return: ReturnModeMarker,
-    DualPcdConverter<Model, Return>: PcdConverter<Output = Vec<DualReturnPoint>>,
+    DualPcdConverter<Model, Return>: PcdConverter<Output = Vec<DualPoint>>,
 {
     let points = remaining_points
         .drain(..)
@@ -51,21 +51,21 @@ where
 
 pub(crate) fn convert_dynamic_return(
     pcd_converter: &mut DPcdConverter,
-    remaining_points: &mut DynamicReturnPoints,
+    remaining_points: &mut DPoints,
     packet: &DataPacket,
 ) -> Option<DynamicReturnFrame> {
     let new_points = pcd_converter.convert(packet).unwrap();
     match (remaining_points, new_points) {
         (
-            DynamicReturnPoints::Single(remaining_points),
-            DynamicReturnPoints::Single(new_points),
+            DPoints::Single(remaining_points),
+            DPoints::Single(new_points),
         ) => {
             let points = remaining_points.drain(..).chain(new_points.into_iter());
             let (frame, new_remaining_points) = points_to_frames(points);
             let _ = mem::replace(remaining_points, new_remaining_points);
             frame.map(DynamicReturnFrame::Single)
         }
-        (DynamicReturnPoints::Dual(remaining_points), DynamicReturnPoints::Dual(new_points)) => {
+        (DPoints::Dual(remaining_points), DPoints::Dual(new_points)) => {
             let points = remaining_points.drain(..).chain(new_points.into_iter());
             let (frame, new_remaining_points) = points_to_frames(points);
             let _ = mem::replace(remaining_points, new_remaining_points);

@@ -13,7 +13,7 @@ pub trait VelodynePoint {
 
 /// Point in strongest or last return mode.
 #[derive(Debug, Clone, Copy)]
-pub struct PointData {
+pub struct Measurement {
     pub distance: Length,
     pub intensity: u8,
     pub position: [Length; 3],
@@ -55,16 +55,16 @@ mod single_return_point {
 
     /// Point in strongest or last return mode.
     #[derive(Debug, Clone, Copy)]
-    pub struct SingleReturnPoint {
+    pub struct SinglePoint {
         pub laser_id: u32,
         pub timestamp: Duration,
         pub original_azimuth_angle: Angle,
         pub corrected_azimuth_angle: Angle,
-        pub data: PointData,
+        pub data: Measurement,
         pub lidar_frame_entry: LidarFrameEntry,
     }
 
-    impl VelodynePoint for SingleReturnPoint {
+    impl VelodynePoint for SinglePoint {
         fn laser_id(&self) -> u32 {
             self.laser_id
         }
@@ -82,7 +82,7 @@ mod single_return_point {
         }
     }
 
-    impl LidarFrameMsg for SingleReturnPoint {
+    impl LidarFrameMsg for SinglePoint {
         fn set_row_idx(&mut self, id: usize) {
             self.lidar_frame_entry.row_idx = id;
         }
@@ -104,22 +104,22 @@ mod dual_return_point {
 
     /// Point in dual return mode.
     #[derive(Debug, Clone, Copy)]
-    pub struct DualReturnPoint {
+    pub struct DualPoint {
         pub laser_id: u32,
         pub timestamp: Duration,
         pub original_azimuth_angle: Angle,
         pub corrected_azimuth_angle: Angle,
-        pub strongest_return_data: PointData,
-        pub last_return_data: PointData,
+        pub strongest_return_data: Measurement,
+        pub last_return_data: Measurement,
         pub lidar_frame_entry: LidarFrameEntry,
     }
 
-    impl DualReturnPoint {
+    impl DualPoint {
         pub fn try_from_pair(
-            strongest_return_point: SingleReturnPoint,
-            last_return_point: SingleReturnPoint,
+            strongest_return_point: SinglePoint,
+            last_return_point: SinglePoint,
         ) -> Result<Self> {
-            let SingleReturnPoint {
+            let SinglePoint {
                 laser_id: laser_id_strongest,
                 timestamp: timestamp_strongest,
                 original_azimuth_angle: original_azimuth_angle_strongest,
@@ -128,7 +128,7 @@ mod dual_return_point {
                 ..
             } = strongest_return_point;
 
-            let SingleReturnPoint {
+            let SinglePoint {
                 laser_id: laser_id_last,
                 timestamp: timestamp_last,
                 original_azimuth_angle: original_azimuth_angle_last,
@@ -154,7 +154,7 @@ mod dual_return_point {
                 "corrected azimuth angle does not match"
             );
 
-            let dual_return_point = DualReturnPoint {
+            let dual_return_point = DualPoint {
                 laser_id: laser_id_strongest,
                 timestamp: timestamp_strongest,
                 original_azimuth_angle: original_azimuth_angle_strongest,
@@ -168,7 +168,7 @@ mod dual_return_point {
         }
     }
 
-    impl VelodynePoint for DualReturnPoint {
+    impl VelodynePoint for DualPoint {
         fn laser_id(&self) -> u32 {
             self.laser_id
         }
@@ -186,7 +186,7 @@ mod dual_return_point {
         }
     }
 
-    impl LidarFrameMsg for DualReturnPoint {
+    impl LidarFrameMsg for DualPoint {
         fn set_row_idx(&mut self, id: usize) {
             self.lidar_frame_entry.row_idx = id;
         }
@@ -211,8 +211,8 @@ mod dynamic_return_points {
     // Convert dynamic return points to frame
     #[derive(Debug, Clone)]
     pub enum DynamicReturnFrame {
-        Single(PcdFrame<SingleReturnPoint>),
-        Dual(PcdFrame<DualReturnPoint>),
+        Single(PcdFrame<SinglePoint>),
+        Dual(PcdFrame<DualPoint>),
     }
 
     impl DynamicReturnFrame {
@@ -225,16 +225,16 @@ mod dynamic_return_points {
     }
 
     impl IntoIterator for DynamicReturnFrame {
-        type Item = DynamicReturnPoint;
-        type IntoIter = DynamicReturnPointsIter;
+        type Item = DPoint;
+        type IntoIter = DPointsIter;
 
         fn into_iter(self) -> Self::IntoIter {
-            let iter: Box<dyn Iterator<Item = DynamicReturnPoint> + Sync + Send> = match self {
+            let iter: Box<dyn Iterator<Item = DPoint> + Sync + Send> = match self {
                 Self::Single(points) => {
-                    Box::new(points.data.into_iter().map(DynamicReturnPoint::Single))
+                    Box::new(points.data.into_iter().map(DPoint::Single))
                 }
                 Self::Dual(points) => {
-                    Box::new(points.data.into_iter().map(DynamicReturnPoint::Dual))
+                    Box::new(points.data.into_iter().map(DPoint::Dual))
                 }
             };
             Self::IntoIter { iter }
@@ -243,12 +243,12 @@ mod dynamic_return_points {
 
     /// Collection of points in either single return or dual return mode.
     #[derive(Debug, Clone)]
-    pub enum DynamicReturnPoints {
-        Single(Vec<SingleReturnPoint>),
-        Dual(Vec<DualReturnPoint>),
+    pub enum DPoints {
+        Single(Vec<SinglePoint>),
+        Dual(Vec<DualPoint>),
     }
 
-    impl DynamicReturnPoints {
+    impl DPoints {
         pub fn is_empty(&self) -> bool {
             match self {
                 Self::Single(points) => points.is_empty(),
@@ -264,29 +264,29 @@ mod dynamic_return_points {
         // }
     }
 
-    impl IntoIterator for DynamicReturnPoints {
-        type Item = DynamicReturnPoint;
-        type IntoIter = DynamicReturnPointsIter;
+    impl IntoIterator for DPoints {
+        type Item = DPoint;
+        type IntoIter = DPointsIter;
 
         fn into_iter(self) -> Self::IntoIter {
-            let iter: Box<dyn Iterator<Item = DynamicReturnPoint> + Sync + Send> = match self {
+            let iter: Box<dyn Iterator<Item = DPoint> + Sync + Send> = match self {
                 Self::Single(points) => {
-                    Box::new(points.into_iter().map(DynamicReturnPoint::Single))
+                    Box::new(points.into_iter().map(DPoint::Single))
                 }
-                Self::Dual(points) => Box::new(points.into_iter().map(DynamicReturnPoint::Dual)),
+                Self::Dual(points) => Box::new(points.into_iter().map(DPoint::Dual)),
             };
             Self::IntoIter { iter }
         }
     }
 
-    impl From<Vec<SingleReturnPoint>> for DynamicReturnPoints {
-        fn from(points: Vec<SingleReturnPoint>) -> Self {
+    impl From<Vec<SinglePoint>> for DPoints {
+        fn from(points: Vec<SinglePoint>) -> Self {
             Self::Single(points)
         }
     }
 
-    impl From<Vec<DualReturnPoint>> for DynamicReturnPoints {
-        fn from(points: Vec<DualReturnPoint>) -> Self {
+    impl From<Vec<DualPoint>> for DPoints {
+        fn from(points: Vec<DualPoint>) -> Self {
             Self::Dual(points)
         }
     }
@@ -294,13 +294,13 @@ mod dynamic_return_points {
     /// Collection of points in either single return or dual return mode.
     #[derive(Derivative)]
     #[derivative(Debug)]
-    pub struct DynamicReturnPointsIter {
+    pub struct DPointsIter {
         #[derivative(Debug = "ignore")]
-        iter: Box<dyn Iterator<Item = DynamicReturnPoint> + Sync + Send>,
+        iter: Box<dyn Iterator<Item = DPoint> + Sync + Send>,
     }
 
-    impl Iterator for DynamicReturnPointsIter {
-        type Item = DynamicReturnPoint;
+    impl Iterator for DPointsIter {
+        type Item = DPoint;
 
         fn next(&mut self) -> Option<Self::Item> {
             self.iter.next()
@@ -309,12 +309,12 @@ mod dynamic_return_points {
 
     /// collection of points in either single return or dual return mode.
     #[derive(Debug, Clone, Copy)]
-    pub enum DynamicReturnPoint {
-        Single(SingleReturnPoint),
-        Dual(DualReturnPoint),
+    pub enum DPoint {
+        Single(SinglePoint),
+        Dual(DualPoint),
     }
 
-    impl DynamicReturnPoint {
+    impl DPoint {
         pub fn laser_id(&self) -> u32 {
             match self {
                 Self::Single(point) => point.laser_id,

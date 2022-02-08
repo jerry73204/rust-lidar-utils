@@ -8,7 +8,7 @@ use crate::{
         },
         packet::DataPacket,
         pcd_converter::{DPcdConverter, DualPcdConverter, SinglePcdConverter},
-        point::{DualReturnPoint, DynamicReturnFrame, DynamicReturnPoints, SingleReturnPoint},
+        point::{DualPoint, DynamicReturnFrame, DPoints, SinglePoint},
         PcdConverter, ReturnMode, PUCK_HIRES, PUCK_LITE, VLP_16, VLP_32C,
     },
 };
@@ -39,7 +39,7 @@ mod s_type {
         SinglePcdConverter<Model, Return>: PcdConverter,
     {
         pub(crate) pcd_converter: SinglePcdConverter<Model, Return>,
-        pub(crate) state: Vec<SingleReturnPoint>,
+        pub(crate) state: Vec<SinglePoint>,
     }
 
     pub struct DualFrameConverter<Model, Return>
@@ -50,7 +50,7 @@ mod s_type {
         DualPcdConverter<Model, Return>: PcdConverter,
     {
         pub(crate) pcd_converter: DualPcdConverter<Model, Return>,
-        pub(crate) state: Vec<DualReturnPoint>,
+        pub(crate) state: Vec<DualPoint>,
     }
 
     // aliases
@@ -103,8 +103,8 @@ mod s_type {
     }
 
     impl FrameConverter for Vlp16_Last_FrameConverter {
-        type Output = PcdFrame<SingleReturnPoint>;
-        type State = Vec<SingleReturnPoint>;
+        type Output = PcdFrame<SinglePoint>;
+        type State = Vec<SinglePoint>;
 
         fn convert<P>(&mut self, packet: P) -> Option<Self::Output>
         where
@@ -128,8 +128,8 @@ mod s_type {
     }
 
     impl FrameConverter for Vlp16_Strongest_FrameConverter {
-        type Output = PcdFrame<SingleReturnPoint>;
-        type State = Vec<SingleReturnPoint>;
+        type Output = PcdFrame<SinglePoint>;
+        type State = Vec<SinglePoint>;
 
         fn convert<P>(&mut self, packet: P) -> Option<Self::Output>
         where
@@ -153,8 +153,8 @@ mod s_type {
     }
 
     impl FrameConverter for Vlp16_Dual_FrameConverter {
-        type Output = PcdFrame<DualReturnPoint>;
-        type State = Vec<DualReturnPoint>;
+        type Output = PcdFrame<DualPoint>;
+        type State = Vec<DualPoint>;
 
         fn convert<P>(&mut self, packet: P) -> Option<Self::Output>
         where
@@ -178,8 +178,8 @@ mod s_type {
     }
 
     impl FrameConverter for Vlp32c_Last_FrameConverter {
-        type Output = PcdFrame<SingleReturnPoint>;
-        type State = Vec<SingleReturnPoint>;
+        type Output = PcdFrame<SinglePoint>;
+        type State = Vec<SinglePoint>;
 
         fn convert<P>(&mut self, packet: P) -> Option<Self::Output>
         where
@@ -203,8 +203,8 @@ mod s_type {
     }
 
     impl FrameConverter for Vlp32c_Strongest_FrameConverter {
-        type Output = PcdFrame<SingleReturnPoint>;
-        type State = Vec<SingleReturnPoint>;
+        type Output = PcdFrame<SinglePoint>;
+        type State = Vec<SinglePoint>;
 
         fn convert<P>(&mut self, packet: P) -> Option<Self::Output>
         where
@@ -228,8 +228,8 @@ mod s_type {
     }
 
     impl FrameConverter for Vlp32c_Dual_FrameConverter {
-        type Output = PcdFrame<DualReturnPoint>;
-        type State = Vec<DualReturnPoint>;
+        type Output = PcdFrame<DualPoint>;
+        type State = Vec<DualPoint>;
 
         fn convert<P>(&mut self, packet: P) -> Option<Self::Output>
         where
@@ -270,10 +270,8 @@ mod d_type {
     impl DFrameConverter {
         pub fn from_config(config: DConfig) -> Self {
             let state = match config.return_mode {
-                ReturnMode::Strongest | ReturnMode::Last => {
-                    DynamicReturnPoints::Single(vec![])
-                }
-                ReturnMode::Dual => DynamicReturnPoints::Dual(vec![]),
+                ReturnMode::Strongest | ReturnMode::Last => DPoints::Single(vec![]),
+                ReturnMode::Dual => DPoints::Dual(vec![]),
             };
 
             Self {
@@ -285,7 +283,7 @@ mod d_type {
 
     impl FrameConverter for DFrameConverter {
         type Output = DynamicReturnFrame;
-        type State = DynamicReturnPoints;
+        type State = DPoints;
 
         fn convert<P>(&mut self, packet: P) -> Option<Self::Output>
         where
@@ -301,14 +299,14 @@ mod d_type {
 
         fn pop_remaining(&mut self) -> Option<Self::State> {
             match &mut self.state {
-                DynamicReturnPoints::Single(points) => {
+                DPoints::Single(points) => {
                     let points = mem::take(points);
 
-                    (!points.is_empty()).then(|| DynamicReturnPoints::Single(points))
+                    (!points.is_empty()).then(|| DPoints::Single(points))
                 }
-                DynamicReturnPoints::Dual(points) => {
+                DPoints::Dual(points) => {
                     let points = mem::take(points);
-                    (!points.is_empty()).then(|| DynamicReturnPoints::Dual(points))
+                    (!points.is_empty()).then(|| DPoints::Dual(points))
                 }
             }
         }
