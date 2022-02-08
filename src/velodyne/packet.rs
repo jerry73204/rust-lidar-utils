@@ -89,24 +89,8 @@ mod data_packet {
     }
 
     impl DataPacket {
-        /// Construct packet from [pcap::Packet](pcap::Packet).
-        #[cfg(feature = "pcap")]
-        pub fn from_pcap(packet: &pcap::Packet) -> Result<Self> {
-            let packet_header_size = 42;
-
-            let body_size = packet.header.len as usize - packet_header_size;
-            ensure!(
-                body_size == mem::size_of::<Self>(),
-                "Input pcap packet is not a valid Velodyne Lidar packet",
-            );
-
-            let mut buffer = Box::new([0u8; mem::size_of::<Self>()]);
-            buffer.copy_from_slice(&packet.data[packet_header_size..]);
-            Ok(Self::from_buffer(*buffer))
-        }
-
         /// Construct packet from binary buffer.
-        pub fn from_buffer(buffer: [u8; mem::size_of::<Self>()]) -> Self {
+        pub fn from_bytes(buffer: [u8; mem::size_of::<Self>()]) -> Self {
             unsafe { mem::transmute::<_, Self>(buffer) }
         }
 
@@ -456,24 +440,8 @@ mod position_packet {
     }
 
     impl PositionPacket {
-        /// Construct packet from [pcap::Packet](pcap::Packet).
-        #[cfg(feature = "pcap")]
-        pub fn from_pcap(packet: &pcap::Packet) -> Result<Self> {
-            let packet_header_size = 42;
-
-            let body_size = packet.header.len as usize - packet_header_size;
-            ensure!(
-                body_size == mem::size_of::<Self>(),
-                "Input pcap packet is not a valid Velodyne Lidar packet",
-            );
-
-            let mut buffer = Box::new([0u8; mem::size_of::<Self>()]);
-            buffer.copy_from_slice(&packet.data[packet_header_size..]);
-            Ok(Self::from_buffer(*buffer))
-        }
-
         /// Construct packet from binary buffer.
-        pub fn from_buffer(buffer: [u8; mem::size_of::<Self>()]) -> Self {
+        pub fn from_bytes(buffer: [u8; mem::size_of::<Self>()]) -> Self {
             unsafe { mem::transmute::<_, Self>(buffer) }
         }
 

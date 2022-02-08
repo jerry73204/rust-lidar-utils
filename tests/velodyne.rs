@@ -1,30 +1,26 @@
 use anyhow::{ensure, Result};
 use itertools::izip;
-use lidar_utils::velodyne::{
-    self, consts, DataPacket, FrameConverter, PcdConverter, PositionPacket,
-};
-
+use lidar_utils::velodyne::{self, consts, DataPacket, FrameConverter, PcdConverter};
 use pcap::Capture;
-use std::mem;
 
 const UDP_HEADER_SIZE: usize = 42;
 
 #[test]
-#[cfg(feature = "pcap")]
 fn velodyne_vlp_16_pcap_file() -> Result<()> {
     let mut cap = Capture::from_file("test_files/velodyne_vlp16.pcap")?;
     cap.filter("udp", true)?;
 
-    let mut data_packets = vec![];
-    let mut position_packets = vec![];
+    let data_packets: Vec<_> = itertools::unfold(cap, |cap| {
+        Some(loop {
+            let packet = cap.next().ok()?;
+            let slice = &packet.data[UDP_HEADER_SIZE..];
 
-    while let Ok(packet) = cap.next() {
-        if packet.data.len() == mem::size_of::<DataPacket>() + UDP_HEADER_SIZE {
-            data_packets.push(DataPacket::from_pcap(&packet)?);
-        } else if packet.data.len() == mem::size_of::<PositionPacket>() + UDP_HEADER_SIZE {
-            position_packets.push(PositionPacket::from_pcap(&packet)?);
-        }
-    }
+            if let Ok(packet) = DataPacket::from_slice(slice) {
+                break *packet;
+            }
+        })
+    })
+    .collect();
 
     // timestamp test
     {
@@ -90,21 +86,21 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
 }
 
 #[test]
-#[cfg(feature = "pcap")]
 fn velodyne_vlp_32_pcap_file() -> Result<()> {
     let mut cap = Capture::from_file("test_files/velodyne_vlp32.pcap")?;
     cap.filter("udp", true)?;
 
-    let mut data_packets = vec![];
-    let mut position_packets = vec![];
+    let data_packets: Vec<_> = itertools::unfold(cap, |cap| {
+        Some(loop {
+            let packet = cap.next().ok()?;
+            let slice = &packet.data[UDP_HEADER_SIZE..];
 
-    while let Ok(packet) = cap.next() {
-        if packet.data.len() == mem::size_of::<DataPacket>() + UDP_HEADER_SIZE {
-            data_packets.push(DataPacket::from_pcap(&packet)?);
-        } else if packet.data.len() == mem::size_of::<PositionPacket>() + UDP_HEADER_SIZE {
-            position_packets.push(PositionPacket::from_pcap(&packet)?);
-        }
-    }
+            if let Ok(packet) = DataPacket::from_slice(slice) {
+                break *packet;
+            }
+        })
+    })
+    .collect();
 
     // timestamp test
     {

@@ -19,7 +19,6 @@ serde-big-array = "0.3.2"
 chrono = "0.4.19"
 derivative = "2.2.0"
 itertools = "0.10.3"
-pcap = { version = "0.9.1", optional = true }
 num-traits = "0.2.14"
 noisy_float = { version = "0.2.0", features = ["serde"] }
 measurements = "0.11.0"
@@ -31,11 +30,10 @@ pcap = "0.9.1"
 toml = "0.5.8"
 
 [features]
-default = ["pcap"]
-all-tests = ["ouster-client-test", "pcap"]
+default = []
+all-tests = ["ouster-client-test"]
 ouster-client-test = []
-docs-only = ["pcap/docs-rs"]
 
-[package.metadata.docs.rs]
-features = ["pcap", "docs-only"]
-no-default-features = true
+# [package.metadata.docs.rs]
+# features = ["pcap", "docs-only"]
+# no-default-features = true

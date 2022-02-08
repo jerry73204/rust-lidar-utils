@@ -5,22 +5,27 @@ use lidar_utils::ouster::{
 };
 use pcap::Capture;
 
-#[test]
-#[cfg(feature = "pcap")]
-fn ouster_create_packet() -> Result<()> {
-    let mut packets = vec![];
+const UDP_HEADER_SIZE: usize = 42;
 
+#[test]
+fn ouster_create_packet() -> Result<()> {
     let mut cap = Capture::from_file("test_files/ouster_example.pcap")?;
     cap.filter("udp", true)?;
 
-    while let Ok(packet) = cap.next() {
-        let lidar_packet = OusterPacket::from_pcap(&packet)?;
-        packets.push(lidar_packet);
-    }
+    let packets: Vec<_> = itertools::unfold(cap, |cap| {
+        Some(loop {
+            let packet = cap.next().ok()?;
+            let slice = &packet.data[UDP_HEADER_SIZE..];
+            if let Ok(packet) = OusterPacket::from_slice(slice) {
+                break *packet;
+            }
+        })
+    })
+    .collect();
 
     let mut prev_timestamp = None;
 
-    for packet in packets.iter() {
+    for packet in &packets {
         let timestamp = packet.columns[0].timestamp;
         if let Some(prev) = prev_timestamp {
             assert!(timestamp > prev, "packets are not ordered by timestsamp");
@@ -32,7 +37,6 @@ fn ouster_create_packet() -> Result<()> {
 }
 
 #[test]
-#[cfg(feature = "pcap")]
 fn ouster_pcd_converter() -> Result<()> {
     // Load config
     let config = Config::from_path("test_files/ouster_example.json")?;
@@ -43,7 +47,8 @@ fn ouster_pcd_converter() -> Result<()> {
     cap.filter("udp", true)?;
 
     while let Ok(packet) = cap.next() {
-        let lidar_packet = OusterPacket::from_pcap(&packet)?;
+        let slice = &packet.data[UDP_HEADER_SIZE..];
+        let lidar_packet = OusterPacket::from_slice(slice)?;
         let points = pcd_converter.convert(lidar_packet)?;
         assert!(points.len() as u16 == pcd_converter.columns_per_revolution());
     }
@@ -52,7 +57,6 @@ fn ouster_pcd_converter() -> Result<()> {
 }
 
 #[test]
-#[cfg(feature = "pcap")]
 fn ouster_frame_converter() -> Result<()> {
     // Load config
     let config = Config::from_path("test_files/ouster_example.json")?;
@@ -65,7 +69,8 @@ fn ouster_frame_converter() -> Result<()> {
     let mut frames = vec![];
 
     while let Ok(packet) = cap.next() {
-        let lidar_packet = OusterPacket::from_pcap(&packet)?;
+        let slice = &packet.data[UDP_HEADER_SIZE..];
+        let lidar_packet = OusterPacket::from_slice(slice)?;
         let new_frames = frame_converter.push_packet(&lidar_packet)?;
         frames.extend(new_frames);
     }
