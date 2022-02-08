@@ -516,6 +516,42 @@ mod firing {
         pub channels_last: &'a [Channel; 16],
     }
 
+    impl<'a> DualFiring16<'a> {
+        pub fn strongest_part(&self) -> SingleFiring16<'a> {
+            let Self {
+                time,
+                ref azimuth_range,
+                block_strongest: block,
+                channels_strongest: channels,
+                ..
+            } = *self;
+
+            SingleFiring16 {
+                time,
+                azimuth_range: azimuth_range.clone(),
+                block,
+                channels,
+            }
+        }
+
+        pub fn last_part(&self) -> SingleFiring16<'a> {
+            let Self {
+                time,
+                ref azimuth_range,
+                block_last: block,
+                channels_last: channels,
+                ..
+            } = *self;
+
+            SingleFiring16 {
+                time,
+                azimuth_range: azimuth_range.clone(),
+                block,
+                channels,
+            }
+        }
+    }
+
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct SingleFiring32<'a> {
         pub time: Duration,
@@ -532,6 +568,42 @@ mod firing {
         pub block_last: &'a Block,
         pub channels_strongest: &'a [Channel; 32],
         pub channels_last: &'a [Channel; 32],
+    }
+
+    impl<'a> DualFiring32<'a> {
+        pub fn strongest_part(&self) -> SingleFiring32<'a> {
+            let Self {
+                time,
+                ref azimuth_range,
+                block_strongest: block,
+                channels_strongest: channels,
+                ..
+            } = *self;
+
+            SingleFiring32 {
+                time,
+                azimuth_range: azimuth_range.clone(),
+                block,
+                channels,
+            }
+        }
+
+        pub fn last_part(&self) -> SingleFiring32<'a> {
+            let Self {
+                time,
+                ref azimuth_range,
+                block_last: block,
+                channels_last: channels,
+                ..
+            } = *self;
+
+            SingleFiring32 {
+                time,
+                azimuth_range: azimuth_range.clone(),
+                block,
+                channels,
+            }
+        }
     }
 }
 
