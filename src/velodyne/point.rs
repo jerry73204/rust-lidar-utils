@@ -19,6 +19,32 @@ pub struct Measurement {
     pub xyz: [Length; 3],
 }
 
+/// Point in strongest or last return mode.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MeasurementDual {
+    pub strongest: Measurement,
+    pub last: Measurement,
+}
+
+/// Point in strongest or last return mode.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum MeasurementKind {
+    Single(Measurement),
+    Dual(MeasurementDual),
+}
+
+impl From<Measurement> for MeasurementKind {
+    fn from(from: Measurement) -> Self {
+        Self::Single(from)
+    }
+}
+
+impl From<MeasurementDual> for MeasurementKind {
+    fn from(from: MeasurementDual) -> Self {
+        Self::Dual(from)
+    }
+}
+
 pub trait LidarFrameMsg {
     fn set_row_idx(&mut self, id: usize);
     fn row_idx(&self) -> usize;
@@ -66,40 +92,49 @@ mod point_ {
         pub laser_id: usize,
         pub time: Duration,
         pub azimuth: Angle,
-        pub measurement_strongest: Measurement,
-        pub measurement_last: Measurement,
+        pub measurements: MeasurementDual,
     }
 
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct FiringXyzSingle16 {
+    pub struct PointKind {
+        pub laser_id: usize,
         pub time: Duration,
-        pub azimuth_count: u16,
-        pub azimuth_range: Range<Angle>,
-        pub points: [PointSingle; 16],
+        pub azimuth: Angle,
+        pub measurement: MeasurementKind,
     }
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct FiringXyzSingle32 {
-        pub time: Duration,
-        pub azimuth_count: u16,
-        pub azimuth_range: Range<Angle>,
-        pub points: [PointSingle; 32],
+    impl From<PointSingle> for PointKind {
+        fn from(from: PointSingle) -> Self {
+            let PointSingle {
+                laser_id,
+                time,
+                azimuth,
+                measurement,
+            } = from;
+            Self {
+                laser_id,
+                time,
+                azimuth,
+                measurement: measurement.into(),
+            }
+        }
     }
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct FiringXyzDual16 {
-        pub time: Duration,
-        pub azimuth_count: u16,
-        pub azimuth_range: Range<Angle>,
-        pub points: [PointDual; 16],
-    }
-
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct FiringXyzDual32 {
-        pub time: Duration,
-        pub azimuth_count: u16,
-        pub azimuth_range: Range<Angle>,
-        pub points: [PointDual; 32],
+    impl From<PointDual> for PointKind {
+        fn from(from: PointDual) -> Self {
+            let PointDual {
+                laser_id,
+                time,
+                azimuth,
+                measurements,
+            } = from;
+            Self {
+                laser_id,
+                time,
+                azimuth,
+                measurement: measurements.into(),
+            }
+        }
     }
 }
 
@@ -252,143 +287,6 @@ mod dual_return_point {
         }
         fn col_idx(&self) -> usize {
             self.lidar_frame_entry.col_idx
-        }
-    }
-}
-
-pub use dynamic_return_points::*;
-mod dynamic_return_points {
-    use crate::velodyne::PcdFrame;
-
-    use super::*;
-
-    // Convert dynamic return points to frame
-    #[derive(Debug, Clone)]
-    pub enum DynamicReturnFrame {
-        Single(PcdFrame<SinglePoint>),
-        Dual(PcdFrame<DualPoint>),
-    }
-
-    impl DynamicReturnFrame {
-        pub fn is_empty(&self) -> bool {
-            match self {
-                Self::Single(points) => points.data.is_empty(),
-                Self::Dual(points) => points.data.is_empty(),
-            }
-        }
-    }
-
-    impl IntoIterator for DynamicReturnFrame {
-        type Item = DPoint;
-        type IntoIter = DPointsIter;
-
-        fn into_iter(self) -> Self::IntoIter {
-            let iter: Box<dyn Iterator<Item = DPoint> + Sync + Send> = match self {
-                Self::Single(points) => Box::new(points.data.into_iter().map(DPoint::Single)),
-                Self::Dual(points) => Box::new(points.data.into_iter().map(DPoint::Dual)),
-            };
-            Self::IntoIter { iter }
-        }
-    }
-
-    /// Collection of points in either single return or dual return mode.
-    #[derive(Debug, Clone)]
-    pub enum DPoints {
-        Single(Vec<SinglePoint>),
-        Dual(Vec<DualPoint>),
-    }
-
-    impl DPoints {
-        pub fn is_empty(&self) -> bool {
-            match self {
-                Self::Single(points) => points.is_empty(),
-                Self::Dual(points) => points.is_empty(),
-            }
-        }
-
-        // pub(crate) fn empty_like(&self) -> Self {
-        //     match self {
-        //         Self::Single(_) => Self::Single(vec![]),
-        //         Self::Dual(_) => Self::Dual(vec![]),
-        //     }
-        // }
-    }
-
-    impl IntoIterator for DPoints {
-        type Item = DPoint;
-        type IntoIter = DPointsIter;
-
-        fn into_iter(self) -> Self::IntoIter {
-            let iter: Box<dyn Iterator<Item = DPoint> + Sync + Send> = match self {
-                Self::Single(points) => Box::new(points.into_iter().map(DPoint::Single)),
-                Self::Dual(points) => Box::new(points.into_iter().map(DPoint::Dual)),
-            };
-            Self::IntoIter { iter }
-        }
-    }
-
-    impl From<Vec<SinglePoint>> for DPoints {
-        fn from(points: Vec<SinglePoint>) -> Self {
-            Self::Single(points)
-        }
-    }
-
-    impl From<Vec<DualPoint>> for DPoints {
-        fn from(points: Vec<DualPoint>) -> Self {
-            Self::Dual(points)
-        }
-    }
-
-    /// Collection of points in either single return or dual return mode.
-    #[derive(Derivative)]
-    #[derivative(Debug)]
-    pub struct DPointsIter {
-        #[derivative(Debug = "ignore")]
-        iter: Box<dyn Iterator<Item = DPoint> + Sync + Send>,
-    }
-
-    impl Iterator for DPointsIter {
-        type Item = DPoint;
-
-        fn next(&mut self) -> Option<Self::Item> {
-            self.iter.next()
-        }
-    }
-
-    /// collection of points in either single return or dual return mode.
-    #[derive(Debug, Clone)]
-    pub enum DPoint {
-        Single(SinglePoint),
-        Dual(DualPoint),
-    }
-
-    impl DPoint {
-        pub fn laser_id(&self) -> u32 {
-            match self {
-                Self::Single(point) => point.laser_id,
-                Self::Dual(point) => point.laser_id,
-            }
-        }
-
-        pub fn timestamp(&self) -> Duration {
-            match self {
-                Self::Single(point) => point.timestamp,
-                Self::Dual(point) => point.timestamp,
-            }
-        }
-
-        pub fn original_azimuth(&self) -> Angle {
-            match self {
-                Self::Single(point) => point.original_azimuth_angle,
-                Self::Dual(point) => point.original_azimuth_angle,
-            }
-        }
-
-        pub fn corrected_azimuth(&self) -> Angle {
-            match self {
-                Self::Single(point) => point.corrected_azimuth_angle,
-                Self::Dual(point) => point.corrected_azimuth_angle,
-            }
         }
     }
 }

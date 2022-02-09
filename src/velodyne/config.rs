@@ -1,185 +1,25 @@
 //! Defines a set of Velodyne LiDAR configurations.
 
-use super::{
-    consts,
-    frame_converter::{DFrameConverter, DualFrameConverter, FrameConverter, SingleFrameConverter},
-    packet::{ProductID, ReturnMode},
-    pcd_converter::{DPcdConverter, DualPcdConverter, PcdConverter, SinglePcdConverter},
+use crate::{
+    common::*,
+    velodyne::{
+        consts,
+        firing::FiringFormat,
+        packet::{ProductID, ReturnMode},
+        pcd_converter::PcdConverterKind,
+    },
 };
-use crate::common::*;
-
-pub trait Config {
-    fn lasers(&self) -> &[LaserParameter];
-    fn return_mode(&self) -> ReturnMode;
-    fn product_id(&self) -> ProductID;
-    fn distance_resolution(&self) -> Length;
-}
-
-pub use sconfig::*;
-mod sconfig {
-    #![allow(non_camel_case_types)]
-    use super::*;
-
-    // type
-
-    /// Config type for Velodyne LiDARs.
-    #[derive(Debug, Clone)]
-    pub struct SConfig<Model, ReturnMode>
-    where
-        Model: ModelMarker,
-        ReturnMode: ReturnModeMarker,
-        Model::ParamArray: IntoIterator<Item = LaserParameter> + AsRef<[LaserParameter]>,
-    {
-        pub(crate) lasers: Model::ParamArray,
-        _phantom: PhantomData<ReturnMode>,
-    }
-
-    // aliases
-
-    pub type Vlp16_Strongest_Config = SConfig<VLP_16, StrongestReturn>;
-    pub type Vlp16_Last_Config = SConfig<VLP_16, LastReturn>;
-    pub type Vlp16_Dual_Config = SConfig<VLP_16, DualReturn>;
-    pub type Vlp32c_Strongest_Config = SConfig<VLP_32C, StrongestReturn>;
-    pub type Vlp32c_Last_Config = SConfig<VLP_32C, LastReturn>;
-    pub type Vlp32c_Dual_Config = SConfig<VLP_32C, DualReturn>;
-    pub type PuckLite_Strongest_Config = SConfig<PUCK_LITE, StrongestReturn>;
-    pub type PuckLite_Last_Config = SConfig<PUCK_LITE, LastReturn>;
-    pub type PuckLite_Dual_Config = SConfig<PUCK_LITE, DualReturn>;
-    pub type PuckHires_Strongest_Config = SConfig<PUCK_HIRES, StrongestReturn>;
-    pub type PuckHires_Last_Config = SConfig<PUCK_HIRES, LastReturn>;
-    pub type PuckHires_Dual_Config = SConfig<PUCK_HIRES, DualReturn>;
-
-    // impls
-
-    impl<Model, Return> SConfig<Model, Return>
-    where
-        Model: ModelMarker,
-        Return: ReturnModeMarker,
-        Model::ParamArray: IntoIterator<Item = LaserParameter> + AsRef<[LaserParameter]>,
-    {
-        pub fn new() -> Self {
-            Self {
-                lasers: Model::lasers(),
-                _phantom: PhantomData,
-            }
-        }
-
-        pub fn to_dyn(&self) -> DConfig {
-            self.into()
-        }
-
-        pub fn into_dyn(self) -> DConfig {
-            self.into()
-        }
-    }
-
-    impl<Model> SConfig<Model, StrongestReturn>
-    where
-        Model: ModelMarker,
-        Model::ParamArray: IntoIterator<Item = LaserParameter> + AsRef<[LaserParameter]>,
-    {
-        pub fn build_pcd_converter(self) -> SinglePcdConverter<Model, StrongestReturn>
-        where
-            SinglePcdConverter<Model, StrongestReturn>: PcdConverter,
-        {
-            SinglePcdConverter::from_config(self)
-        }
-
-        pub fn build_frame_converter(self) -> SingleFrameConverter<Model, StrongestReturn>
-        where
-            SingleFrameConverter<Model, StrongestReturn>: FrameConverter,
-            SinglePcdConverter<Model, StrongestReturn>: PcdConverter,
-        {
-            SingleFrameConverter::from_config(self)
-        }
-    }
-
-    impl<Model> SConfig<Model, LastReturn>
-    where
-        Model: ModelMarker,
-        Model::ParamArray: IntoIterator<Item = LaserParameter> + AsRef<[LaserParameter]>,
-    {
-        pub fn build_pcd_converter(self) -> SinglePcdConverter<Model, LastReturn>
-        where
-            SinglePcdConverter<Model, LastReturn>: PcdConverter,
-        {
-            SinglePcdConverter::from_config(self)
-        }
-
-        pub fn build_frame_converter(self) -> SingleFrameConverter<Model, LastReturn>
-        where
-            SingleFrameConverter<Model, LastReturn>: FrameConverter,
-            SinglePcdConverter<Model, LastReturn>: PcdConverter,
-        {
-            SingleFrameConverter::from_config(self)
-        }
-    }
-
-    impl<Model> SConfig<Model, DualReturn>
-    where
-        Model: ModelMarker,
-        Model::ParamArray: IntoIterator<Item = LaserParameter> + AsRef<[LaserParameter]>,
-    {
-        pub fn build_pcd_converter(self) -> DualPcdConverter<Model, DualReturn>
-        where
-            DualPcdConverter<Model, DualReturn>: PcdConverter,
-        {
-            DualPcdConverter::from_config(self)
-        }
-
-        pub fn build_frame_converter(self) -> DualFrameConverter<Model, DualReturn>
-        where
-            DualFrameConverter<Model, DualReturn>: FrameConverter,
-            DualPcdConverter<Model, DualReturn>: PcdConverter,
-        {
-            DualFrameConverter::from_config(self)
-        }
-    }
-
-    impl<Model, Return> Default for SConfig<Model, Return>
-    where
-        Model: ModelMarker,
-        Return: ReturnModeMarker,
-        Model::ParamArray: IntoIterator<Item = LaserParameter> + AsRef<[LaserParameter]>,
-    {
-        fn default() -> Self {
-            Self::new()
-        }
-    }
-
-    impl<Model, Return> Config for SConfig<Model, Return>
-    where
-        Model: ModelMarker,
-        Return: ReturnModeMarker,
-        Model::ParamArray: IntoIterator<Item = LaserParameter> + AsRef<[LaserParameter]>,
-    {
-        fn lasers(&self) -> &[LaserParameter] {
-            self.lasers.as_ref()
-        }
-
-        fn return_mode(&self) -> ReturnMode {
-            Return::return_mode()
-        }
-
-        fn product_id(&self) -> ProductID {
-            Model::product_id()
-        }
-
-        fn distance_resolution(&self) -> Length {
-            Model::distance_resolution()
-        }
-    }
-}
 
 pub use dconfig::*;
 mod dconfig {
+
     use super::*;
 
     // type
 
     /// Config type for Velodyne LiDARs.
     #[derive(Debug, Clone)]
-    pub struct DConfig {
+    pub struct Config {
         pub lasers: Vec<LaserParameter>,
         pub return_mode: ReturnMode,
         pub product_id: ProductID,
@@ -188,265 +28,127 @@ mod dconfig {
 
     // impls
 
-    impl Config for DConfig {
-        fn lasers(&self) -> &[LaserParameter] {
-            &self.lasers
-        }
-
-        fn return_mode(&self) -> ReturnMode {
-            self.return_mode
-        }
-
-        fn product_id(&self) -> ProductID {
-            self.product_id
-        }
-
-        fn distance_resolution(&self) -> Length {
-            self.distance_resolution
+    impl Config {
+        pub fn firing_format(&self) -> FiringFormat {
+            FiringFormat::new(self.product_id, self.return_mode).unwrap()
         }
     }
 
-    impl DConfig {
-        pub fn build_pcd_converter(self) -> DPcdConverter {
-            DPcdConverter::from_config(self)
+    impl Config {
+        pub fn build_pcd_converter(self) -> Result<PcdConverterKind> {
+            PcdConverterKind::from_config(self)
         }
 
-        pub fn build_frame_converter(self) -> DFrameConverter {
-            DFrameConverter::from_config(self)
-        }
-    }
+        // pub fn build_frame_converter(self) -> DFrameConverter {
+        //     DFrameConverter::from_config(self)
+        // }
 
-    impl<Model, Return> From<&SConfig<Model, Return>> for DConfig
-    where
-        Model: ModelMarker,
-        Return: ReturnModeMarker,
-        Model::ParamArray: IntoIterator<Item = LaserParameter> + AsRef<[LaserParameter]>,
-    {
-        fn from(from: &SConfig<Model, Return>) -> Self {
-            DConfig {
-                product_id: Model::product_id(),
-                lasers: from.lasers.as_ref().to_vec(),
-                return_mode: Return::return_mode(),
-                distance_resolution: Model::distance_resolution(),
+        pub fn new_vlp_16_last() -> Self {
+            Self {
+                lasers: LaserParameter::vlp_16().to_vec(),
+                return_mode: ReturnMode::Last,
+                product_id: ProductID::VLP16,
+                distance_resolution: *consts::vlp_16::DISTANCE_RESOLUTION,
             }
         }
-    }
 
-    impl<Model, Return> From<SConfig<Model, Return>> for DConfig
-    where
-        Model: ModelMarker,
-        Return: ReturnModeMarker,
-        Model::ParamArray: IntoIterator<Item = LaserParameter> + AsRef<[LaserParameter]>,
-    {
-        fn from(from: SConfig<Model, Return>) -> Self {
-            DConfig {
-                product_id: Model::product_id(),
-                lasers: from.lasers.into_iter().collect(),
-                return_mode: Return::return_mode(),
-                distance_resolution: Model::distance_resolution(),
+        pub fn new_vlp_16_strongest() -> Self {
+            Self {
+                lasers: LaserParameter::vlp_16().to_vec(),
+                return_mode: ReturnMode::Strongest,
+                product_id: ProductID::VLP16,
+                distance_resolution: *consts::vlp_16::DISTANCE_RESOLUTION,
             }
         }
-    }
-}
 
-pub use fns::*;
-mod fns {
-    use super::*;
-
-    pub fn vlp_16_last_return_config() -> Vlp16_Last_Config {
-        SConfig::new()
-    }
-
-    pub fn puck_hires_last_return_config() -> PuckHires_Last_Config {
-        SConfig::new()
-    }
-
-    pub fn puck_lite_last_return_config() -> PuckLite_Last_Config {
-        SConfig::new()
-    }
-
-    pub fn vlp_16_strongest_return_config() -> Vlp16_Strongest_Config {
-        SConfig::new()
-    }
-
-    pub fn puck_hires_strongest_return_config() -> PuckHires_Strongest_Config {
-        SConfig::new()
-    }
-
-    pub fn puck_lite_strongest_return_config() -> PuckLite_Strongest_Config {
-        SConfig::new()
-    }
-
-    pub fn vlp_16_dual_return_config() -> Vlp16_Dual_Config {
-        SConfig::new()
-    }
-
-    pub fn puck_hires_dual_return_config() -> PuckHires_Dual_Config {
-        SConfig::new()
-    }
-
-    pub fn puck_lite_dual_return_config() -> PuckLite_Dual_Config {
-        SConfig::new()
-    }
-
-    pub fn vlp_32c_last_return_config() -> Vlp32c_Last_Config {
-        SConfig::new()
-    }
-
-    pub fn vlp_32c_strongest_return_config() -> Vlp32c_Strongest_Config {
-        SConfig::new()
-    }
-
-    pub fn vlp_32c_dual_return_config() -> Vlp32c_Dual_Config {
-        SConfig::new()
-    }
-}
-
-pub use return_mode_marker::*;
-mod return_mode_marker {
-    use super::*;
-
-    pub trait ReturnModeMarker
-    where
-        Self: Debug + Clone,
-    {
-        fn return_mode() -> ReturnMode;
-    }
-
-    #[derive(Debug, Clone, Copy)]
-    pub struct StrongestReturn {
-        _private: [u8; 0],
-    }
-
-    impl ReturnModeMarker for StrongestReturn {
-        fn return_mode() -> ReturnMode {
-            ReturnMode::Strongest
-        }
-    }
-
-    #[derive(Debug, Clone, Copy)]
-    pub struct LastReturn {
-        _private: [u8; 0],
-    }
-
-    impl ReturnModeMarker for LastReturn {
-        fn return_mode() -> ReturnMode {
-            ReturnMode::Last
-        }
-    }
-
-    #[derive(Debug, Clone, Copy)]
-    pub struct DualReturn {
-        _private: [u8; 0],
-    }
-
-    impl ReturnModeMarker for DualReturn {
-        fn return_mode() -> ReturnMode {
-            ReturnMode::Dual
-        }
-    }
-}
-
-pub use model_marker::*;
-mod model_marker {
-    pub use super::*;
-
-    pub trait ModelMarker
-    where
-        Self::ParamArray: IntoIterator<Item = LaserParameter> + AsRef<[LaserParameter]>,
-    {
-        type ParamArray;
-
-        fn product_id() -> ProductID;
-        fn distance_resolution() -> Length;
-        fn lasers() -> Self::ParamArray;
-    }
-
-    #[derive(Debug, Clone, Copy)]
-    #[allow(non_camel_case_types)]
-    pub struct VLP_16 {
-        _private: [u8; 0],
-    }
-
-    #[derive(Debug, Clone, Copy)]
-    #[allow(non_camel_case_types)]
-    pub struct VLP_32C {
-        _private: [u8; 0],
-    }
-
-    #[derive(Debug, Clone, Copy)]
-    #[allow(non_camel_case_types)]
-    pub struct PUCK_LITE {
-        _private: [u8; 0],
-    }
-
-    #[derive(Debug, Clone, Copy)]
-    #[allow(non_camel_case_types)]
-    pub struct PUCK_HIRES {
-        _private: [u8; 0],
-    }
-
-    impl ModelMarker for VLP_16 {
-        type ParamArray = [LaserParameter; 16];
-
-        fn product_id() -> ProductID {
-            ProductID::VLP16
+        pub fn new_vlp_16_dual() -> Self {
+            Self {
+                lasers: LaserParameter::vlp_16().to_vec(),
+                return_mode: ReturnMode::Dual,
+                product_id: ProductID::VLP16,
+                distance_resolution: *consts::vlp_16::DISTANCE_RESOLUTION,
+            }
         }
 
-        fn distance_resolution() -> Length {
-            *consts::vlp_16::DISTANCE_RESOLUTION
+        pub fn new_puck_hires_last() -> Self {
+            Self {
+                lasers: LaserParameter::puck_hires().to_vec(),
+                return_mode: ReturnMode::Last,
+                product_id: ProductID::PuckHiRes,
+                distance_resolution: *consts::puck_hires::DISTANCE_RESOLUTION,
+            }
         }
 
-        fn lasers() -> Self::ParamArray {
-            LaserParameter::vlp_16()
-        }
-    }
-
-    impl ModelMarker for VLP_32C {
-        type ParamArray = [LaserParameter; 32];
-
-        fn product_id() -> ProductID {
-            ProductID::VLP32C
+        pub fn new_puck_hires_strongest() -> Self {
+            Self {
+                lasers: LaserParameter::puck_hires().to_vec(),
+                return_mode: ReturnMode::Strongest,
+                product_id: ProductID::PuckHiRes,
+                distance_resolution: *consts::puck_hires::DISTANCE_RESOLUTION,
+            }
         }
 
-        fn distance_resolution() -> Length {
-            *consts::vlp_32c::DISTANCE_RESOLUTION
+        pub fn new_puck_hires_dual() -> Self {
+            Self {
+                lasers: LaserParameter::puck_hires().to_vec(),
+                return_mode: ReturnMode::Dual,
+                product_id: ProductID::PuckHiRes,
+                distance_resolution: *consts::puck_hires::DISTANCE_RESOLUTION,
+            }
         }
 
-        fn lasers() -> Self::ParamArray {
-            LaserParameter::vlp_32c()
-        }
-    }
-
-    impl ModelMarker for PUCK_LITE {
-        type ParamArray = [LaserParameter; 16];
-
-        fn product_id() -> ProductID {
-            ProductID::PuckLite
+        pub fn new_puck_lite_last() -> Self {
+            Self {
+                lasers: LaserParameter::puck_lite().to_vec(),
+                return_mode: ReturnMode::Last,
+                product_id: ProductID::PuckLite,
+                distance_resolution: *consts::puck_lite::DISTANCE_RESOLUTION,
+            }
         }
 
-        fn distance_resolution() -> Length {
-            *consts::puck_lite::DISTANCE_RESOLUTION
+        pub fn new_puck_lite_strongest() -> Self {
+            Self {
+                lasers: LaserParameter::puck_lite().to_vec(),
+                return_mode: ReturnMode::Strongest,
+                product_id: ProductID::PuckLite,
+                distance_resolution: *consts::puck_lite::DISTANCE_RESOLUTION,
+            }
         }
 
-        fn lasers() -> Self::ParamArray {
-            LaserParameter::puck_lite()
-        }
-    }
-
-    impl ModelMarker for PUCK_HIRES {
-        type ParamArray = [LaserParameter; 16];
-
-        fn product_id() -> ProductID {
-            ProductID::PuckHiRes
+        pub fn new_puck_lite_dual() -> Self {
+            Self {
+                lasers: LaserParameter::puck_lite().to_vec(),
+                return_mode: ReturnMode::Dual,
+                product_id: ProductID::PuckLite,
+                distance_resolution: *consts::puck_lite::DISTANCE_RESOLUTION,
+            }
         }
 
-        fn distance_resolution() -> Length {
-            *consts::puck_hires::DISTANCE_RESOLUTION
+        pub fn new_vlp_32c_last() -> Self {
+            Self {
+                lasers: LaserParameter::vlp_32c().to_vec(),
+                return_mode: ReturnMode::Last,
+                product_id: ProductID::VLP32C,
+                distance_resolution: *consts::vlp_32c::DISTANCE_RESOLUTION,
+            }
         }
 
-        fn lasers() -> Self::ParamArray {
-            LaserParameter::puck_hires()
+        pub fn new_vlp_32c_strongest() -> Self {
+            Self {
+                lasers: LaserParameter::vlp_32c().to_vec(),
+                return_mode: ReturnMode::Strongest,
+                product_id: ProductID::VLP32C,
+                distance_resolution: *consts::vlp_32c::DISTANCE_RESOLUTION,
+            }
+        }
+
+        pub fn new_vlp_32c_dual() -> Self {
+            Self {
+                lasers: LaserParameter::vlp_32c().to_vec(),
+                return_mode: ReturnMode::Dual,
+                product_id: ProductID::VLP32C,
+                distance_resolution: *consts::vlp_32c::DISTANCE_RESOLUTION,
+            }
         }
     }
 }
@@ -465,99 +167,83 @@ mod params {
 
     impl LaserParameter {
         pub fn vlp_16() -> [LaserParameter; 16] {
-            let mut params: [MaybeUninit<LaserParameter>; 16] =
-                unsafe { MaybeUninit::uninit().assume_init() };
-            izip!(
-                params.iter_mut(),
+            let params: Vec<_> = izip!(
                 consts::vlp_16::ELEVAION_DEGREES,
                 consts::vlp_16::VERTICAL_OFFSETS,
                 consts::vlp_16::HORIZONTAL_OFFSETS,
                 consts::vlp_16::AZIMUTH_OFFSETS,
             )
-            .for_each(
-                |(param, elevation, vertical_offset, horizontal_offset, azimuth_offset)| {
-                    *param = MaybeUninit::new(LaserParameter {
-                        elevation: Angle::from_degrees(elevation),
-                        vertical_offset: Length::from_millimeters(vertical_offset),
-                        horizontal_offset: Length::from_millimeters(horizontal_offset),
-                        azimuth_offset: Angle::from_degrees(azimuth_offset),
-                    });
+            .map(
+                |(elevation, vertical_offset, horizontal_offset, azimuth_offset)| LaserParameter {
+                    elevation: Angle::from_degrees(elevation),
+                    vertical_offset: Length::from_millimeters(vertical_offset),
+                    horizontal_offset: Length::from_millimeters(horizontal_offset),
+                    azimuth_offset: Angle::from_degrees(azimuth_offset),
                 },
-            );
+            )
+            .collect();
 
-            unsafe { mem::transmute::<_, [LaserParameter; 16]>(params) }
+            params.try_into().unwrap_or_else(|_| unreachable!())
         }
 
         pub fn puck_hires() -> [LaserParameter; 16] {
-            let mut params: [MaybeUninit<LaserParameter>; 16] =
-                unsafe { MaybeUninit::uninit().assume_init() };
-            izip!(
-                params.iter_mut(),
+            let params: Vec<_> = izip!(
                 consts::puck_hires::ELEVAION_DEGREES,
                 consts::puck_hires::VERTICAL_OFFSETS,
                 consts::puck_hires::HORIZONTAL_OFFSETS,
                 consts::puck_hires::AZIMUTH_OFFSETS,
             )
-            .for_each(
-                |(param, elevation, vertical_offset, horizontal_offset, azimuth_offset)| {
-                    *param = MaybeUninit::new(LaserParameter {
-                        elevation: Angle::from_degrees(elevation),
-                        vertical_offset: Length::from_millimeters(vertical_offset),
-                        horizontal_offset: Length::from_millimeters(horizontal_offset),
-                        azimuth_offset: Angle::from_degrees(azimuth_offset),
-                    });
+            .map(
+                |(elevation, vertical_offset, horizontal_offset, azimuth_offset)| LaserParameter {
+                    elevation: Angle::from_degrees(elevation),
+                    vertical_offset: Length::from_millimeters(vertical_offset),
+                    horizontal_offset: Length::from_millimeters(horizontal_offset),
+                    azimuth_offset: Angle::from_degrees(azimuth_offset),
                 },
-            );
+            )
+            .collect();
 
-            unsafe { mem::transmute::<_, [LaserParameter; 16]>(params) }
+            params.try_into().unwrap_or_else(|_| unreachable!())
         }
 
         pub fn puck_lite() -> [LaserParameter; 16] {
-            let mut params: [MaybeUninit<LaserParameter>; 16] =
-                unsafe { MaybeUninit::uninit().assume_init() };
-            izip!(
-                params.iter_mut(),
+            let params: Vec<_> = izip!(
                 consts::puck_lite::ELEVAION_DEGREES,
                 consts::puck_lite::VERTICAL_OFFSETS,
                 consts::puck_lite::HORIZONTAL_OFFSETS,
                 consts::puck_lite::AZIMUTH_OFFSETS,
             )
-            .for_each(
-                |(param, elevation, vertical_offset, horizontal_offset, azimuth_offset)| {
-                    *param = MaybeUninit::new(LaserParameter {
-                        elevation: Angle::from_degrees(elevation),
-                        vertical_offset: Length::from_millimeters(vertical_offset),
-                        horizontal_offset: Length::from_millimeters(horizontal_offset),
-                        azimuth_offset: Angle::from_degrees(azimuth_offset),
-                    });
+            .map(
+                |(elevation, vertical_offset, horizontal_offset, azimuth_offset)| LaserParameter {
+                    elevation: Angle::from_degrees(elevation),
+                    vertical_offset: Length::from_millimeters(vertical_offset),
+                    horizontal_offset: Length::from_millimeters(horizontal_offset),
+                    azimuth_offset: Angle::from_degrees(azimuth_offset),
                 },
-            );
+            )
+            .collect();
 
-            unsafe { mem::transmute::<_, [LaserParameter; 16]>(params) }
+            params.try_into().unwrap_or_else(|_| unreachable!())
         }
 
         pub fn vlp_32c() -> [LaserParameter; 32] {
-            let mut params: [MaybeUninit<LaserParameter>; 32] =
-                unsafe { MaybeUninit::uninit().assume_init() };
-            izip!(
-                params.iter_mut(),
+            let params: Vec<_> = izip!(
                 consts::vlp_32c::ELEVAION_DEGREES,
                 consts::vlp_32c::VERTICAL_OFFSETS,
                 consts::vlp_32c::HORIZONTAL_OFFSETS,
                 consts::vlp_32c::AZIMUTH_OFFSETS,
             )
-            .for_each(
-                |(param, elevation, vertical_offset, horizontal_offset, azimuth_offset)| {
-                    *param = MaybeUninit::new(LaserParameter {
-                        elevation: Angle::from_degrees(elevation),
-                        vertical_offset: Length::from_millimeters(vertical_offset),
-                        horizontal_offset: Length::from_millimeters(horizontal_offset),
-                        azimuth_offset: Angle::from_degrees(azimuth_offset),
-                    });
+            .map(
+                |(elevation, vertical_offset, horizontal_offset, azimuth_offset)| LaserParameter {
+                    elevation: Angle::from_degrees(elevation),
+                    vertical_offset: Length::from_millimeters(vertical_offset),
+                    horizontal_offset: Length::from_millimeters(horizontal_offset),
+                    azimuth_offset: Angle::from_degrees(azimuth_offset),
                 },
-            );
+            )
+            .collect();
 
-            unsafe { mem::transmute::<_, [LaserParameter; 32]>(params) }
+            params.try_into().unwrap_or_else(|_| unreachable!())
         }
     }
 }

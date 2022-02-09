@@ -1,11 +1,23 @@
 //! Provides `C-packed` structs for Velodyne data packets.
 
-use super::consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK, FIRING_PERIOD};
-use crate::{common::*, utils::AngleExt as _};
+use crate::{
+    common::*,
+    utils::AngleExt as _,
+    velodyne::{
+        consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK, FIRING_PERIOD},
+        firing::{FiringDual16, FiringDual32, FiringFormat, FiringSingle16, FiringSingle32},
+        firing_iter::FiringIterKind,
+    },
+};
 use std::f64::consts::PI;
 
 pub use data_packet::*;
 mod data_packet {
+
+    use crate::velodyne::firing_iter::{
+        FiringDual16Iter, FiringDual32Iter, FiringSingle16Iter, FiringSingle32Iter,
+    };
+
     use super::*;
 
     /// Represents the block index in range from 0 to 31, or from 32 to 63.
@@ -23,6 +35,16 @@ mod data_packet {
         Strongest = 0x37,
         Last = 0x38,
         Dual = 0x39,
+    }
+
+    impl ReturnMode {
+        pub fn is_single(&self) -> bool {
+            [ReturnMode::Strongest, ReturnMode::Last].contains(self)
+        }
+
+        pub fn is_dual(&self) -> bool {
+            *self == Self::Dual
+        }
     }
 
     /// Represents the hardware model.
@@ -118,35 +140,21 @@ mod data_packet {
         }
 
         pub fn firing_format(&self) -> Option<FiringFormat> {
-            use FiringFormat::*;
-            use ProductID::*;
-            use ReturnMode::*;
-
-            Some(match (self.product_id, self.return_mode) {
-                (HDL32E | VLP32C, Strongest | Last) => Single32,
-                (HDL32E | VLP32C, Dual) => Dual32,
-                (VLP16 | PuckLite | PuckHiRes, Strongest | Last) => Single16,
-                (VLP16 | PuckLite | PuckHiRes, Dual) => Dual16,
-                (Velarray, Strongest | Last) => return None,
-                (Velarray, Dual) => return None,
-                (VLS128, Strongest | Last) => return None,
-                (VLS128, Dual) => return None,
-            })
+            FiringFormat::new(self.product_id, self.return_mode)
         }
 
         pub fn firings(
             &self,
         ) -> Option<
-            Firings<
-                '_,
-                impl Iterator<Item = SingleFiring16<'_>> + Clone,
-                impl Iterator<Item = DualFiring16<'_>> + Clone,
-                impl Iterator<Item = SingleFiring32<'_>> + Clone,
-                impl Iterator<Item = DualFiring32<'_>> + Clone,
+            FiringIterKind<
+                impl Iterator<Item = FiringSingle16<'_>> + Clone,
+                impl Iterator<Item = FiringSingle32<'_>> + Clone,
+                impl Iterator<Item = FiringDual16<'_>> + Clone,
+                impl Iterator<Item = FiringDual32<'_>> + Clone,
             >,
         > {
             use FiringFormat::*;
-            use Firings as F;
+            use FiringIterKind as F;
 
             Some(match self.firing_format()? {
                 Single16 => F::Single16(self.single_16_firings()),
@@ -156,16 +164,9 @@ mod data_packet {
             })
         }
 
-        pub fn single_16_firings(&self) -> impl Iterator<Item = SingleFiring16<'_>> + Clone {
-            // use ProductID as P;
-            // use ReturnMode as R;
-
-            // ensure!(
-            //     [R::Strongest, R::Last].contains(&self.return_mode),
-            //     "expect strongest or last return mode, but get dual mode"
-            // );
-            // ensure!([P::VLP16, P::PuckLite, P::PuckHiRes].contains(&self.product_id));
-
+        pub fn single_16_firings(
+            &self,
+        ) -> FiringSingle16Iter<impl Iterator<Item = FiringSingle16<'_>> + Clone> {
             let block_period = FIRING_PERIOD.mul_f64(2.0);
             let times = iter::successors(Some(self.time()), move |prev| Some(*prev + block_period));
             let firing_azimuths = {
@@ -197,7 +198,7 @@ mod data_packet {
 
                     let (former_channels, latter_channels) = block.channels.split_at(16);
 
-                    let former = SingleFiring16 {
+                    let former = FiringSingle16 {
                         time: former_time,
                         azimuth_range: former_azimuth,
                         block,
@@ -205,7 +206,7 @@ mod data_packet {
                             .try_into()
                             .unwrap_or_else(|_| unreachable!()),
                     };
-                    let latter = SingleFiring16 {
+                    let latter = FiringSingle16 {
                         time: latter_time,
                         azimuth_range: latter_azimuth,
                         block,
@@ -218,20 +219,12 @@ mod data_packet {
                 },
             );
 
-            iter
+            FiringSingle16Iter(iter)
         }
 
-        pub fn dual_16_firings(&self) -> impl Iterator<Item = DualFiring16<'_>> + Clone {
-            // use ProductID as P;
-            // use ReturnMode as R;
-
-            // ensure!(
-            //     self.return_mode == R::Dual,
-            //     "expect dual mode, but get {:?}",
-            //     self.return_mode
-            // );
-            // ensure!([P::VLP16, P::PuckLite, P::PuckHiRes].contains(&self.product_id));
-
+        pub fn dual_16_firings(
+            &self,
+        ) -> FiringDual16Iter<impl Iterator<Item = FiringDual16<'_>> + Clone> {
             let block_period = FIRING_PERIOD.mul_f64(2.0);
             let times = iter::successors(Some(self.time()), move |prev| Some(*prev + block_period));
             let firing_azimuths = {
@@ -275,7 +268,7 @@ mod data_packet {
                     let (former_last, latter_last) = block_last.channels.split_at(16);
 
                     [
-                        DualFiring16 {
+                        FiringDual16 {
                             time: former_time,
                             azimuth_range: former_azimuth,
                             block_strongest,
@@ -287,7 +280,7 @@ mod data_packet {
                                 .try_into()
                                 .unwrap_or_else(|_| unreachable!()),
                         },
-                        DualFiring16 {
+                        FiringDual16 {
                             time: latter_time,
                             azimuth_range: latter_azimuth,
                             block_strongest,
@@ -303,19 +296,12 @@ mod data_packet {
                 },
             );
 
-            firings
+            FiringDual16Iter(firings)
         }
 
-        pub fn single_32_firings(&self) -> impl Iterator<Item = SingleFiring32<'_>> + Clone {
-            // use ProductID as P;
-            // use ReturnMode as R;
-
-            // ensure!(
-            //     [R::Strongest, R::Last].contains(&self.return_mode),
-            //     "expect strongest or last return mode, but get dual mode"
-            // );
-            // ensure!([P::HDL32E, P::VLP32C].contains(&self.product_id));
-
+        pub fn single_32_firings(
+            &self,
+        ) -> FiringSingle32Iter<impl Iterator<Item = FiringSingle32<'_>> + Clone> {
             let times =
                 iter::successors(Some(self.time()), move |prev| Some(*prev + FIRING_PERIOD));
             let azimuths = {
@@ -344,7 +330,7 @@ mod data_packet {
                     let former_time = block_time;
                     let latter_time = former_time + FIRING_PERIOD;
 
-                    SingleFiring32 {
+                    FiringSingle32 {
                         time: latter_time,
                         azimuth_range,
                         block,
@@ -353,20 +339,12 @@ mod data_packet {
                 },
             );
 
-            iter
+            FiringSingle32Iter(iter)
         }
 
-        pub fn dual_32_firings(&self) -> impl Iterator<Item = DualFiring32<'_>> + Clone {
-            // use ProductID as P;
-            // use ReturnMode as R;
-
-            // ensure!(
-            //     self.return_mode == R::Dual,
-            //     "expect dual mode, but get {:?}",
-            //     self.return_mode
-            // );
-            // ensure!([P::HDL32E, P::VLP32C].contains(&self.product_id));
-
+        pub fn dual_32_firings(
+            &self,
+        ) -> FiringDual32Iter<impl Iterator<Item = FiringDual32<'_>> + Clone> {
             let times =
                 iter::successors(Some(self.time()), move |prev| Some(*prev + FIRING_PERIOD));
             let azimuths = {
@@ -399,7 +377,7 @@ mod data_packet {
                         _ => unreachable!(),
                     };
 
-                    DualFiring32 {
+                    FiringDual32 {
                         time: block_time,
                         azimuth_range,
                         block_strongest,
@@ -410,7 +388,7 @@ mod data_packet {
                 },
             );
 
-            iter
+            FiringDual32Iter(iter)
         }
     }
 }
@@ -494,192 +472,6 @@ mod position_packet {
     pub enum ThermalStatus {
         Ok = 0,
         ThermalShutdown = 1,
-    }
-}
-
-pub use firing::*;
-mod firing {
-    use super::*;
-
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-    pub enum FiringFormat {
-        Single16,
-        Dual16,
-        Single32,
-        Dual32,
-    }
-
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub enum Firings<'a, A, B, C, D>
-    where
-        A: Iterator<Item = SingleFiring16<'a>> + Clone,
-        B: Iterator<Item = DualFiring16<'a>> + Clone,
-        C: Iterator<Item = SingleFiring32<'a>> + Clone,
-        D: Iterator<Item = DualFiring32<'a>> + Clone,
-    {
-        Single16(A),
-        Dual16(B),
-        Single32(C),
-        Dual32(D),
-    }
-
-    impl<'a, A, B, C, D> Iterator for Firings<'a, A, B, C, D>
-    where
-        A: Iterator<Item = SingleFiring16<'a>> + Clone,
-        B: Iterator<Item = DualFiring16<'a>> + Clone,
-        C: Iterator<Item = SingleFiring32<'a>> + Clone,
-        D: Iterator<Item = DualFiring32<'a>> + Clone,
-    {
-        type Item = Firing<'a>;
-
-        fn next(&mut self) -> Option<Self::Item> {
-            Some(match self {
-                Firings::Single16(iter) => iter.next()?.into(),
-                Firings::Dual16(iter) => iter.next()?.into(),
-                Firings::Single32(iter) => iter.next()?.into(),
-                Firings::Dual32(iter) => iter.next()?.into(),
-            })
-        }
-    }
-
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub enum Firing<'a> {
-        Single16(SingleFiring16<'a>),
-        Dual16(DualFiring16<'a>),
-        Single32(SingleFiring32<'a>),
-        Dual32(DualFiring32<'a>),
-    }
-
-    impl<'a> From<DualFiring32<'a>> for Firing<'a> {
-        fn from(v: DualFiring32<'a>) -> Self {
-            Self::Dual32(v)
-        }
-    }
-
-    impl<'a> From<SingleFiring32<'a>> for Firing<'a> {
-        fn from(v: SingleFiring32<'a>) -> Self {
-            Self::Single32(v)
-        }
-    }
-
-    impl<'a> From<DualFiring16<'a>> for Firing<'a> {
-        fn from(v: DualFiring16<'a>) -> Self {
-            Self::Dual16(v)
-        }
-    }
-
-    impl<'a> From<SingleFiring16<'a>> for Firing<'a> {
-        fn from(v: SingleFiring16<'a>) -> Self {
-            Self::Single16(v)
-        }
-    }
-
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct SingleFiring16<'a> {
-        pub time: Duration,
-        pub azimuth_range: Range<Angle>,
-        pub block: &'a Block,
-        pub channels: &'a [Channel; 16],
-    }
-
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct DualFiring16<'a> {
-        pub time: Duration,
-        pub azimuth_range: Range<Angle>,
-        pub block_strongest: &'a Block,
-        pub block_last: &'a Block,
-        pub channels_strongest: &'a [Channel; 16],
-        pub channels_last: &'a [Channel; 16],
-    }
-
-    impl<'a> DualFiring16<'a> {
-        pub fn strongest_part(&self) -> SingleFiring16<'a> {
-            let Self {
-                time,
-                ref azimuth_range,
-                block_strongest: block,
-                channels_strongest: channels,
-                ..
-            } = *self;
-
-            SingleFiring16 {
-                time,
-                azimuth_range: azimuth_range.clone(),
-                block,
-                channels,
-            }
-        }
-
-        pub fn last_part(&self) -> SingleFiring16<'a> {
-            let Self {
-                time,
-                ref azimuth_range,
-                block_last: block,
-                channels_last: channels,
-                ..
-            } = *self;
-
-            SingleFiring16 {
-                time,
-                azimuth_range: azimuth_range.clone(),
-                block,
-                channels,
-            }
-        }
-    }
-
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct SingleFiring32<'a> {
-        pub time: Duration,
-        pub azimuth_range: Range<Angle>,
-        pub block: &'a Block,
-        pub channels: &'a [Channel; 32],
-    }
-
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct DualFiring32<'a> {
-        pub time: Duration,
-        pub azimuth_range: Range<Angle>,
-        pub block_strongest: &'a Block,
-        pub block_last: &'a Block,
-        pub channels_strongest: &'a [Channel; 32],
-        pub channels_last: &'a [Channel; 32],
-    }
-
-    impl<'a> DualFiring32<'a> {
-        pub fn strongest_part(&self) -> SingleFiring32<'a> {
-            let Self {
-                time,
-                ref azimuth_range,
-                block_strongest: block,
-                channels_strongest: channels,
-                ..
-            } = *self;
-
-            SingleFiring32 {
-                time,
-                azimuth_range: azimuth_range.clone(),
-                block,
-                channels,
-            }
-        }
-
-        pub fn last_part(&self) -> SingleFiring32<'a> {
-            let Self {
-                time,
-                ref azimuth_range,
-                block_last: block,
-                channels_last: channels,
-                ..
-            } = *self;
-
-            SingleFiring32 {
-                time,
-                azimuth_range: azimuth_range.clone(),
-                block,
-                channels,
-            }
-        }
     }
 }
 

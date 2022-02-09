@@ -7,7 +7,7 @@ pub use noisy_float::types::R64;
 pub use num_traits::{Float, Num};
 pub use serde::{Deserialize, Deserializer, Serialize, Serializer};
 pub use std::{
-    borrow::Borrow,
+    borrow::{Borrow, Cow},
     cmp::Ordering,
     fmt::{self, Debug, Display, Formatter},
     fs::File,
