@@ -3,4 +3,5 @@ members = [
     "velodyne-lidar",
     "ouster-lidar",
     "lidar-utils",
+    "velodyne-test",
 ]

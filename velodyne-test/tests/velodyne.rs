@@ -1,26 +1,15 @@
 use anyhow::{ensure, Result};
 use itertools::izip;
 use pcap::Capture;
-use velodyne_lidar::{config::Config, consts, DataPacket};
+use velodyne_lidar::{config::Config, consts, pcap::PcapFileReader, DataPacket};
 
 const UDP_HEADER_SIZE: usize = 42;
 
 #[test]
 fn velodyne_vlp_16_pcap_file() -> Result<()> {
-    let mut cap = Capture::from_file("test_files/velodyne_vlp16.pcap")?;
-    cap.filter("udp", true)?;
-
-    let data_packets: Vec<_> = itertools::unfold(cap, |cap| {
-        Some(loop {
-            let packet = cap.next().ok()?;
-            let slice = &packet.data[UDP_HEADER_SIZE..];
-
-            if let Ok(packet) = DataPacket::from_slice(slice) {
-                break *packet;
-            }
-        })
-    })
-    .collect();
+    let data_packets: Vec<_> = PcapFileReader::open("test_files/velodyne_vlp16.pcap")?
+        .filter_map(|packet| packet.try_into_data().ok())
+        .collect();
 
     // timestamp test
     {
