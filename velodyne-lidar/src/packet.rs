@@ -441,6 +441,10 @@ mod position_packet {
             Ok(packet)
         }
 
+        pub fn parse_nmea(&self) -> Result<nmea::ParseResult, nmea::NmeaError<'_>> {
+            nmea::parse(&self.nmea)
+        }
+
         pub fn calibration_in_progress(&self) -> bool {
             self.adc_calibration_bitmask & 0b0001 != 0
         }
