@@ -500,6 +500,7 @@ mod position_packet {
             Ok(packet)
         }
 
+        #[cfg(feature = "nmea")]
         pub fn parse_nmea(&self) -> Result<nmea::ParseResult, nmea::NmeaError<'_>> {
             nmea::parse(&self.nmea)
         }
