@@ -203,8 +203,35 @@ mod frame_types {
                     self.firings.iter().flat_map(|firing| &firing.points)
                 }
 
+                pub fn indexer_point_iter(
+                    &self,
+                ) -> impl Iterator<Item = ((usize, usize), &$point)> {
+                    self.firings.iter().enumerate().flat_map(|(col, firing)| {
+                        firing
+                            .points
+                            .iter()
+                            .enumerate()
+                            .map(move |(row, point)| ((row, col), point))
+                    })
+                }
+
                 pub fn into_point_iter(self) -> impl Iterator<Item = $point> {
                     self.firings.into_iter().flat_map(|firing| firing.points)
+                }
+
+                pub fn into_indexed_point_iter(
+                    self,
+                ) -> impl Iterator<Item = ((usize, usize), $point)> {
+                    self.firings
+                        .into_iter()
+                        .enumerate()
+                        .flat_map(|(col, firing)| {
+                            firing
+                                .points
+                                .into_iter()
+                                .enumerate()
+                                .map(move |(row, point)| ((row, col), point))
+                        })
                 }
             }
         };
