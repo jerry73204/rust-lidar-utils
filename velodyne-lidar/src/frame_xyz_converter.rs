@@ -22,12 +22,12 @@ macro_rules! declare_converter {
                 Some($frame { firings })
             }
 
-            pub fn push_many<'a, I>(&'a mut self, firings: I) -> impl Iterator<Item = $frame> + 'a
-            where
-                I: IntoIterator<Item = $firing> + 'a,
-            {
-                push_many(&mut self.buffer, firings).map(|firings| $frame { firings })
-            }
+            // pub fn push_many<'a, I>(&'a mut self, firings: I) -> impl Iterator<Item = $frame> + 'a
+            // where
+            //     I: IntoIterator<Item = $firing> + 'a,
+            // {
+            //     push_many(&mut self.buffer, firings).map(|firings| $frame { firings })
+            // }
 
             pub fn take(&mut self) -> Option<$frame> {
                 let firings = mem::take(&mut self.buffer);
@@ -68,15 +68,15 @@ fn push_one<F: FiringXyz>(buffer: &mut Vec<F>, curr: F) -> Option<Vec<F>> {
     }
 }
 
-fn push_many<'a, F: FiringXyz, I>(
-    buffer: &'a mut Vec<F>,
-    iter: I,
-) -> impl Iterator<Item = Vec<F>> + 'a
-where
-    I: IntoIterator<Item = F>,
-    I::IntoIter: 'a,
-{
-    iter.into_iter()
-        .scan(buffer, |buffer, firing| Some(push_one(buffer, firing)))
-        .flatten()
-}
+// fn push_many<'a, F: FiringXyz, I>(
+//     buffer: &'a mut Vec<F>,
+//     iter: I,
+// ) -> impl Iterator<Item = Vec<F>> + 'a
+// where
+//     I: IntoIterator<Item = F>,
+//     I::IntoIter: 'a,
+// {
+//     iter.into_iter()
+//         .scan(buffer, |buffer, firing| Some(push_one(buffer, firing)))
+//         .flatten()
+// }

@@ -46,12 +46,12 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
     // convert to point cloud
     {
         let converter = Config::new_vlp_16_strongest()
-            .build_pcd_converter()
+            .build_converter()
             .unwrap()
             .into_single16();
         let _: Vec<_> = data_packets
             .iter()
-            .flat_map(|packet| converter.convert_packet(packet))
+            .flat_map(|packet| converter.packet_to_firing_xyz_iter(packet))
             .collect();
     }
 
@@ -130,14 +130,10 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
 
     // convert to point cloud
     {
-        let converter = Config::new_vlp_32c_strongest()
-            .build_pcd_converter()
-            .unwrap()
-            .into_single32();
-        let _: Vec<_> = data_packets
-            .iter()
-            .flat_map(|packet| converter.convert_packet(packet))
-            .collect();
+        let converter = Config::new_vlp_32c_strongest().build_converter().unwrap();
+        converter
+            .packet_iter_to_frame_xyz_iter(data_packets)
+            .count();
     }
 
     // convert to frames

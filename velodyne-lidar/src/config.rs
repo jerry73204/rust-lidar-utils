@@ -3,9 +3,9 @@
 use crate::{
     common::*,
     consts,
+    converter::ConverterKind,
     firing::FiringFormat,
     packet::{ProductID, ReturnMode},
-    pcd_converter::PcdConverterKind,
 };
 
 pub use dconfig::*;
@@ -33,13 +33,9 @@ mod dconfig {
     }
 
     impl Config {
-        pub fn build_pcd_converter(self) -> Result<PcdConverterKind> {
-            PcdConverterKind::from_config(self)
+        pub fn build_converter(self) -> Result<ConverterKind> {
+            ConverterKind::from_config(self)
         }
-
-        // pub fn build_frame_converter(self) -> DFrameConverter {
-        //     DFrameConverter::from_config(self)
-        // }
 
         pub fn new_vlp_16_last() -> Self {
             Self {

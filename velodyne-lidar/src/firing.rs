@@ -159,6 +159,40 @@ mod firing_kind {
         Dual32(FiringDual32<'a>),
     }
 
+    impl<'a> FiringKind<'a> {
+        pub fn try_into_single16(self) -> Result<FiringSingle16<'a>, Self> {
+            if let Self::Single16(v) = self {
+                Ok(v)
+            } else {
+                Err(self)
+            }
+        }
+
+        pub fn try_into_single32(self) -> Result<FiringSingle32<'a>, Self> {
+            if let Self::Single32(v) = self {
+                Ok(v)
+            } else {
+                Err(self)
+            }
+        }
+
+        pub fn try_into_dual16(self) -> Result<FiringDual16<'a>, Self> {
+            if let Self::Dual16(v) = self {
+                Ok(v)
+            } else {
+                Err(self)
+            }
+        }
+
+        pub fn try_into_dual32(self) -> Result<FiringDual32<'a>, Self> {
+            if let Self::Dual32(v) = self {
+                Ok(v)
+            } else {
+                Err(self)
+            }
+        }
+    }
+
     impl<'a> From<FiringDual32<'a>> for FiringKind<'a> {
         fn from(v: FiringDual32<'a>) -> Self {
             Self::Dual32(v)
