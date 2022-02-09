@@ -1,6 +1,6 @@
 use crate::{
     common::*,
-    velodyne::packet::{Block, Channel, ProductID, ReturnMode},
+    packet::{Block, Channel, ProductID, ReturnMode},
 };
 
 pub use firing_format::*;

@@ -1,8 +1,8 @@
 #![cfg(feature = "ouster-client-test")]
 
 use anyhow::Result;
-use lidar_utils::ouster::{client::CommandClient, packet::Packet as OusterPacket};
 use log::warn;
+use ouster_lidar::{client::CommandClient, packet::Packet as OusterPacket};
 use serde::Deserialize;
 use std::{
     fs::File,

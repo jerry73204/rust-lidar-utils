@@ -6,7 +6,5 @@
 //! - Velodyne Puke Lite
 //! - Velodyne Puke Hi-Res
 
-mod common;
-pub mod ouster;
-mod utils;
-pub mod velodyne;
+pub use ouster_lidar as ouster;
+pub use velodyne_lidar as velodyne;

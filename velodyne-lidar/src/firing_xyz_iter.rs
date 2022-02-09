@@ -1,17 +1,15 @@
 use crate::{
     common::*,
-    velodyne::{
-        firing_xyz::{
-            FiringXyzDual16, FiringXyzDual32, FiringXyzKind, FiringXyzSingle16, FiringXyzSingle32,
-        },
-        frame_xyz::{FrameXyzDual16, FrameXyzDual32, FrameXyzSingle16, FrameXyzSingle32},
-        frame_xyz_converter::{
-            FrameXyzConverterDual16, FrameXyzConverterDual32, FrameXyzConverterSingle16,
-            FrameXyzConverterSingle32,
-        },
-        frame_xyz_iter::{
-            FrameXyzDual16Iter, FrameXyzDual32Iter, FrameXyzSingle16Iter, FrameXyzSingle32Iter,
-        },
+    firing_xyz::{
+        FiringXyzDual16, FiringXyzDual32, FiringXyzKind, FiringXyzSingle16, FiringXyzSingle32,
+    },
+    frame_xyz::{FrameXyzDual16, FrameXyzDual32, FrameXyzSingle16, FrameXyzSingle32},
+    frame_xyz_converter::{
+        FrameXyzConverterDual16, FrameXyzConverterDual32, FrameXyzConverterSingle16,
+        FrameXyzConverterSingle32,
+    },
+    frame_xyz_iter::{
+        FrameXyzDual16Iter, FrameXyzDual32Iter, FrameXyzSingle16Iter, FrameXyzSingle32Iter,
     },
 };
 

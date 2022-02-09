@@ -1,5 +1,5 @@
 use anyhow::Result;
-use lidar_utils::ouster::{
+use ouster_lidar::{
     config::Config, frame_converter::FrameConverter, packet::Packet as OusterPacket,
     pcd_converter::PointCloudConverter,
 };

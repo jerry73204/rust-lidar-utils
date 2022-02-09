@@ -1,6 +1,6 @@
 use crate::{
     common::*,
-    velodyne::point::{PointDual, PointKind, PointSingle},
+    point::{PointDual, PointKind, PointSingle},
 };
 
 pub(crate) use firing_trait::*;

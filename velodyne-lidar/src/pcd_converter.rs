@@ -1,18 +1,16 @@
 use crate::{
     common::*,
-    utils::{AngleExt as _, DurationExt as _},
-    velodyne::{
-        config::{Config, LaserParameter},
-        consts::{CHANNEL_PERIOD, FIRING_PERIOD},
-        firing::{FiringDual16, FiringDual32, FiringFormat, FiringSingle16, FiringSingle32},
-        firing_xyz::{FiringXyzDual16, FiringXyzDual32, FiringXyzSingle16, FiringXyzSingle32},
-        firing_xyz_iter::{
-            FiringXyzDual16Iter, FiringXyzDual32Iter, FiringXyzIter, FiringXyzSingle16Iter,
-            FiringXyzSingle32Iter,
-        },
-        packet::DataPacket,
-        point::{Measurement, MeasurementDual, PointDual, PointSingle},
+    config::{Config, LaserParameter},
+    consts::{CHANNEL_PERIOD, FIRING_PERIOD},
+    firing::{FiringDual16, FiringDual32, FiringFormat, FiringSingle16, FiringSingle32},
+    firing_xyz::{FiringXyzDual16, FiringXyzDual32, FiringXyzSingle16, FiringXyzSingle32},
+    firing_xyz_iter::{
+        FiringXyzDual16Iter, FiringXyzDual32Iter, FiringXyzIter, FiringXyzSingle16Iter,
+        FiringXyzSingle32Iter,
     },
+    packet::DataPacket,
+    point::{Measurement, MeasurementDual, PointDual, PointSingle},
+    utils::{AngleExt as _, DurationExt as _},
 };
 
 macro_rules! declare_converter {

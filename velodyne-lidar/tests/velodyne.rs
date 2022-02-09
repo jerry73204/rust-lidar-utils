@@ -1,7 +1,7 @@
 use anyhow::{ensure, Result};
 use itertools::izip;
-use lidar_utils::velodyne::{config::Config, consts, DataPacket};
 use pcap::Capture;
+use velodyne_lidar::{config::Config, consts, DataPacket};
 
 const UDP_HEADER_SIZE: usize = 42;
 

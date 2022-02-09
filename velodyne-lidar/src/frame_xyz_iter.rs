@@ -1,6 +1,4 @@
-pub use crate::velodyne::frame_xyz::{
-    FrameXyzDual16, FrameXyzDual32, FrameXyzSingle16, FrameXyzSingle32,
-};
+pub use crate::frame_xyz::{FrameXyzDual16, FrameXyzDual32, FrameXyzSingle16, FrameXyzSingle32};
 
 macro_rules! declare_iter {
     ($name:ident, $item:ident) => {

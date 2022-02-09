@@ -2,12 +2,10 @@
 
 use crate::{
     common::*,
-    velodyne::{
-        consts,
-        firing::FiringFormat,
-        packet::{ProductID, ReturnMode},
-        pcd_converter::PcdConverterKind,
-    },
+    consts,
+    firing::FiringFormat,
+    packet::{ProductID, ReturnMode},
+    pcd_converter::PcdConverterKind,
 };
 
 pub use dconfig::*;

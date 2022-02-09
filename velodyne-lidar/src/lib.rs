@@ -1,5 +1,6 @@
 //! Velodyne packet format types, configs and converters.
 
+mod common;
 pub mod config;
 pub mod consts;
 pub mod firing;
@@ -12,5 +13,6 @@ pub mod frame_xyz_iter;
 pub mod packet;
 pub mod pcd_converter;
 pub mod point;
+mod utils;
 
 pub use packet::{DataPacket, PositionPacket};
