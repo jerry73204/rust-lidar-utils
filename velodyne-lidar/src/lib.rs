@@ -12,6 +12,8 @@ pub mod frame_xyz;
 pub mod frame_xyz_batcher;
 pub mod frame_xyz_iter;
 pub mod packet;
+#[cfg(feature = "pcap")]
+pub mod pcap;
 pub mod point;
 mod utils;
 
