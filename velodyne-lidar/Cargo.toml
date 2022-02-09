@@ -26,6 +26,11 @@ futures = { version = "0.3.21", optional = true }
 [dev-dependencies]
 
 [features]
-default = ["full"]
+default = []
 full = ["nmea", "async", "pcap"]
 async = ["futures"]
+docs-rs = ["full", "pcap/docs-rs"]
+
+[package.metadata.docs.rs]
+features = ["pcap", "docs-rs"]
+no-default-features = true
