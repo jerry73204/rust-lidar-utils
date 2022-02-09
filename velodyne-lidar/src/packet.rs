@@ -46,15 +46,7 @@ mod data_packet {
     /// Represents the hardware model.
     #[repr(u8)]
     #[derive(
-        Debug,
-        Clone,
-        Copy,
-        PartialEq,
-        Eq,
-        Hash,
-        strum::AsRefStr,
-        strum::Display,
-        strum::EnumString,
+        Debug, Clone, Copy, PartialEq, Eq, Hash, strum::AsRefStr, strum::Display, strum::EnumString,
     )]
     pub enum ProductID {
         HDL32E = 0x21,
