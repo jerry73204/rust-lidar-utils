@@ -5,6 +5,7 @@ use crate::{
     consts,
     converter::ConverterKind,
     firing::FiringFormat,
+    frame_xyz_batcher::FrameXyzBatcherKind,
     packet::{ProductID, ReturnMode},
 };
 
@@ -27,14 +28,18 @@ mod dconfig {
     // impls
 
     impl Config {
-        pub fn firing_format(&self) -> FiringFormat {
-            FiringFormat::new(self.product_id, self.return_mode).unwrap()
+        pub fn firing_format(&self) -> Option<FiringFormat> {
+            FiringFormat::new(self.product_id, self.return_mode)
         }
     }
 
     impl Config {
         pub fn build_converter(self) -> Result<ConverterKind> {
             ConverterKind::from_config(self)
+        }
+
+        pub fn build_frame_xyz_batcher(&self) -> Result<FrameXyzBatcherKind> {
+            FrameXyzBatcherKind::from_config(&self)
         }
 
         pub fn new_vlp_16_last() -> Self {

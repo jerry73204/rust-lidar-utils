@@ -75,8 +75,8 @@ impl LidarFrameMsg for LidarFrameEntry {
     }
 }
 
-pub use point_::*;
-mod point_ {
+pub use point_types::*;
+mod point_types {
     use super::*;
 
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -94,6 +94,11 @@ mod point_ {
         pub azimuth: Angle,
         pub measurements: MeasurementDual,
     }
+}
+
+pub use point_kind::*;
+mod point_kind {
+    use super::*;
 
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct PointKind {
@@ -134,6 +139,79 @@ mod point_ {
                 azimuth,
                 measurement: measurements.into(),
             }
+        }
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub enum PointKindRef<'a> {
+        Single(&'a PointSingle),
+        Dual(&'a PointDual),
+    }
+
+    impl<'a> PointKindRef<'a> {
+        pub fn laser_id(&self) -> usize {
+            match self {
+                Self::Single(point) => point.laser_id,
+                Self::Dual(point) => point.laser_id,
+            }
+        }
+
+        pub fn time(&self) -> Duration {
+            match self {
+                Self::Single(point) => point.time,
+                Self::Dual(point) => point.time,
+            }
+        }
+
+        pub fn azimuth(&self) -> Angle {
+            match self {
+                Self::Single(point) => point.azimuth,
+                Self::Dual(point) => point.azimuth,
+            }
+        }
+
+        pub fn try_into_single(self) -> Result<&'a PointSingle, Self> {
+            if let Self::Single(v) = self {
+                Ok(v)
+            } else {
+                Err(self)
+            }
+        }
+
+        pub fn try_into_dual(self) -> Result<&'a PointDual, Self> {
+            if let Self::Dual(v) = self {
+                Ok(v)
+            } else {
+                Err(self)
+            }
+        }
+
+        pub fn as_single(&self) -> Option<&&'a PointSingle> {
+            if let Self::Single(v) = self {
+                Some(v)
+            } else {
+                None
+            }
+        }
+
+        pub fn as_dual(&self) -> Option<&&'a PointDual> {
+            if let Self::Dual(v) = self {
+                Some(v)
+            } else {
+                None
+            }
+        }
+    }
+
+    impl<'a> From<&'a PointDual> for PointKindRef<'a> {
+        fn from(v: &'a PointDual) -> Self {
+            Self::Dual(v)
+        }
+    }
+
+    impl<'a> From<&'a PointSingle> for PointKindRef<'a> {
+        fn from(v: &'a PointSingle) -> Self {
+            Self::Single(v)
         }
     }
 }

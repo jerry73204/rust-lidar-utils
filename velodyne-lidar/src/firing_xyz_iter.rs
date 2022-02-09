@@ -4,9 +4,9 @@ use crate::{
         FiringXyzDual16, FiringXyzDual32, FiringXyzKind, FiringXyzSingle16, FiringXyzSingle32,
     },
     frame_xyz::{FrameXyzDual16, FrameXyzDual32, FrameXyzSingle16, FrameXyzSingle32},
-    frame_xyz_converter::{
-        FrameXyzConverterDual16, FrameXyzConverterDual32, FrameXyzConverterSingle16,
-        FrameXyzConverterSingle32,
+    frame_xyz_batcher::{
+        FrameXyzBatcherDual16, FrameXyzBatcherDual32, FrameXyzBatcherSingle16,
+        FrameXyzBatcherSingle32,
     },
     frame_xyz_iter::{
         FrameXyzDual16Iter, FrameXyzDual32Iter, FrameXyzSingle16Iter, FrameXyzSingle32Iter,
@@ -66,28 +66,28 @@ macro_rules! declare_iter {
 declare_iter!(
     FiringXyzSingle16Iter,
     FiringXyzSingle16,
-    FrameXyzConverterSingle16,
+    FrameXyzBatcherSingle16,
     FrameXyzSingle16,
     FrameXyzSingle16Iter
 );
 declare_iter!(
     FiringXyzSingle32Iter,
     FiringXyzSingle32,
-    FrameXyzConverterSingle32,
+    FrameXyzBatcherSingle32,
     FrameXyzSingle32,
     FrameXyzSingle32Iter
 );
 declare_iter!(
     FiringXyzDual16Iter,
     FiringXyzDual16,
-    FrameXyzConverterDual16,
+    FrameXyzBatcherDual16,
     FrameXyzDual16,
     FrameXyzDual16Iter
 );
 declare_iter!(
     FiringXyzDual32Iter,
     FiringXyzDual32,
-    FrameXyzConverterDual32,
+    FrameXyzBatcherDual32,
     FrameXyzDual32,
     FrameXyzDual32Iter
 );

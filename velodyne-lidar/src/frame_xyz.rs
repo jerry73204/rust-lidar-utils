@@ -1,8 +1,8 @@
-use super::{
+use crate::{
+    common::*,
     firing_xyz::{FiringXyzDual16, FiringXyzDual32, FiringXyzSingle16, FiringXyzSingle32},
-    point::{PointDual, PointSingle},
+    point::{PointDual, PointKind, PointKindRef, PointSingle},
 };
-use crate::common::*;
 
 pub use frame_kind::*;
 mod frame_kind {
@@ -13,6 +13,67 @@ mod frame_kind {
         Single32(FrameXyzSingle32),
         Dual16(FrameXyzDual16),
         Dual32(FrameXyzDual32),
+    }
+
+    impl FrameXyzKind {
+        pub fn nrows(&self) -> usize {
+            match self {
+                Self::Single16(frame) => frame.nrows(),
+                Self::Single32(frame) => frame.nrows(),
+                Self::Dual16(frame) => frame.nrows(),
+                Self::Dual32(frame) => frame.nrows(),
+            }
+        }
+
+        pub fn ncols(&self) -> usize {
+            match self {
+                Self::Single16(frame) => frame.ncols(),
+                Self::Single32(frame) => frame.ncols(),
+                Self::Dual16(frame) => frame.ncols(),
+                Self::Dual32(frame) => frame.ncols(),
+            }
+        }
+
+        pub fn point_at(&self, row: usize, col: usize) -> Option<PointKindRef<'_>> {
+            Some(match self {
+                Self::Single16(frame) => frame.point_at(row, col)?.into(),
+                Self::Single32(frame) => frame.point_at(row, col)?.into(),
+                Self::Dual16(frame) => frame.point_at(row, col)?.into(),
+                Self::Dual32(frame) => frame.point_at(row, col)?.into(),
+            })
+        }
+
+        pub fn point_iter<'a>(
+            &'a self,
+        ) -> PointRefIter<
+            impl Iterator<Item = &'a PointSingle>,
+            impl Iterator<Item = &'a PointSingle>,
+            impl Iterator<Item = &'a PointDual>,
+            impl Iterator<Item = &'a PointDual>,
+        > {
+            match self {
+                Self::Single16(frame) => PointRefIter::Single16(frame.point_iter()),
+                Self::Single32(frame) => PointRefIter::Single32(frame.point_iter()),
+                Self::Dual16(frame) => PointRefIter::Dual16(frame.point_iter()),
+                Self::Dual32(frame) => PointRefIter::Dual32(frame.point_iter()),
+            }
+        }
+
+        pub fn into_point_iter(
+            self,
+        ) -> PointIter<
+            impl Iterator<Item = PointSingle>,
+            impl Iterator<Item = PointSingle>,
+            impl Iterator<Item = PointDual>,
+            impl Iterator<Item = PointDual>,
+        > {
+            match self {
+                Self::Single16(frame) => PointIter::Single16(frame.into_point_iter()),
+                Self::Single32(frame) => PointIter::Single32(frame.into_point_iter()),
+                Self::Dual16(frame) => PointIter::Dual16(frame.into_point_iter()),
+                Self::Dual32(frame) => PointIter::Dual32(frame.into_point_iter()),
+            }
+        }
     }
 
     impl From<FrameXyzDual16> for FrameXyzKind {
@@ -40,6 +101,80 @@ mod frame_kind {
     }
 }
 
+pub use point_iter::*;
+pub mod point_iter {
+    use super::*;
+
+    pub enum PointIter<A, B, C, D>
+    where
+        A: Iterator<Item = PointSingle>,
+        B: Iterator<Item = PointSingle>,
+        C: Iterator<Item = PointDual>,
+        D: Iterator<Item = PointDual>,
+    {
+        Single16(A),
+        Single32(B),
+        Dual16(C),
+        Dual32(D),
+    }
+
+    impl<A, B, C, D> Iterator for PointIter<A, B, C, D>
+    where
+        A: Iterator<Item = PointSingle>,
+        B: Iterator<Item = PointSingle>,
+        C: Iterator<Item = PointDual>,
+        D: Iterator<Item = PointDual>,
+    {
+        type Item = PointKind;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            Some(match self {
+                Self::Single16(iter) => iter.next()?.into(),
+                Self::Single32(iter) => iter.next()?.into(),
+                Self::Dual16(iter) => iter.next()?.into(),
+                Self::Dual32(iter) => iter.next()?.into(),
+            })
+        }
+    }
+}
+
+pub use point_ref_iter::*;
+pub mod point_ref_iter {
+    use super::*;
+
+    pub enum PointRefIter<'a, A, B, C, D>
+    where
+        A: Iterator<Item = &'a PointSingle>,
+        B: Iterator<Item = &'a PointSingle>,
+        C: Iterator<Item = &'a PointDual>,
+        D: Iterator<Item = &'a PointDual>,
+    {
+        Single16(A),
+        Single32(B),
+        Dual16(C),
+        Dual32(D),
+    }
+
+    impl<'a, A, B, C, D> Iterator for PointRefIter<'a, A, B, C, D>
+    where
+        A: Iterator<Item = &'a PointSingle>,
+        B: Iterator<Item = &'a PointSingle>,
+        C: Iterator<Item = &'a PointDual>,
+        D: Iterator<Item = &'a PointDual>,
+    {
+        type Item = PointKindRef<'a>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            Some(match self {
+                Self::Single16(iter) => iter.next()?.into(),
+                Self::Single32(iter) => iter.next()?.into(),
+                Self::Dual16(iter) => iter.next()?.into(),
+                Self::Dual32(iter) => iter.next()?.into(),
+            })
+        }
+    }
+}
+
 pub use frame_types::*;
 mod frame_types {
     use super::*;
@@ -63,6 +198,14 @@ mod frame_types {
                 pub fn point_at(&self, row: usize, col: usize) -> Option<&$point> {
                     self.firings.get(col)?.points.get(row)
                 }
+
+                pub fn point_iter(&self) -> impl Iterator<Item = &$point> {
+                    self.firings.iter().flat_map(|firing| &firing.points)
+                }
+
+                pub fn into_point_iter(self) -> impl Iterator<Item = $point> {
+                    self.firings.into_iter().flat_map(|firing| firing.points)
+                }
             }
         };
     }
@@ -72,99 +215,3 @@ mod frame_types {
     declare_type!(FrameXyzDual16, FiringXyzDual16, 16, PointDual);
     declare_type!(FrameXyzDual32, FiringXyzDual32, 32, PointDual);
 }
-
-// pub fn firings_to_frames_single_16<I>(firings: I) -> impl Iterator<Item = FrameXyzSingle16>
-// where
-//     I: IntoIterator<Item = FiringXyzSingle16>,
-// {
-//     let buffer: Vec<FiringXyzSingle16> = vec![];
-
-//     itertools::unfold((firings.into_iter(), buffer), |(firings, buffer)| loop {
-//         if let Some(curr) = firings.next() {
-//             let wrap =
-//                 matches!(buffer.last(), Some(prev) if prev.azimuth_count > curr.azimuth_count);
-
-//             if wrap {
-//                 let output = mem::replace(buffer, vec![curr]);
-//                 break Some(output);
-//             } else {
-//                 buffer.push(curr);
-//             }
-//         } else {
-//             break (!buffer.is_empty()).then(|| mem::take(buffer));
-//         }
-//     })
-//     .map(|firings| FrameXyzSingle16 { firings })
-// }
-
-// pub fn firings_to_frames_single_32<I>(firings: I) -> impl Iterator<Item = FrameXyzSingle32>
-// where
-//     I: IntoIterator<Item = FiringXyzSingle32>,
-// {
-//     let buffer: Vec<FiringXyzSingle32> = vec![];
-
-//     itertools::unfold((firings.into_iter(), buffer), |(firings, buffer)| loop {
-//         if let Some(curr) = firings.next() {
-//             let wrap =
-//                 matches!(buffer.last(), Some(prev) if prev.azimuth_count > curr.azimuth_count);
-
-//             if wrap {
-//                 let output = mem::replace(buffer, vec![curr]);
-//                 break Some(output);
-//             } else {
-//                 buffer.push(curr);
-//             }
-//         } else {
-//             break (!buffer.is_empty()).then(|| mem::take(buffer));
-//         }
-//     })
-//     .map(|firings| FrameXyzSingle32 { firings })
-// }
-
-// pub fn firings_to_frames_dual_16<I>(firings: I) -> impl Iterator<Item = FrameXyzDual16>
-// where
-//     I: IntoIterator<Item = FiringXyzDual16>,
-// {
-//     let buffer: Vec<FiringXyzDual16> = vec![];
-
-//     itertools::unfold((firings.into_iter(), buffer), |(firings, buffer)| loop {
-//         if let Some(curr) = firings.next() {
-//             let wrap =
-//                 matches!(buffer.last(), Some(prev) if prev.azimuth_count > curr.azimuth_count);
-
-//             if wrap {
-//                 let output = mem::replace(buffer, vec![curr]);
-//                 break Some(output);
-//             } else {
-//                 buffer.push(curr);
-//             }
-//         } else {
-//             break (!buffer.is_empty()).then(|| mem::take(buffer));
-//         }
-//     })
-//     .map(|firings| FrameXyzDual16 { firings })
-// }
-
-// pub fn firings_to_frames_dual_32<I>(firings: I) -> impl Iterator<Item = FrameXyzDual32>
-// where
-//     I: IntoIterator<Item = FiringXyzDual32>,
-// {
-//     let buffer: Vec<FiringXyzDual32> = vec![];
-
-//     itertools::unfold((firings.into_iter(), buffer), |(firings, buffer)| loop {
-//         if let Some(curr) = firings.next() {
-//             let wrap =
-//                 matches!(buffer.last(), Some(prev) if prev.azimuth_count > curr.azimuth_count);
-
-//             if wrap {
-//                 let output = mem::replace(buffer, vec![curr]);
-//                 break Some(output);
-//             } else {
-//                 buffer.push(curr);
-//             }
-//         } else {
-//             break (!buffer.is_empty()).then(|| mem::take(buffer));
-//         }
-//     })
-//     .map(|firings| FrameXyzDual32 { firings })
-// }

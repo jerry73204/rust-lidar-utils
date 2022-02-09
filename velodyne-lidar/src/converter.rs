@@ -326,7 +326,9 @@ mod kind {
         pub fn from_config(config: Config) -> Result<Self> {
             use FiringFormat as F;
 
-            let firing_format = config.firing_format();
+            let firing_format = config
+                .firing_format()
+                .ok_or_else(|| format_err!("product is not supported"))?;
             let Config {
                 lasers,
                 distance_resolution,
