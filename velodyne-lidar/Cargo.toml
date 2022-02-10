@@ -21,7 +21,8 @@ nmea = { version = "0.0.11", optional = true }
 pcap = { version = "0.9.1", optional = true }
 futures = { version = "0.3.21", optional = true }
 
-[dev-dependencies]
+# [dev-dependencies]
+# rand = "0.8.4"
 
 [features]
 default = []

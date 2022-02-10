@@ -39,7 +39,7 @@ mod dconfig {
         }
 
         pub fn build_frame_xyz_batcher(&self) -> Result<FrameXyzBatcherKind> {
-            FrameXyzBatcherKind::from_config(&self)
+            FrameXyzBatcherKind::from_config(self)
         }
 
         pub fn new_vlp_16_last() -> Self {

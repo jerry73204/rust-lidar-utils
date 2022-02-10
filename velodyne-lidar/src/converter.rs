@@ -736,13 +736,152 @@ mod functions {
         vertical_offset: Length,
         horizontal_offset: Length,
     ) -> [Length; 3] {
+        spherical_to_xyz_generic(
+            distance,
+            elevation,
+            azimuth,
+            vertical_offset,
+            horizontal_offset,
+        )
+
+        // #[cfg(any(
+        //     not(feature = "fast_approx"),
+        //     not(any(target_arch = "x86", target_arch = "x86_64"))
+        // ))]
+        // {
+        //     spherical_to_xyz_generic(
+        //         distance,
+        //         elevation,
+        //         azimuth,
+        //         vertical_offset,
+        //         horizontal_offset,
+        //     )
+        // }
+
+        // #[cfg(all(
+        //     feature = "fast_approx",
+        //     any(target_arch = "x86", target_arch = "x86_64")
+        // ))]
+        // {
+        //     spherical_to_xyz_x86(
+        //         distance,
+        //         elevation,
+        //         azimuth,
+        //         vertical_offset,
+        //         horizontal_offset,
+        //     )
+        // }
+    }
+
+    pub fn spherical_to_xyz_generic(
+        distance: Length,
+        elevation: Angle,
+        azimuth: Angle,
+        vertical_offset: Length,
+        horizontal_offset: Length,
+    ) -> [Length; 3] {
         // The origin of elevaion_angle lies on xy plane.
         // The azimuth angle starts from y-axis, rotates clockwise.
 
-        let distance_plane = distance * elevation.cos() - vertical_offset * elevation.sin();
-        let x = distance_plane * azimuth.sin() - horizontal_offset * azimuth.cos();
-        let y = distance_plane * azimuth.cos() + horizontal_offset * azimuth.sin();
-        let z = distance * elevation.sin() + vertical_offset * elevation.cos();
+        let elevation_sin = elevation.sin();
+        let elevation_cos = 1.0 - elevation_sin.abs();
+        let azimuth_sin = azimuth.sin();
+        let azimuth_cos = azimuth.cos();
+
+        let distance_plane = distance * elevation_cos - vertical_offset * elevation_sin;
+        let x = distance_plane * azimuth_sin - horizontal_offset * azimuth_cos;
+        let y = distance_plane * azimuth_cos + horizontal_offset * azimuth_sin;
+        let z = distance * elevation_sin + vertical_offset * elevation_cos;
         [x, y, z]
     }
+
+    // #[allow(dead_code)]
+    // #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    // pub fn spherical_to_xyz_x86(
+    //     distance: Length,
+    //     elevation: Angle,
+    //     azimuth: Angle,
+    //     vertical_offset: Length,
+    //     horizontal_offset: Length,
+    // ) -> [Length; 3] {
+    //     use fastapprox::fast::{cosfull, sin, sinfull};
+    //     use std::f64::consts::FRAC_PI_2;
+
+    //     debug_assert!(((-FRAC_PI_2)..=FRAC_PI_2).contains(&elevation.as_radians()));
+
+    //     let elevation_sin = sin(elevation.as_radians() as f32) as f64;
+    //     let elevation_cos = 1.0 - elevation_sin.abs();
+    //     let azimuth_sin = sinfull(azimuth.as_radians() as f32) as f64;
+    //     let azimuth_cos = cosfull(azimuth.as_radians() as f32) as f64;
+
+    //     let distance_plane = distance * elevation_cos - vertical_offset * elevation_sin;
+    //     let x = distance_plane * azimuth_sin - horizontal_offset * azimuth_cos;
+    //     let y = distance_plane * azimuth_cos + horizontal_offset * azimuth_sin;
+    //     let z = distance * elevation_sin + vertical_offset * elevation_cos;
+    //     [x, y, z]
+    // }
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+
+//     #[test]
+//     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+//     fn spherical_to_xyz_precisoin_test() {
+//         use rand::prelude::*;
+//         use std::f64::consts::{FRAC_PI_2, PI};
+
+//         let mut rng = rand::thread_rng();
+
+//         LaserParameter::vlp_32c().into_iter().for_each(|laser| {
+//             let LaserParameter {
+//                 elevation,
+//                 azimuth_offset,
+//                 vertical_offset,
+//                 horizontal_offset,
+//             } = laser;
+
+//             assert!(((-FRAC_PI_2)..=FRAC_PI_2).contains(&elevation.as_radians()));
+
+//             (0..1000).for_each(|_| {
+//                 let distance = Length::from_meters(rng.gen_range(0f64..200.0));
+//                 let azimuth = (Angle::from_radians(rng.gen_range(0f64..(PI * 2.0)))
+//                     + azimuth_offset)
+//                     .wrap_to_2pi();
+
+//                 let slower = spherical_to_xyz_generic(
+//                     distance,
+//                     elevation,
+//                     azimuth,
+//                     vertical_offset,
+//                     horizontal_offset,
+//                 );
+//                 let faster = spherical_to_xyz_x86(
+//                     distance,
+//                     elevation,
+//                     azimuth,
+//                     vertical_offset,
+//                     horizontal_offset,
+//                 );
+
+//                 let [x1, y1, z1] = slower;
+//                 let [x2, y2, z2] = faster;
+
+//                 let l2_m = ((x2 - x1).as_meters().powi(2)
+//                     + (y2 - y1).as_meters().powi(2)
+//                     + (z2 - z1).as_meters().powi(2))
+//                 .sqrt();
+
+//                 assert!(
+//                     l2_m <= 14e-3,
+//                     "large position error {} meters for distance={}, azimuth={}, elevation={}",
+//                     l2_m,
+//                     distance,
+//                     azimuth,
+//                     elevation,
+//                 );
+//             });
+//         });
+//     }
+// }

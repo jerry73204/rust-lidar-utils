@@ -33,11 +33,6 @@ pub(crate) trait DurationExt {
 
 impl DurationExt for Duration {
     fn div_duration(self, rhs: Duration) -> f64 {
-        let lhs = self.as_nanos();
-        let rhs = rhs.as_nanos();
-
-        let int = lhs / rhs;
-        let frac = (lhs - rhs * int) as f64 / rhs as f64;
-        int as f64 + frac
+        self.as_secs_f64() / rhs.as_secs_f64()
     }
 }
