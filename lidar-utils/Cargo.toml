@@ -15,7 +15,7 @@ anyhow = "1.0.53"
 futures = "0.3.21"
 itertools = "0.10.3"
 ouster-lidar = { version = "0.1.0", path = "../ouster-lidar" }
-par-stream = { version = "0.10.0", features = ["runtime-tokio"] }
+par-stream = { version = "0.10.2", features = ["runtime-tokio"] }
 pcap = "0.9.1"
 pcd-rs = "0.8.0"
 structopt = "0.3.26"
