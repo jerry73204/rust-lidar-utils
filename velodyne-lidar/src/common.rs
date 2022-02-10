@@ -4,7 +4,6 @@ pub use derivative::Derivative;
 pub use itertools::{chain, izip, Itertools as _};
 pub use measurements::{Angle, Length};
 pub use noisy_float::types::R64;
-pub use num_traits::{Float, Num};
 pub use serde::{Deserialize, Deserializer, Serialize, Serializer};
 pub use std::{
     borrow::{Borrow, Cow},
