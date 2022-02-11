@@ -3,9 +3,10 @@ use crate::{
     config::Config,
     firing::FiringFormat,
     firing_xyz::{
-        FiringXyz, FiringXyzDual16, FiringXyzDual32, FiringXyzSingle16, FiringXyzSingle32,
+        FiringXyz, FiringXyzDual16, FiringXyzDual32, FiringXyzKind, FiringXyzSingle16,
+        FiringXyzSingle32,
     },
-    frame_xyz::{FrameXyzDual16, FrameXyzDual32, FrameXyzSingle16, FrameXyzSingle32},
+    frame_xyz::{FrameXyzDual16, FrameXyzDual32, FrameXyzKind, FrameXyzSingle16, FrameXyzSingle32},
 };
 #[cfg(feature = "async")]
 use futures::stream::{self, Stream, StreamExt as _};
@@ -171,6 +172,64 @@ mod kind {
 
         pub fn into_dual32(self) -> FrameXyzBatcherDual32 {
             self.try_into_dual32().unwrap()
+        }
+
+        pub fn push_one(&mut self, firing: FiringXyzKind) -> Result<Option<FrameXyzKind>> {
+            use FiringXyzKind as F;
+
+            let frame = match (self, firing) {
+                (Self::Single16(me), F::Single16(firing)) => me.push_one(firing).map(Into::into),
+                (Self::Single32(me), F::Single32(firing)) => me.push_one(firing).map(Into::into),
+                (Self::Dual16(me), F::Dual16(firing)) => me.push_one(firing).map(Into::into),
+                (Self::Dual32(me), F::Dual32(firing)) => me.push_one(firing).map(Into::into),
+                _ => bail!("batcher type and firing type mismatch"),
+            };
+
+            Ok(frame)
+        }
+
+        pub fn push_many<'a, I>(
+            &'a mut self,
+            firings: I,
+        ) -> impl Iterator<Item = Result<FrameXyzKind>> + 'a
+        where
+            I: IntoIterator<Item = FiringXyzKind> + 'a,
+        {
+            let firings = firings.into_iter();
+            let err = || format_err!("batcher and firing type mismatch");
+
+            let frame_iter: Box<dyn Iterator<Item = Result<Option<FrameXyzKind>>>> = match self {
+                Self::Single16(me) => Box::new(firings.map(move |firing| {
+                    let firing = firing.try_into_single16().map_err(|_| err())?;
+                    let frame: Option<FrameXyzKind> = me.push_one(firing).map(Into::into);
+                    Ok(frame)
+                })),
+                Self::Single32(me) => Box::new(firings.map(move |firing| {
+                    let firing = firing.try_into_single32().map_err(|_| err())?;
+                    let frame: Option<FrameXyzKind> = me.push_one(firing).map(Into::into);
+                    Ok(frame)
+                })),
+                Self::Dual16(me) => Box::new(firings.map(move |firing| {
+                    let firing = firing.try_into_dual16().map_err(|_| err())?;
+                    let frame: Option<FrameXyzKind> = me.push_one(firing).map(Into::into);
+                    Ok(frame)
+                })),
+                Self::Dual32(me) => Box::new(firings.map(move |firing| {
+                    let firing = firing.try_into_dual32().map_err(|_| err())?;
+                    let frame: Option<FrameXyzKind> = me.push_one(firing).map(Into::into);
+                    Ok(frame)
+                })),
+            };
+            frame_iter.flat_map(|frame| frame.transpose())
+        }
+
+        pub fn take(&mut self) -> Option<FrameXyzKind> {
+            match self {
+                Self::Single16(me) => me.take().map(Into::into),
+                Self::Single32(me) => me.take().map(Into::into),
+                Self::Dual16(me) => me.take().map(Into::into),
+                Self::Dual32(me) => me.take().map(Into::into),
+            }
         }
     }
 
