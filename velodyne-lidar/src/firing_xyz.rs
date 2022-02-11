@@ -1,6 +1,6 @@
 use crate::{
     common::*,
-    point::{PointDual, PointKind, PointSingle},
+    point::{PointDual, PointSingle},
 };
 
 pub(crate) use firing_trait::*;
@@ -69,81 +69,94 @@ pub struct FiringXyzDual32 {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FiringXyzKind {
-    pub time: Duration,
-    pub azimuth_count: u16,
-    pub azimuth_range: Range<Angle>,
-    pub points: Vec<PointKind>,
+pub enum FiringXyzKind {
+    Single16(FiringXyzSingle16),
+    Single32(FiringXyzSingle32),
+    Dual16(FiringXyzDual16),
+    Dual32(FiringXyzDual32),
 }
 
-impl From<FiringXyzSingle16> for FiringXyzKind {
-    fn from(from: FiringXyzSingle16) -> Self {
-        let FiringXyzSingle16 {
-            time,
-            azimuth_count,
-            azimuth_range,
-            points,
-        } = from;
-
-        Self {
-            time,
-            azimuth_count,
-            azimuth_range,
-            points: points.into_iter().map(Into::into).collect(),
+impl FiringXyzKind {
+    pub fn time(&self) -> Duration {
+        match self {
+            FiringXyzKind::Single16(me) => me.time,
+            FiringXyzKind::Single32(me) => me.time,
+            FiringXyzKind::Dual16(me) => me.time,
+            FiringXyzKind::Dual32(me) => me.time,
         }
     }
-}
 
-impl From<FiringXyzSingle32> for FiringXyzKind {
-    fn from(from: FiringXyzSingle32) -> Self {
-        let FiringXyzSingle32 {
-            time,
-            azimuth_count,
-            azimuth_range,
-            points,
-        } = from;
-
-        Self {
-            time,
-            azimuth_count,
-            azimuth_range,
-            points: points.into_iter().map(Into::into).collect(),
+    pub fn azimuth_count(&self) -> u16 {
+        match self {
+            FiringXyzKind::Single16(me) => me.azimuth_count,
+            FiringXyzKind::Single32(me) => me.azimuth_count,
+            FiringXyzKind::Dual16(me) => me.azimuth_count,
+            FiringXyzKind::Dual32(me) => me.azimuth_count,
         }
     }
-}
 
-impl From<FiringXyzDual16> for FiringXyzKind {
-    fn from(from: FiringXyzDual16) -> Self {
-        let FiringXyzDual16 {
-            time,
-            azimuth_count,
-            azimuth_range,
-            points,
-        } = from;
+    pub fn azimuth_range(&self) -> &Range<Angle> {
+        match self {
+            FiringXyzKind::Single16(me) => &me.azimuth_range,
+            FiringXyzKind::Single32(me) => &me.azimuth_range,
+            FiringXyzKind::Dual16(me) => &me.azimuth_range,
+            FiringXyzKind::Dual32(me) => &me.azimuth_range,
+        }
+    }
 
-        Self {
-            time,
-            azimuth_count,
-            azimuth_range,
-            points: points.into_iter().map(Into::into).collect(),
+    pub fn try_into_single16(self) -> Result<FiringXyzSingle16, Self> {
+        if let Self::Single16(v) = self {
+            Ok(v)
+        } else {
+            Err(self)
+        }
+    }
+
+    pub fn try_into_single32(self) -> Result<FiringXyzSingle32, Self> {
+        if let Self::Single32(v) = self {
+            Ok(v)
+        } else {
+            Err(self)
+        }
+    }
+
+    pub fn try_into_dual16(self) -> Result<FiringXyzDual16, Self> {
+        if let Self::Dual16(v) = self {
+            Ok(v)
+        } else {
+            Err(self)
+        }
+    }
+
+    pub fn try_into_dual32(self) -> Result<FiringXyzDual32, Self> {
+        if let Self::Dual32(v) = self {
+            Ok(v)
+        } else {
+            Err(self)
         }
     }
 }
 
 impl From<FiringXyzDual32> for FiringXyzKind {
-    fn from(from: FiringXyzDual32) -> Self {
-        let FiringXyzDual32 {
-            time,
-            azimuth_count,
-            azimuth_range,
-            points,
-        } = from;
+    fn from(v: FiringXyzDual32) -> Self {
+        Self::Dual32(v)
+    }
+}
 
-        Self {
-            time,
-            azimuth_count,
-            azimuth_range,
-            points: points.into_iter().map(Into::into).collect(),
-        }
+impl From<FiringXyzDual16> for FiringXyzKind {
+    fn from(v: FiringXyzDual16) -> Self {
+        Self::Dual16(v)
+    }
+}
+
+impl From<FiringXyzSingle32> for FiringXyzKind {
+    fn from(v: FiringXyzSingle32) -> Self {
+        Self::Single32(v)
+    }
+}
+
+impl From<FiringXyzSingle16> for FiringXyzKind {
+    fn from(v: FiringXyzSingle16) -> Self {
+        Self::Single16(v)
     }
 }
