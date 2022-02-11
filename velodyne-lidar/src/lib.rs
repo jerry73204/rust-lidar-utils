@@ -18,6 +18,12 @@ pub mod point;
 pub mod point_iter;
 mod utils;
 
-pub use config::Config;
+#[cfg(feature = "pcap")]
+pub use crate::pcap::PcapFileReader;
+pub use config::*;
 pub use converter::*;
-pub use packet::{DataPacket, PositionPacket, ProductID, ReturnMode};
+pub use firing::*;
+pub use firing_xyz::*;
+pub use frame_xyz::*;
+pub use packet::{DataPacket, PacketKind, PositionPacket, ProductID, ReturnMode};
+pub use point::*;

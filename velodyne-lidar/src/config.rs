@@ -9,9 +9,8 @@ use crate::{
     packet::{ProductID, ReturnMode},
 };
 
-pub use dconfig::*;
-mod dconfig {
-
+pub use config_::*;
+mod config_ {
     use super::*;
 
     // type
