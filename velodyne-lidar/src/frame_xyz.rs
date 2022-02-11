@@ -1,11 +1,16 @@
 use crate::{
     common::*,
     firing_xyz::{FiringXyzDual16, FiringXyzDual32, FiringXyzSingle16, FiringXyzSingle32},
+    firing_xyz_iter::{
+        FiringXyzDual16Iter, FiringXyzDual32Iter, FiringXyzIter, FiringXyzSingle16Iter,
+        FiringXyzSingle32Iter,
+    },
     point::{PointDual, PointKind, PointKindRef, PointSingle},
 };
 
 pub use frame_kind::*;
 mod frame_kind {
+
     use super::*;
 
     pub enum FrameXyzKind {
@@ -41,6 +46,22 @@ mod frame_kind {
                 Self::Dual16(frame) => frame.point_at(row, col)?.into(),
                 Self::Dual32(frame) => frame.point_at(row, col)?.into(),
             })
+        }
+
+        pub fn into_firing_iter(
+            self,
+        ) -> FiringXyzIter<
+            impl Iterator<Item = FiringXyzSingle16>,
+            impl Iterator<Item = FiringXyzSingle32>,
+            impl Iterator<Item = FiringXyzDual16>,
+            impl Iterator<Item = FiringXyzDual32>,
+        > {
+            match self {
+                FrameXyzKind::Single16(me) => FiringXyzSingle16Iter(me.firings.into_iter()).into(),
+                FrameXyzKind::Single32(me) => FiringXyzSingle32Iter(me.firings.into_iter()).into(),
+                FrameXyzKind::Dual16(me) => FiringXyzDual16Iter(me.firings.into_iter()).into(),
+                FrameXyzKind::Dual32(me) => FiringXyzDual32Iter(me.firings.into_iter()).into(),
+            }
         }
 
         pub fn point_iter<'a>(
@@ -203,7 +224,7 @@ mod frame_types {
                     self.firings.iter().flat_map(|firing| &firing.points)
                 }
 
-                pub fn indexer_point_iter(
+                pub fn indexed_point_iter(
                     &self,
                 ) -> impl Iterator<Item = ((usize, usize), &$point)> {
                     self.firings.iter().enumerate().flat_map(|(col, firing)| {
