@@ -15,6 +15,7 @@ pub mod packet;
 #[cfg(feature = "pcap")]
 pub mod pcap;
 pub mod point;
+pub mod point_iter;
 mod utils;
 
 pub use config::Config;

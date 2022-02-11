@@ -9,7 +9,7 @@ use crate::{
         FiringXyzDual16, FiringXyzDual32, FiringXyzKind, FiringXyzSingle16, FiringXyzSingle32,
     },
     firing_xyz_iter::{
-        FiringXyzDual16Iter, FiringXyzDual32Iter, FiringXyzIter, FiringXyzSingle16Iter,
+        FiringXyzDual16Iter, FiringXyzDual32Iter, FiringXyzKindIter, FiringXyzSingle16Iter,
         FiringXyzSingle32Iter,
     },
     frame_xyz::{FrameXyzDual16, FrameXyzDual32, FrameXyzSingle16, FrameXyzSingle32},
@@ -265,7 +265,7 @@ mod kind {
         pub fn packet_to_firing_xyz_iter<'a>(
             &'a self,
             packet: &'a DataPacket,
-        ) -> FiringXyzIter<
+        ) -> FiringXyzKindIter<
             impl Iterator<Item = FiringXyzSingle16> + 'a,
             impl Iterator<Item = FiringXyzSingle32> + 'a,
             impl Iterator<Item = FiringXyzDual16> + 'a,
@@ -282,7 +282,7 @@ mod kind {
         pub fn packet_iter_to_firing_xyz_iter<'a, P, I>(
             &'a self,
             packets: I,
-        ) -> FiringXyzIter<
+        ) -> FiringXyzKindIter<
             impl Iterator<Item = FiringXyzSingle16> + 'a,
             impl Iterator<Item = FiringXyzSingle32> + 'a,
             impl Iterator<Item = FiringXyzDual16> + 'a,

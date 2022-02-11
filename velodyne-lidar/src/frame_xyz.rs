@@ -2,14 +2,22 @@ use crate::{
     common::*,
     firing_xyz::{FiringXyzDual16, FiringXyzDual32, FiringXyzSingle16, FiringXyzSingle32},
     firing_xyz_iter::{
-        FiringXyzDual16Iter, FiringXyzDual32Iter, FiringXyzIter, FiringXyzSingle16Iter,
+        FiringXyzDual16Iter, FiringXyzDual32Iter, FiringXyzKindIter, FiringXyzSingle16Iter,
         FiringXyzSingle32Iter,
     },
-    point::{PointDual, PointKind, PointKindRef, PointSingle},
+    point::{PointDual, PointKindRef, PointSingle},
 };
 
 pub use frame_kind::*;
 mod frame_kind {
+
+    use crate::{
+        firing_xyz_iter::{
+            FiringXyzDual16RefIter, FiringXyzDual32RefIter, FiringXyzKindRefIter,
+            FiringXyzSingle16RefIter, FiringXyzSingle32RefIter,
+        },
+        point_iter::{PointIter, PointRefIter},
+    };
 
     use super::*;
 
@@ -48,9 +56,25 @@ mod frame_kind {
             })
         }
 
+        pub fn firing_iter<'a>(
+            &'a self,
+        ) -> FiringXyzKindRefIter<
+            impl Iterator<Item = &'a FiringXyzSingle16>,
+            impl Iterator<Item = &'a FiringXyzSingle32>,
+            impl Iterator<Item = &'a FiringXyzDual16>,
+            impl Iterator<Item = &'a FiringXyzDual32>,
+        > {
+            match self {
+                FrameXyzKind::Single16(me) => FiringXyzSingle16RefIter(me.firings.iter()).into(),
+                FrameXyzKind::Single32(me) => FiringXyzSingle32RefIter(me.firings.iter()).into(),
+                FrameXyzKind::Dual16(me) => FiringXyzDual16RefIter(me.firings.iter()).into(),
+                FrameXyzKind::Dual32(me) => FiringXyzDual32RefIter(me.firings.iter()).into(),
+            }
+        }
+
         pub fn into_firing_iter(
             self,
-        ) -> FiringXyzIter<
+        ) -> FiringXyzKindIter<
             impl Iterator<Item = FiringXyzSingle16>,
             impl Iterator<Item = FiringXyzSingle32>,
             impl Iterator<Item = FiringXyzDual16>,
@@ -118,80 +142,6 @@ mod frame_kind {
     impl From<FrameXyzSingle16> for FrameXyzKind {
         fn from(v: FrameXyzSingle16) -> Self {
             Self::Single16(v)
-        }
-    }
-}
-
-pub use point_iter::*;
-pub mod point_iter {
-    use super::*;
-
-    pub enum PointIter<A, B, C, D>
-    where
-        A: Iterator<Item = PointSingle>,
-        B: Iterator<Item = PointSingle>,
-        C: Iterator<Item = PointDual>,
-        D: Iterator<Item = PointDual>,
-    {
-        Single16(A),
-        Single32(B),
-        Dual16(C),
-        Dual32(D),
-    }
-
-    impl<A, B, C, D> Iterator for PointIter<A, B, C, D>
-    where
-        A: Iterator<Item = PointSingle>,
-        B: Iterator<Item = PointSingle>,
-        C: Iterator<Item = PointDual>,
-        D: Iterator<Item = PointDual>,
-    {
-        type Item = PointKind;
-
-        fn next(&mut self) -> Option<Self::Item> {
-            Some(match self {
-                Self::Single16(iter) => iter.next()?.into(),
-                Self::Single32(iter) => iter.next()?.into(),
-                Self::Dual16(iter) => iter.next()?.into(),
-                Self::Dual32(iter) => iter.next()?.into(),
-            })
-        }
-    }
-}
-
-pub use point_ref_iter::*;
-pub mod point_ref_iter {
-    use super::*;
-
-    pub enum PointRefIter<'a, A, B, C, D>
-    where
-        A: Iterator<Item = &'a PointSingle>,
-        B: Iterator<Item = &'a PointSingle>,
-        C: Iterator<Item = &'a PointDual>,
-        D: Iterator<Item = &'a PointDual>,
-    {
-        Single16(A),
-        Single32(B),
-        Dual16(C),
-        Dual32(D),
-    }
-
-    impl<'a, A, B, C, D> Iterator for PointRefIter<'a, A, B, C, D>
-    where
-        A: Iterator<Item = &'a PointSingle>,
-        B: Iterator<Item = &'a PointSingle>,
-        C: Iterator<Item = &'a PointDual>,
-        D: Iterator<Item = &'a PointDual>,
-    {
-        type Item = PointKindRef<'a>;
-
-        fn next(&mut self) -> Option<Self::Item> {
-            Some(match self {
-                Self::Single16(iter) => iter.next()?.into(),
-                Self::Single32(iter) => iter.next()?.into(),
-                Self::Dual16(iter) => iter.next()?.into(),
-                Self::Dual32(iter) => iter.next()?.into(),
-            })
         }
     }
 }
