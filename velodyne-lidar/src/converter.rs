@@ -424,7 +424,6 @@ mod functions {
             time: firing_time,
             ref azimuth_range,
             channels,
-            block,
             ..
         } = *firing;
 
@@ -473,7 +472,6 @@ mod functions {
 
         FiringXyzSingle16 {
             time: firing_time,
-            azimuth_count: block.azimuth_count,
             azimuth_range: azimuth_range.clone(),
             points,
         }
@@ -488,7 +486,6 @@ mod functions {
             time: firing_time,
             ref azimuth_range,
             channels,
-            block,
             ..
         } = *firing;
 
@@ -541,7 +538,6 @@ mod functions {
 
         FiringXyzSingle32 {
             time: firing_time,
-            azimuth_count: block.azimuth_count,
             azimuth_range: azimuth_range.clone(),
             points,
         }
@@ -557,7 +553,6 @@ mod functions {
             ref azimuth_range,
             channels_strongest,
             channels_last,
-            block_strongest,
             ..
         } = *firing;
 
@@ -630,7 +625,6 @@ mod functions {
 
         FiringXyzDual16 {
             time: firing_time,
-            azimuth_count: block_strongest.azimuth_count,
             azimuth_range: azimuth_range.clone(),
             points,
         }
@@ -646,7 +640,6 @@ mod functions {
             ref azimuth_range,
             channels_strongest,
             channels_last,
-            block_strongest,
             ..
         } = *firing;
 
@@ -723,7 +716,6 @@ mod functions {
 
         FiringXyzDual32 {
             time: firing_time,
-            azimuth_count: block_strongest.azimuth_count,
             azimuth_range: azimuth_range.clone(),
             points,
         }

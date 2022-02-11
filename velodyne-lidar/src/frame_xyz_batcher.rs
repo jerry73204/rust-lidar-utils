@@ -259,7 +259,7 @@ mod kind {
 }
 
 fn push_one<F: FiringXyz>(buffer: &mut Vec<F>, curr: F) -> Option<Vec<F>> {
-    let wrap = matches!(buffer.last(), Some(prev) if prev.azimuth_count() > curr.azimuth_count());
+    let wrap = matches!(buffer.last(), Some(prev) if prev.azimuth() > curr.azimuth());
 
     if wrap {
         let output = mem::replace(buffer, vec![curr]);

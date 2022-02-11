@@ -8,30 +8,30 @@ mod firing_trait {
     use super::*;
 
     pub trait FiringXyz {
-        fn azimuth_count(&self) -> u16;
+        fn azimuth(&self) -> Angle;
     }
 
     impl FiringXyz for FiringXyzSingle16 {
-        fn azimuth_count(&self) -> u16 {
-            self.azimuth_count
+        fn azimuth(&self) -> Angle {
+            self.azimuth_range.start
         }
     }
 
     impl FiringXyz for FiringXyzSingle32 {
-        fn azimuth_count(&self) -> u16 {
-            self.azimuth_count
+        fn azimuth(&self) -> Angle {
+            self.azimuth_range.start
         }
     }
 
     impl FiringXyz for FiringXyzDual16 {
-        fn azimuth_count(&self) -> u16 {
-            self.azimuth_count
+        fn azimuth(&self) -> Angle {
+            self.azimuth_range.start
         }
     }
 
     impl FiringXyz for FiringXyzDual32 {
-        fn azimuth_count(&self) -> u16 {
-            self.azimuth_count
+        fn azimuth(&self) -> Angle {
+            self.azimuth_range.start
         }
     }
 }
@@ -39,7 +39,6 @@ mod firing_trait {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringXyzSingle16 {
     pub time: Duration,
-    pub azimuth_count: u16,
     pub azimuth_range: Range<Angle>,
     pub points: [PointSingle; 16],
 }
@@ -47,7 +46,6 @@ pub struct FiringXyzSingle16 {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringXyzSingle32 {
     pub time: Duration,
-    pub azimuth_count: u16,
     pub azimuth_range: Range<Angle>,
     pub points: [PointSingle; 32],
 }
@@ -55,7 +53,6 @@ pub struct FiringXyzSingle32 {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringXyzDual16 {
     pub time: Duration,
-    pub azimuth_count: u16,
     pub azimuth_range: Range<Angle>,
     pub points: [PointDual; 16],
 }
@@ -63,7 +60,6 @@ pub struct FiringXyzDual16 {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringXyzDual32 {
     pub time: Duration,
-    pub azimuth_count: u16,
     pub azimuth_range: Range<Angle>,
     pub points: [PointDual; 32],
 }
@@ -90,13 +86,8 @@ mod kind {
             }
         }
 
-        pub fn azimuth_count(&self) -> u16 {
-            match self {
-                FiringXyzKind::Single16(me) => me.azimuth_count,
-                FiringXyzKind::Single32(me) => me.azimuth_count,
-                FiringXyzKind::Dual16(me) => me.azimuth_count,
-                FiringXyzKind::Dual32(me) => me.azimuth_count,
-            }
+        pub fn azimuth(&self) -> Angle {
+            self.azimuth_range().start
         }
 
         pub fn azimuth_range(&self) -> &Range<Angle> {
@@ -188,13 +179,8 @@ mod ref_kind {
             }
         }
 
-        pub fn azimuth_count(&self) -> u16 {
-            match self {
-                FiringXyzRefKind::Single16(me) => me.azimuth_count,
-                FiringXyzRefKind::Single32(me) => me.azimuth_count,
-                FiringXyzRefKind::Dual16(me) => me.azimuth_count,
-                FiringXyzRefKind::Dual32(me) => me.azimuth_count,
-            }
+        pub fn azimuth(&self) -> Angle {
+            self.azimuth_range().start
         }
 
         pub fn azimuth_range(&self) -> &Range<Angle> {
