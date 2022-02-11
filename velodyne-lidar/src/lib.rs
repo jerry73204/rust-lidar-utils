@@ -17,5 +17,6 @@ pub mod pcap;
 pub mod point;
 mod utils;
 
+pub use config::Config;
 pub use converter::*;
-pub use packet::{DataPacket, PositionPacket};
+pub use packet::{DataPacket, PositionPacket, ProductID, ReturnMode};
