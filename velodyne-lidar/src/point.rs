@@ -60,6 +60,16 @@ mod point_types {
         pub azimuth: Angle,
         pub measurements: MeasurementDual,
     }
+
+    impl PointDual {
+        pub fn measurement_strongest(&self) -> &Measurement {
+            &self.measurements.strongest
+        }
+
+        pub fn measurement_last(&self) -> &Measurement {
+            &self.measurements.last
+        }
+    }
 }
 
 pub use point_kind::*;
