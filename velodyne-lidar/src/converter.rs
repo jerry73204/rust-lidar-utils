@@ -776,7 +776,7 @@ mod functions {
         // The azimuth angle starts from y-axis, rotates clockwise.
 
         let elevation_sin = elevation.sin();
-        let elevation_cos = 1.0 - elevation_sin.abs();
+        let elevation_cos = elevation.cos();
         let azimuth_sin = azimuth.sin();
         let azimuth_cos = azimuth.cos();
 
