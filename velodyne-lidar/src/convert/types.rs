@@ -7,10 +7,9 @@ use crate::{
     },
     firing_xyz::{
         iter::{
-            FiringXyzD16Iter, FiringXyzD32Iter, FiringXyzKindIter, FiringXyzS16Iter,
-            FiringXyzS32Iter,
+            FiringXyzD16Iter, FiringXyzD32Iter, FiringXyzIter, FiringXyzS16Iter, FiringXyzS32Iter,
         },
-        types::{FiringXyzD16, FiringXyzD32, FiringXyzKind, FiringXyzS16, FiringXyzS32},
+        types::{FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
     },
     frame_xyz::{
         iter::{FrameXyzD16Iter, FrameXyzD32Iter, FrameXyzIter, FrameXyzS16Iter, FrameXyzS32Iter},
@@ -207,7 +206,7 @@ mod kind {
         pub fn firing_to_firing_xyz<'a>(
             &self,
             firing: FiringBlock<'a>,
-        ) -> Result<FiringXyzKind, FiringBlock<'a>> {
+        ) -> Result<FiringXyz, FiringBlock<'a>> {
             use FiringBlock as F;
 
             Ok(match (self, firing) {
@@ -226,7 +225,7 @@ mod kind {
         // pub fn firing_iter_to_firing_xyz_iter<'a, I>(
         //     &'a self,
         //     firings: I,
-        // ) -> impl Iterator<Item = Result<FiringXyzKind, FiringKind<'a>>> + '_
+        // ) -> impl Iterator<Item = Result<FiringXyz, FiringKind<'a>>> + '_
         // where
         //     I: IntoIterator<Item = FiringKind<'a>>,
         //     I::IntoIter: 'a,
@@ -264,7 +263,7 @@ mod kind {
         pub fn packet_to_firing_xyz_iter<'a>(
             &'a self,
             packet: &'a DataPacket,
-        ) -> FiringXyzKindIter<
+        ) -> FiringXyzIter<
             impl Iterator<Item = FiringXyzS16> + 'a,
             impl Iterator<Item = FiringXyzS32> + 'a,
             impl Iterator<Item = FiringXyzD16> + 'a,
@@ -281,7 +280,7 @@ mod kind {
         pub fn packet_iter_to_firing_xyz_iter<'a, P, I>(
             &'a self,
             packets: I,
-        ) -> FiringXyzKindIter<
+        ) -> FiringXyzIter<
             impl Iterator<Item = FiringXyzS16> + 'a,
             impl Iterator<Item = FiringXyzS32> + 'a,
             impl Iterator<Item = FiringXyzD16> + 'a,

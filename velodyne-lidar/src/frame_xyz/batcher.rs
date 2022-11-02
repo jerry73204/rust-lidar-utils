@@ -173,8 +173,8 @@ mod kind {
             self.try_into_dual32().unwrap()
         }
 
-        pub fn push_one(&mut self, firing: FiringXyzKind) -> Result<Option<FrameXyz>> {
-            use FiringXyzKind as F;
+        pub fn push_one(&mut self, firing: FiringXyz) -> Result<Option<FrameXyz>> {
+            use FiringXyz as F;
 
             let frame = match (self, firing) {
                 (Self::Single16(me), F::Single16(firing)) => me.push_one(firing).map(Into::into),
@@ -192,7 +192,7 @@ mod kind {
             firings: I,
         ) -> impl Iterator<Item = Result<FrameXyz>> + 'a
         where
-            I: IntoIterator<Item = FiringXyzKind> + 'a,
+            I: IntoIterator<Item = FiringXyz> + 'a,
         {
             let firings = firings.into_iter();
             let err = || format_err!("batcher and firing type mismatch");
@@ -257,7 +257,7 @@ mod kind {
     }
 }
 
-fn push_one<F: FiringXyz>(buffer: &mut Vec<F>, curr: F) -> Option<Vec<F>> {
+fn push_one<F: FiringXyzKind>(buffer: &mut Vec<F>, curr: F) -> Option<Vec<F>> {
     let wrap = matches!(buffer.last(), Some(prev) if prev.azimuth() > curr.azimuth());
 
     if wrap {
@@ -269,7 +269,7 @@ fn push_one<F: FiringXyz>(buffer: &mut Vec<F>, curr: F) -> Option<Vec<F>> {
     }
 }
 
-fn push_many<'a, F: FiringXyz, I>(
+fn push_many<'a, F: FiringXyzKind, I>(
     buffer: &'a mut Vec<F>,
     iter: I,
 ) -> impl Iterator<Item = Vec<F>> + 'a

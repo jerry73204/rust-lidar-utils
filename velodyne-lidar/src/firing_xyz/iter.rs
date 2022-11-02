@@ -1,7 +1,7 @@
 use crate::{
     common::*,
     firing_xyz::types::{
-        FiringXyzD16, FiringXyzD32, FiringXyzKind, FiringXyzRef, FiringXyzS16, FiringXyzS32,
+        FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzRef, FiringXyzS16, FiringXyzS32,
     },
     frame_xyz::{
         batcher::{FrameXyzBatcherD16, FrameXyzBatcherD32, FrameXyzBatcherS16, FrameXyzBatcherS32},
@@ -123,7 +123,7 @@ mod firing_xyz_kind_iter {
     use super::*;
 
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub enum FiringXyzKindIter<A, B, C, D>
+    pub enum FiringXyzIter<A, B, C, D>
     where
         A: Iterator<Item = FiringXyzS16>,
         B: Iterator<Item = FiringXyzS32>,
@@ -136,7 +136,7 @@ mod firing_xyz_kind_iter {
         Dual32(FiringXyzD32Iter<D>),
     }
 
-    impl<A, B, C, D> From<FiringXyzD32Iter<D>> for FiringXyzKindIter<A, B, C, D>
+    impl<A, B, C, D> From<FiringXyzD32Iter<D>> for FiringXyzIter<A, B, C, D>
     where
         A: Iterator<Item = FiringXyzS16>,
         B: Iterator<Item = FiringXyzS32>,
@@ -148,7 +148,7 @@ mod firing_xyz_kind_iter {
         }
     }
 
-    impl<A, B, C, D> From<FiringXyzD16Iter<C>> for FiringXyzKindIter<A, B, C, D>
+    impl<A, B, C, D> From<FiringXyzD16Iter<C>> for FiringXyzIter<A, B, C, D>
     where
         A: Iterator<Item = FiringXyzS16>,
         B: Iterator<Item = FiringXyzS32>,
@@ -160,7 +160,7 @@ mod firing_xyz_kind_iter {
         }
     }
 
-    impl<A, B, C, D> From<FiringXyzS32Iter<B>> for FiringXyzKindIter<A, B, C, D>
+    impl<A, B, C, D> From<FiringXyzS32Iter<B>> for FiringXyzIter<A, B, C, D>
     where
         A: Iterator<Item = FiringXyzS16>,
         B: Iterator<Item = FiringXyzS32>,
@@ -172,7 +172,7 @@ mod firing_xyz_kind_iter {
         }
     }
 
-    impl<A, B, C, D> From<FiringXyzS16Iter<A>> for FiringXyzKindIter<A, B, C, D>
+    impl<A, B, C, D> From<FiringXyzS16Iter<A>> for FiringXyzIter<A, B, C, D>
     where
         A: Iterator<Item = FiringXyzS16>,
         B: Iterator<Item = FiringXyzS32>,
@@ -184,14 +184,14 @@ mod firing_xyz_kind_iter {
         }
     }
 
-    impl<A, B, C, D> Iterator for FiringXyzKindIter<A, B, C, D>
+    impl<A, B, C, D> Iterator for FiringXyzIter<A, B, C, D>
     where
         A: Iterator<Item = FiringXyzS16>,
         B: Iterator<Item = FiringXyzS32>,
         C: Iterator<Item = FiringXyzD16>,
         D: Iterator<Item = FiringXyzD32>,
     {
-        type Item = FiringXyzKind;
+        type Item = FiringXyz;
 
         fn next(&mut self) -> Option<Self::Item> {
             Some(match self {
@@ -210,7 +210,7 @@ mod firing_xyz_kind_ref_iter {
     use super::*;
 
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub enum FiringXyzKindRefIter<'a, A, B, C, D>
+    pub enum FiringXyzRefIter<'a, A, B, C, D>
     where
         A: Iterator<Item = &'a FiringXyzS16>,
         B: Iterator<Item = &'a FiringXyzS32>,
@@ -223,7 +223,7 @@ mod firing_xyz_kind_ref_iter {
         Dual32(FiringXyzDual32RefIter<'a, D>),
     }
 
-    impl<'a, A, B, C, D> From<FiringXyzDual32RefIter<'a, D>> for FiringXyzKindRefIter<'a, A, B, C, D>
+    impl<'a, A, B, C, D> From<FiringXyzDual32RefIter<'a, D>> for FiringXyzRefIter<'a, A, B, C, D>
     where
         A: Iterator<Item = &'a FiringXyzS16>,
         B: Iterator<Item = &'a FiringXyzS32>,
@@ -235,7 +235,7 @@ mod firing_xyz_kind_ref_iter {
         }
     }
 
-    impl<'a, A, B, C, D> From<FiringXyzDual16RefIter<'a, C>> for FiringXyzKindRefIter<'a, A, B, C, D>
+    impl<'a, A, B, C, D> From<FiringXyzDual16RefIter<'a, C>> for FiringXyzRefIter<'a, A, B, C, D>
     where
         A: Iterator<Item = &'a FiringXyzS16>,
         B: Iterator<Item = &'a FiringXyzS32>,
@@ -247,7 +247,7 @@ mod firing_xyz_kind_ref_iter {
         }
     }
 
-    impl<'a, A, B, C, D> From<FiringXyzSingle32RefIter<'a, B>> for FiringXyzKindRefIter<'a, A, B, C, D>
+    impl<'a, A, B, C, D> From<FiringXyzSingle32RefIter<'a, B>> for FiringXyzRefIter<'a, A, B, C, D>
     where
         A: Iterator<Item = &'a FiringXyzS16>,
         B: Iterator<Item = &'a FiringXyzS32>,
@@ -259,7 +259,7 @@ mod firing_xyz_kind_ref_iter {
         }
     }
 
-    impl<'a, A, B, C, D> From<FiringXyzSingle16RefIter<'a, A>> for FiringXyzKindRefIter<'a, A, B, C, D>
+    impl<'a, A, B, C, D> From<FiringXyzSingle16RefIter<'a, A>> for FiringXyzRefIter<'a, A, B, C, D>
     where
         A: Iterator<Item = &'a FiringXyzS16>,
         B: Iterator<Item = &'a FiringXyzS32>,
@@ -271,7 +271,7 @@ mod firing_xyz_kind_ref_iter {
         }
     }
 
-    impl<'a, A, B, C, D> Iterator for FiringXyzKindRefIter<'a, A, B, C, D>
+    impl<'a, A, B, C, D> Iterator for FiringXyzRefIter<'a, A, B, C, D>
     where
         A: Iterator<Item = &'a FiringXyzS16>,
         B: Iterator<Item = &'a FiringXyzS32>,

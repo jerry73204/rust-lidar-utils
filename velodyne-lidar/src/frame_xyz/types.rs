@@ -3,7 +3,7 @@ use crate::{
     firing_xyz::{
         iter::{
             FiringXyzD16Iter, FiringXyzD32Iter, FiringXyzDual16RefIter, FiringXyzDual32RefIter,
-            FiringXyzKindIter, FiringXyzKindRefIter, FiringXyzS16Iter, FiringXyzS32Iter,
+            FiringXyzIter, FiringXyzRefIter, FiringXyzS16Iter, FiringXyzS32Iter,
             FiringXyzSingle16RefIter, FiringXyzSingle32RefIter,
         },
         types::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
@@ -55,7 +55,7 @@ mod frame_kind {
 
         pub fn firing_iter<'a>(
             &'a self,
-        ) -> FiringXyzKindRefIter<
+        ) -> FiringXyzRefIter<
             impl Iterator<Item = &'a FiringXyzS16>,
             impl Iterator<Item = &'a FiringXyzS32>,
             impl Iterator<Item = &'a FiringXyzD16>,
@@ -71,7 +71,7 @@ mod frame_kind {
 
         pub fn into_firing_iter(
             self,
-        ) -> FiringXyzKindIter<
+        ) -> FiringXyzIter<
             impl Iterator<Item = FiringXyzS16>,
             impl Iterator<Item = FiringXyzS32>,
             impl Iterator<Item = FiringXyzD16>,
