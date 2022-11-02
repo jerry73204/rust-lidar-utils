@@ -77,14 +77,14 @@ mod point_kind {
     use super::*;
 
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct PointKind {
+    pub struct Point {
         pub laser_id: usize,
         pub time: Duration,
         pub azimuth: Angle,
         pub measurement: MeasurementKind,
     }
 
-    impl From<PointS> for PointKind {
+    impl From<PointS> for Point {
         fn from(from: PointS) -> Self {
             let PointS {
                 laser_id,
@@ -101,7 +101,7 @@ mod point_kind {
         }
     }
 
-    impl From<PointD> for PointKind {
+    impl From<PointD> for Point {
         fn from(from: PointD) -> Self {
             let PointD {
                 laser_id,
@@ -119,12 +119,12 @@ mod point_kind {
     }
 
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub enum PointKindRef<'a> {
+    pub enum PointRef<'a> {
         Single(&'a PointS),
         Dual(&'a PointD),
     }
 
-    impl<'a> PointKindRef<'a> {
+    impl<'a> PointRef<'a> {
         pub fn laser_id(&self) -> usize {
             match self {
                 Self::Single(point) => point.laser_id,
@@ -179,13 +179,13 @@ mod point_kind {
         }
     }
 
-    impl<'a> From<&'a PointD> for PointKindRef<'a> {
+    impl<'a> From<&'a PointD> for PointRef<'a> {
         fn from(v: &'a PointD) -> Self {
             Self::Dual(v)
         }
     }
 
-    impl<'a> From<&'a PointS> for PointKindRef<'a> {
+    impl<'a> From<&'a PointS> for PointRef<'a> {
         fn from(v: &'a PointS) -> Self {
             Self::Single(v)
         }

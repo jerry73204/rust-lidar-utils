@@ -10,7 +10,7 @@ use crate::{
     },
     point::{
         iter::{PointIter, PointRefIter},
-        types::{PointD, PointKind, PointKindRef, PointS},
+        types::{Point, PointD, PointRef, PointS},
     },
 };
 
@@ -44,7 +44,7 @@ mod frame_kind {
             }
         }
 
-        pub fn point_at(&self, row: usize, col: usize) -> Option<PointKindRef<'_>> {
+        pub fn point_at(&self, row: usize, col: usize) -> Option<PointRef<'_>> {
             Some(match self {
                 Self::Single16(frame) => frame.point_at(row, col)?.into(),
                 Self::Single32(frame) => frame.point_at(row, col)?.into(),
@@ -103,27 +103,27 @@ mod frame_kind {
 
         pub fn indexed_point_iter<'a>(
             &'a self,
-        ) -> Box<dyn Iterator<Item = ((usize, usize), PointKindRef<'a>)> + 'a> {
+        ) -> Box<dyn Iterator<Item = ((usize, usize), PointRef<'a>)> + 'a> {
             match self {
                 Self::Single16(frame) => Box::new(
                     frame
                         .indexed_point_iter()
-                        .map(|(index, point)| (index, PointKindRef::from(point))),
+                        .map(|(index, point)| (index, PointRef::from(point))),
                 ),
                 Self::Single32(frame) => Box::new(
                     frame
                         .indexed_point_iter()
-                        .map(|(index, point)| (index, PointKindRef::from(point))),
+                        .map(|(index, point)| (index, PointRef::from(point))),
                 ),
                 Self::Dual16(frame) => Box::new(
                     frame
                         .indexed_point_iter()
-                        .map(|(index, point)| (index, PointKindRef::from(point))),
+                        .map(|(index, point)| (index, PointRef::from(point))),
                 ),
                 Self::Dual32(frame) => Box::new(
                     frame
                         .indexed_point_iter()
-                        .map(|(index, point)| (index, PointKindRef::from(point))),
+                        .map(|(index, point)| (index, PointRef::from(point))),
                 ),
             }
         }
@@ -144,29 +144,27 @@ mod frame_kind {
             }
         }
 
-        pub fn into_indexed_point_iter(
-            self,
-        ) -> Box<dyn Iterator<Item = ((usize, usize), PointKind)>> {
+        pub fn into_indexed_point_iter(self) -> Box<dyn Iterator<Item = ((usize, usize), Point)>> {
             match self {
                 Self::Single16(frame) => Box::new(
                     frame
                         .into_indexed_point_iter()
-                        .map(|(index, point)| (index, PointKind::from(point))),
+                        .map(|(index, point)| (index, Point::from(point))),
                 ),
                 Self::Single32(frame) => Box::new(
                     frame
                         .into_indexed_point_iter()
-                        .map(|(index, point)| (index, PointKind::from(point))),
+                        .map(|(index, point)| (index, Point::from(point))),
                 ),
                 Self::Dual16(frame) => Box::new(
                     frame
                         .into_indexed_point_iter()
-                        .map(|(index, point)| (index, PointKind::from(point))),
+                        .map(|(index, point)| (index, Point::from(point))),
                 ),
                 Self::Dual32(frame) => Box::new(
                     frame
                         .into_indexed_point_iter()
-                        .map(|(index, point)| (index, PointKind::from(point))),
+                        .map(|(index, point)| (index, Point::from(point))),
                 ),
             }
         }

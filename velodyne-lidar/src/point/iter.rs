@@ -1,4 +1,4 @@
-use crate::point::types::{PointD, PointKind, PointKindRef, PointS};
+use crate::point::types::{Point, PointD, PointRef, PointS};
 
 pub use point_iter_::*;
 pub mod point_iter_ {
@@ -24,7 +24,7 @@ pub mod point_iter_ {
         C: Iterator<Item = PointD>,
         D: Iterator<Item = PointD>,
     {
-        type Item = PointKind;
+        type Item = Point;
 
         fn next(&mut self) -> Option<Self::Item> {
             Some(match self {
@@ -61,7 +61,7 @@ pub mod point_ref_iter {
         C: Iterator<Item = &'a PointD>,
         D: Iterator<Item = &'a PointD>,
     {
-        type Item = PointKindRef<'a>;
+        type Item = PointRef<'a>;
 
         fn next(&mut self) -> Option<Self::Item> {
             Some(match self {
