@@ -325,38 +325,38 @@ mod kind {
             }
         }
 
-        pub fn from_config(config: Config) -> Result<Self> {
+        pub fn from_config(config: &Config) -> Result<Self> {
             use FiringFormat as F;
 
             let firing_format = config
                 .firing_format()
                 .ok_or_else(|| format_err!("product is not supported"))?;
             let Config {
-                lasers,
+                ref lasers,
                 distance_resolution,
                 ..
-            } = config;
+            } = *config;
 
-            let err = || format_err!("invalid laser parameters");
+            let err = || format_err!("the number of laser parameters is invalid");
 
             Ok(match firing_format {
                 F::Single16 => ConverterSingle16 {
-                    lasers: lasers.try_into().map_err(|_| err())?,
+                    lasers: lasers.clone().try_into().map_err(|_| err())?,
                     distance_resolution,
                 }
                 .into(),
                 F::Dual16 => ConverterDual16 {
-                    lasers: lasers.try_into().map_err(|_| err())?,
+                    lasers: lasers.clone().try_into().map_err(|_| err())?,
                     distance_resolution,
                 }
                 .into(),
                 F::Single32 => ConverterSingle32 {
-                    lasers: lasers.try_into().map_err(|_| err())?,
+                    lasers: lasers.clone().try_into().map_err(|_| err())?,
                     distance_resolution,
                 }
                 .into(),
                 F::Dual32 => ConverterDual32 {
-                    lasers: lasers.try_into().map_err(|_| err())?,
+                    lasers: lasers.clone().try_into().map_err(|_| err())?,
                     distance_resolution,
                 }
                 .into(),

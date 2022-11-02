@@ -33,7 +33,7 @@ mod config_ {
     }
 
     impl Config {
-        pub fn build_converter(self) -> Result<ConverterKind> {
+        pub fn build_converter(&self) -> Result<ConverterKind> {
             ConverterKind::from_config(self)
         }
 
