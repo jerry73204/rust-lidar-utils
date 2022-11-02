@@ -1,12 +1,12 @@
 use crate::{
     common::*,
     consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK, FIRING_PERIOD},
-    firing::{
+    firing_block::{
         iter::{
-            FiringDual16Iter, FiringDual32Iter, FiringIterKind, FiringSingle16Iter,
-            FiringSingle32Iter,
+            FiringBlockD16Iter, FiringBlockD32Iter, FiringBlockIter, FiringBlockS16Iter,
+            FiringBlockS32Iter,
         },
-        types::{FiringDual16, FiringDual32, FiringFormat, FiringSingle16, FiringSingle32},
+        types::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32, FiringFormat},
     },
     utils::AngleExt as _,
 };
@@ -140,15 +140,15 @@ impl DataPacket {
     pub fn firings(
         &self,
     ) -> Option<
-        FiringIterKind<
-            impl Iterator<Item = FiringSingle16<'_>> + Clone,
-            impl Iterator<Item = FiringSingle32<'_>> + Clone,
-            impl Iterator<Item = FiringDual16<'_>> + Clone,
-            impl Iterator<Item = FiringDual32<'_>> + Clone,
+        FiringBlockIter<
+            impl Iterator<Item = FiringBlockS16<'_>> + Clone,
+            impl Iterator<Item = FiringBlockS32<'_>> + Clone,
+            impl Iterator<Item = FiringBlockD16<'_>> + Clone,
+            impl Iterator<Item = FiringBlockD32<'_>> + Clone,
         >,
     > {
+        use FiringBlockIter as F;
         use FiringFormat::*;
-        use FiringIterKind as F;
 
         Some(match self.firing_format()? {
             Single16 => F::Single16(self.single_16_firings()),
@@ -160,7 +160,7 @@ impl DataPacket {
 
     pub fn single_16_firings(
         &self,
-    ) -> FiringSingle16Iter<impl Iterator<Item = FiringSingle16<'_>> + Clone> {
+    ) -> FiringBlockS16Iter<impl Iterator<Item = FiringBlockS16<'_>> + Clone> {
         let block_period = FIRING_PERIOD.mul_f64(2.0);
         let times = iter::successors(Some(self.time()), move |prev| Some(*prev + block_period));
         let firing_azimuths = {
@@ -191,7 +191,7 @@ impl DataPacket {
 
                 let (former_channels, latter_channels) = block.channels.split_at(16);
 
-                let former = FiringSingle16 {
+                let former = FiringBlockS16 {
                     time: former_time,
                     azimuth_range: former_azimuth,
                     block,
@@ -199,7 +199,7 @@ impl DataPacket {
                         .try_into()
                         .unwrap_or_else(|_| unreachable!()),
                 };
-                let latter = FiringSingle16 {
+                let latter = FiringBlockS16 {
                     time: latter_time,
                     azimuth_range: latter_azimuth,
                     block,
@@ -212,12 +212,12 @@ impl DataPacket {
             },
         );
 
-        FiringSingle16Iter(iter)
+        FiringBlockS16Iter(iter)
     }
 
     pub fn dual_16_firings(
         &self,
-    ) -> FiringDual16Iter<impl Iterator<Item = FiringDual16<'_>> + Clone> {
+    ) -> FiringBlockD16Iter<impl Iterator<Item = FiringBlockD16<'_>> + Clone> {
         let block_period = FIRING_PERIOD.mul_f64(2.0);
         let times = iter::successors(Some(self.time()), move |prev| Some(*prev + block_period));
         let firing_azimuths = {
@@ -260,7 +260,7 @@ impl DataPacket {
                 let (former_last, latter_last) = block_last.channels.split_at(16);
 
                 [
-                    FiringDual16 {
+                    FiringBlockD16 {
                         time: former_time,
                         azimuth_range: former_azimuth,
                         block_strongest,
@@ -270,7 +270,7 @@ impl DataPacket {
                             .unwrap_or_else(|_| unreachable!()),
                         channels_last: former_last.try_into().unwrap_or_else(|_| unreachable!()),
                     },
-                    FiringDual16 {
+                    FiringBlockD16 {
                         time: latter_time,
                         azimuth_range: latter_azimuth,
                         block_strongest,
@@ -284,12 +284,12 @@ impl DataPacket {
             },
         );
 
-        FiringDual16Iter(firings)
+        FiringBlockD16Iter(firings)
     }
 
     pub fn single_32_firings(
         &self,
-    ) -> FiringSingle32Iter<impl Iterator<Item = FiringSingle32<'_>> + Clone> {
+    ) -> FiringBlockS32Iter<impl Iterator<Item = FiringBlockS32<'_>> + Clone> {
         let times = iter::successors(Some(self.time()), move |prev| Some(*prev + FIRING_PERIOD));
         let azimuths = {
             let block_azimuths: Vec<_> = self.blocks.iter().map(|block| block.azimuth()).collect();
@@ -316,7 +316,7 @@ impl DataPacket {
                 let former_time = block_time;
                 let latter_time = former_time + FIRING_PERIOD;
 
-                FiringSingle32 {
+                FiringBlockS32 {
                     time: latter_time,
                     azimuth_range,
                     block,
@@ -324,12 +324,12 @@ impl DataPacket {
                 }
             });
 
-        FiringSingle32Iter(iter)
+        FiringBlockS32Iter(iter)
     }
 
     pub fn dual_32_firings(
         &self,
-    ) -> FiringDual32Iter<impl Iterator<Item = FiringDual32<'_>> + Clone> {
+    ) -> FiringBlockD32Iter<impl Iterator<Item = FiringBlockD32<'_>> + Clone> {
         let times = iter::successors(Some(self.time()), move |prev| Some(*prev + FIRING_PERIOD));
         let azimuths = {
             let azimuths: Vec<_> = self
@@ -361,7 +361,7 @@ impl DataPacket {
                     _ => unreachable!(),
                 };
 
-                FiringDual32 {
+                FiringBlockD32 {
                     time: block_time,
                     azimuth_range,
                     block_strongest,
@@ -372,6 +372,6 @@ impl DataPacket {
             },
         );
 
-        FiringDual32Iter(iter)
+        FiringBlockD32Iter(iter)
     }
 }

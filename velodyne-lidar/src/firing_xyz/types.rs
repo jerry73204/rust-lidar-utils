@@ -1,6 +1,6 @@
 use crate::{
     common::*,
-    point::types::{PointDual, PointSingle},
+    point::types::{PointD, PointS},
 };
 
 pub(crate) use firing_trait::*;
@@ -11,25 +11,25 @@ mod firing_trait {
         fn azimuth(&self) -> Angle;
     }
 
-    impl FiringXyz for FiringXyzSingle16 {
+    impl FiringXyz for FiringXyzS16 {
         fn azimuth(&self) -> Angle {
             self.azimuth_range.start
         }
     }
 
-    impl FiringXyz for FiringXyzSingle32 {
+    impl FiringXyz for FiringXyzS32 {
         fn azimuth(&self) -> Angle {
             self.azimuth_range.start
         }
     }
 
-    impl FiringXyz for FiringXyzDual16 {
+    impl FiringXyz for FiringXyzD16 {
         fn azimuth(&self) -> Angle {
             self.azimuth_range.start
         }
     }
 
-    impl FiringXyz for FiringXyzDual32 {
+    impl FiringXyz for FiringXyzD32 {
         fn azimuth(&self) -> Angle {
             self.azimuth_range.start
         }
@@ -37,31 +37,31 @@ mod firing_trait {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FiringXyzSingle16 {
+pub struct FiringXyzS16 {
     pub time: Duration,
     pub azimuth_range: Range<Angle>,
-    pub points: [PointSingle; 16],
+    pub points: [PointS; 16],
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FiringXyzSingle32 {
+pub struct FiringXyzS32 {
     pub time: Duration,
     pub azimuth_range: Range<Angle>,
-    pub points: [PointSingle; 32],
+    pub points: [PointS; 32],
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FiringXyzDual16 {
+pub struct FiringXyzD16 {
     pub time: Duration,
     pub azimuth_range: Range<Angle>,
-    pub points: [PointDual; 16],
+    pub points: [PointD; 16],
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FiringXyzDual32 {
+pub struct FiringXyzD32 {
     pub time: Duration,
     pub azimuth_range: Range<Angle>,
-    pub points: [PointDual; 32],
+    pub points: [PointD; 32],
 }
 
 pub use kind::*;
@@ -70,10 +70,10 @@ mod kind {
 
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum FiringXyzKind {
-        Single16(FiringXyzSingle16),
-        Single32(FiringXyzSingle32),
-        Dual16(FiringXyzDual16),
-        Dual32(FiringXyzDual32),
+        Single16(FiringXyzS16),
+        Single32(FiringXyzS32),
+        Dual16(FiringXyzD16),
+        Dual32(FiringXyzD32),
     }
 
     impl FiringXyzKind {
@@ -99,7 +99,7 @@ mod kind {
             }
         }
 
-        pub fn try_into_single16(self) -> Result<FiringXyzSingle16, Self> {
+        pub fn try_into_single16(self) -> Result<FiringXyzS16, Self> {
             if let Self::Single16(v) = self {
                 Ok(v)
             } else {
@@ -107,7 +107,7 @@ mod kind {
             }
         }
 
-        pub fn try_into_single32(self) -> Result<FiringXyzSingle32, Self> {
+        pub fn try_into_single32(self) -> Result<FiringXyzS32, Self> {
             if let Self::Single32(v) = self {
                 Ok(v)
             } else {
@@ -115,7 +115,7 @@ mod kind {
             }
         }
 
-        pub fn try_into_dual16(self) -> Result<FiringXyzDual16, Self> {
+        pub fn try_into_dual16(self) -> Result<FiringXyzD16, Self> {
             if let Self::Dual16(v) = self {
                 Ok(v)
             } else {
@@ -123,7 +123,7 @@ mod kind {
             }
         }
 
-        pub fn try_into_dual32(self) -> Result<FiringXyzDual32, Self> {
+        pub fn try_into_dual32(self) -> Result<FiringXyzD32, Self> {
             if let Self::Dual32(v) = self {
                 Ok(v)
             } else {
@@ -132,26 +132,26 @@ mod kind {
         }
     }
 
-    impl From<FiringXyzDual32> for FiringXyzKind {
-        fn from(v: FiringXyzDual32) -> Self {
+    impl From<FiringXyzD32> for FiringXyzKind {
+        fn from(v: FiringXyzD32) -> Self {
             Self::Dual32(v)
         }
     }
 
-    impl From<FiringXyzDual16> for FiringXyzKind {
-        fn from(v: FiringXyzDual16) -> Self {
+    impl From<FiringXyzD16> for FiringXyzKind {
+        fn from(v: FiringXyzD16) -> Self {
             Self::Dual16(v)
         }
     }
 
-    impl From<FiringXyzSingle32> for FiringXyzKind {
-        fn from(v: FiringXyzSingle32) -> Self {
+    impl From<FiringXyzS32> for FiringXyzKind {
+        fn from(v: FiringXyzS32) -> Self {
             Self::Single32(v)
         }
     }
 
-    impl From<FiringXyzSingle16> for FiringXyzKind {
-        fn from(v: FiringXyzSingle16) -> Self {
+    impl From<FiringXyzS16> for FiringXyzKind {
+        fn from(v: FiringXyzS16) -> Self {
             Self::Single16(v)
         }
     }
@@ -162,20 +162,20 @@ mod ref_kind {
     use super::*;
 
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub enum FiringXyzRefKind<'a> {
-        Single16(&'a FiringXyzSingle16),
-        Single32(&'a FiringXyzSingle32),
-        Dual16(&'a FiringXyzDual16),
-        Dual32(&'a FiringXyzDual32),
+    pub enum FiringXyzRef<'a> {
+        Single16(&'a FiringXyzS16),
+        Single32(&'a FiringXyzS32),
+        Dual16(&'a FiringXyzD16),
+        Dual32(&'a FiringXyzD32),
     }
 
-    impl<'a> FiringXyzRefKind<'a> {
+    impl<'a> FiringXyzRef<'a> {
         pub fn time(&self) -> Duration {
             match self {
-                FiringXyzRefKind::Single16(me) => me.time,
-                FiringXyzRefKind::Single32(me) => me.time,
-                FiringXyzRefKind::Dual16(me) => me.time,
-                FiringXyzRefKind::Dual32(me) => me.time,
+                FiringXyzRef::Single16(me) => me.time,
+                FiringXyzRef::Single32(me) => me.time,
+                FiringXyzRef::Dual16(me) => me.time,
+                FiringXyzRef::Dual32(me) => me.time,
             }
         }
 
@@ -185,14 +185,14 @@ mod ref_kind {
 
         pub fn azimuth_range(&self) -> &Range<Angle> {
             match self {
-                FiringXyzRefKind::Single16(me) => &me.azimuth_range,
-                FiringXyzRefKind::Single32(me) => &me.azimuth_range,
-                FiringXyzRefKind::Dual16(me) => &me.azimuth_range,
-                FiringXyzRefKind::Dual32(me) => &me.azimuth_range,
+                FiringXyzRef::Single16(me) => &me.azimuth_range,
+                FiringXyzRef::Single32(me) => &me.azimuth_range,
+                FiringXyzRef::Dual16(me) => &me.azimuth_range,
+                FiringXyzRef::Dual32(me) => &me.azimuth_range,
             }
         }
 
-        pub fn to_single16(&self) -> Option<&'a FiringXyzSingle16> {
+        pub fn to_single16(&self) -> Option<&'a FiringXyzS16> {
             if let Self::Single16(v) = self {
                 Some(v)
             } else {
@@ -200,7 +200,7 @@ mod ref_kind {
             }
         }
 
-        pub fn to_single32(&self) -> Option<&'a FiringXyzSingle32> {
+        pub fn to_single32(&self) -> Option<&'a FiringXyzS32> {
             if let Self::Single32(v) = self {
                 Some(v)
             } else {
@@ -208,7 +208,7 @@ mod ref_kind {
             }
         }
 
-        pub fn to_dual16(&self) -> Option<&'a FiringXyzDual16> {
+        pub fn to_dual16(&self) -> Option<&'a FiringXyzD16> {
             if let Self::Dual16(v) = self {
                 Some(v)
             } else {
@@ -216,7 +216,7 @@ mod ref_kind {
             }
         }
 
-        pub fn to_dual32(&self) -> Option<&'a FiringXyzDual32> {
+        pub fn to_dual32(&self) -> Option<&'a FiringXyzD32> {
             if let Self::Dual32(v) = self {
                 Some(v)
             } else {
@@ -225,26 +225,26 @@ mod ref_kind {
         }
     }
 
-    impl<'a> From<&'a FiringXyzDual32> for FiringXyzRefKind<'a> {
-        fn from(v: &'a FiringXyzDual32) -> Self {
+    impl<'a> From<&'a FiringXyzD32> for FiringXyzRef<'a> {
+        fn from(v: &'a FiringXyzD32) -> Self {
             Self::Dual32(v)
         }
     }
 
-    impl<'a> From<&'a FiringXyzDual16> for FiringXyzRefKind<'a> {
-        fn from(v: &'a FiringXyzDual16) -> Self {
+    impl<'a> From<&'a FiringXyzD16> for FiringXyzRef<'a> {
+        fn from(v: &'a FiringXyzD16) -> Self {
             Self::Dual16(v)
         }
     }
 
-    impl<'a> From<&'a FiringXyzSingle32> for FiringXyzRefKind<'a> {
-        fn from(v: &'a FiringXyzSingle32) -> Self {
+    impl<'a> From<&'a FiringXyzS32> for FiringXyzRef<'a> {
+        fn from(v: &'a FiringXyzS32) -> Self {
             Self::Single32(v)
         }
     }
 
-    impl<'a> From<&'a FiringXyzSingle16> for FiringXyzRefKind<'a> {
-        fn from(v: &'a FiringXyzSingle16) -> Self {
+    impl<'a> From<&'a FiringXyzS16> for FiringXyzRef<'a> {
+        fn from(v: &'a FiringXyzS16) -> Self {
             Self::Single16(v)
         }
     }

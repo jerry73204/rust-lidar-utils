@@ -1,7 +1,5 @@
-use crate::frame_xyz::types::FrameXyzKind;
-pub use crate::frame_xyz::types::{
-    FrameXyzDual16, FrameXyzDual32, FrameXyzSingle16, FrameXyzSingle32,
-};
+use crate::frame_xyz::types::FrameXyz;
+pub use crate::frame_xyz::types::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32};
 
 macro_rules! declare_iter {
     ($name:ident, $item:ident) => {
@@ -27,81 +25,81 @@ macro_rules! declare_iter {
     };
 }
 
-declare_iter!(FrameXyzSingle16Iter, FrameXyzSingle16);
-declare_iter!(FrameXyzSingle32Iter, FrameXyzSingle32);
-declare_iter!(FrameXyzDual16Iter, FrameXyzDual16);
-declare_iter!(FrameXyzDual32Iter, FrameXyzDual32);
+declare_iter!(FrameXyzS16Iter, FrameXyzS16);
+declare_iter!(FrameXyzS32Iter, FrameXyzS32);
+declare_iter!(FrameXyzD16Iter, FrameXyzD16);
+declare_iter!(FrameXyzD32Iter, FrameXyzD32);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FrameXyzIter<A, B, C, D>
 where
-    A: Iterator<Item = FrameXyzSingle16>,
-    B: Iterator<Item = FrameXyzSingle32>,
-    C: Iterator<Item = FrameXyzDual16>,
-    D: Iterator<Item = FrameXyzDual32>,
+    A: Iterator<Item = FrameXyzS16>,
+    B: Iterator<Item = FrameXyzS32>,
+    C: Iterator<Item = FrameXyzD16>,
+    D: Iterator<Item = FrameXyzD32>,
 {
-    Single16(FrameXyzSingle16Iter<A>),
-    Single32(FrameXyzSingle32Iter<B>),
-    Dual16(FrameXyzDual16Iter<C>),
-    Dual32(FrameXyzDual32Iter<D>),
+    Single16(FrameXyzS16Iter<A>),
+    Single32(FrameXyzS32Iter<B>),
+    Dual16(FrameXyzD16Iter<C>),
+    Dual32(FrameXyzD32Iter<D>),
 }
 
-impl<A, B, C, D> From<FrameXyzDual32Iter<D>> for FrameXyzIter<A, B, C, D>
+impl<A, B, C, D> From<FrameXyzD32Iter<D>> for FrameXyzIter<A, B, C, D>
 where
-    A: Iterator<Item = FrameXyzSingle16>,
-    B: Iterator<Item = FrameXyzSingle32>,
-    C: Iterator<Item = FrameXyzDual16>,
-    D: Iterator<Item = FrameXyzDual32>,
+    A: Iterator<Item = FrameXyzS16>,
+    B: Iterator<Item = FrameXyzS32>,
+    C: Iterator<Item = FrameXyzD16>,
+    D: Iterator<Item = FrameXyzD32>,
 {
-    fn from(v: FrameXyzDual32Iter<D>) -> Self {
+    fn from(v: FrameXyzD32Iter<D>) -> Self {
         Self::Dual32(v)
     }
 }
 
-impl<A, B, C, D> From<FrameXyzDual16Iter<C>> for FrameXyzIter<A, B, C, D>
+impl<A, B, C, D> From<FrameXyzD16Iter<C>> for FrameXyzIter<A, B, C, D>
 where
-    A: Iterator<Item = FrameXyzSingle16>,
-    B: Iterator<Item = FrameXyzSingle32>,
-    C: Iterator<Item = FrameXyzDual16>,
-    D: Iterator<Item = FrameXyzDual32>,
+    A: Iterator<Item = FrameXyzS16>,
+    B: Iterator<Item = FrameXyzS32>,
+    C: Iterator<Item = FrameXyzD16>,
+    D: Iterator<Item = FrameXyzD32>,
 {
-    fn from(v: FrameXyzDual16Iter<C>) -> Self {
+    fn from(v: FrameXyzD16Iter<C>) -> Self {
         Self::Dual16(v)
     }
 }
 
-impl<A, B, C, D> From<FrameXyzSingle32Iter<B>> for FrameXyzIter<A, B, C, D>
+impl<A, B, C, D> From<FrameXyzS32Iter<B>> for FrameXyzIter<A, B, C, D>
 where
-    A: Iterator<Item = FrameXyzSingle16>,
-    B: Iterator<Item = FrameXyzSingle32>,
-    C: Iterator<Item = FrameXyzDual16>,
-    D: Iterator<Item = FrameXyzDual32>,
+    A: Iterator<Item = FrameXyzS16>,
+    B: Iterator<Item = FrameXyzS32>,
+    C: Iterator<Item = FrameXyzD16>,
+    D: Iterator<Item = FrameXyzD32>,
 {
-    fn from(v: FrameXyzSingle32Iter<B>) -> Self {
+    fn from(v: FrameXyzS32Iter<B>) -> Self {
         Self::Single32(v)
     }
 }
 
-impl<A, B, C, D> From<FrameXyzSingle16Iter<A>> for FrameXyzIter<A, B, C, D>
+impl<A, B, C, D> From<FrameXyzS16Iter<A>> for FrameXyzIter<A, B, C, D>
 where
-    A: Iterator<Item = FrameXyzSingle16>,
-    B: Iterator<Item = FrameXyzSingle32>,
-    C: Iterator<Item = FrameXyzDual16>,
-    D: Iterator<Item = FrameXyzDual32>,
+    A: Iterator<Item = FrameXyzS16>,
+    B: Iterator<Item = FrameXyzS32>,
+    C: Iterator<Item = FrameXyzD16>,
+    D: Iterator<Item = FrameXyzD32>,
 {
-    fn from(v: FrameXyzSingle16Iter<A>) -> Self {
+    fn from(v: FrameXyzS16Iter<A>) -> Self {
         Self::Single16(v)
     }
 }
 
 impl<A, B, C, D> Iterator for FrameXyzIter<A, B, C, D>
 where
-    A: Iterator<Item = FrameXyzSingle16>,
-    B: Iterator<Item = FrameXyzSingle32>,
-    C: Iterator<Item = FrameXyzDual16>,
-    D: Iterator<Item = FrameXyzDual32>,
+    A: Iterator<Item = FrameXyzS16>,
+    B: Iterator<Item = FrameXyzS32>,
+    C: Iterator<Item = FrameXyzD16>,
+    D: Iterator<Item = FrameXyzD32>,
 {
-    type Item = FrameXyzKind;
+    type Item = FrameXyz;
 
     fn next(&mut self) -> Option<Self::Item> {
         Some(match self {

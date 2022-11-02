@@ -2,15 +2,15 @@ use crate::{
     common::*,
     firing_xyz::{
         iter::{
-            FiringXyzDual16Iter, FiringXyzDual16RefIter, FiringXyzDual32Iter,
-            FiringXyzDual32RefIter, FiringXyzKindIter, FiringXyzKindRefIter, FiringXyzSingle16Iter,
-            FiringXyzSingle16RefIter, FiringXyzSingle32Iter, FiringXyzSingle32RefIter,
+            FiringXyzD16Iter, FiringXyzD32Iter, FiringXyzDual16RefIter, FiringXyzDual32RefIter,
+            FiringXyzKindIter, FiringXyzKindRefIter, FiringXyzS16Iter, FiringXyzS32Iter,
+            FiringXyzSingle16RefIter, FiringXyzSingle32RefIter,
         },
-        types::{FiringXyzDual16, FiringXyzDual32, FiringXyzSingle16, FiringXyzSingle32},
+        types::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
     },
     point::{
         iter::{PointIter, PointRefIter},
-        types::{PointDual, PointKind, PointKindRef, PointSingle},
+        types::{PointD, PointKind, PointKindRef, PointS},
     },
 };
 
@@ -18,14 +18,14 @@ pub use frame_kind::*;
 mod frame_kind {
     use super::*;
 
-    pub enum FrameXyzKind {
-        Single16(FrameXyzSingle16),
-        Single32(FrameXyzSingle32),
-        Dual16(FrameXyzDual16),
-        Dual32(FrameXyzDual32),
+    pub enum FrameXyz {
+        Single16(FrameXyzS16),
+        Single32(FrameXyzS32),
+        Dual16(FrameXyzD16),
+        Dual32(FrameXyzD32),
     }
 
-    impl FrameXyzKind {
+    impl FrameXyz {
         pub fn nrows(&self) -> usize {
             match self {
                 Self::Single16(frame) => frame.nrows(),
@@ -56,42 +56,42 @@ mod frame_kind {
         pub fn firing_iter<'a>(
             &'a self,
         ) -> FiringXyzKindRefIter<
-            impl Iterator<Item = &'a FiringXyzSingle16>,
-            impl Iterator<Item = &'a FiringXyzSingle32>,
-            impl Iterator<Item = &'a FiringXyzDual16>,
-            impl Iterator<Item = &'a FiringXyzDual32>,
+            impl Iterator<Item = &'a FiringXyzS16>,
+            impl Iterator<Item = &'a FiringXyzS32>,
+            impl Iterator<Item = &'a FiringXyzD16>,
+            impl Iterator<Item = &'a FiringXyzD32>,
         > {
             match self {
-                FrameXyzKind::Single16(me) => FiringXyzSingle16RefIter(me.firings.iter()).into(),
-                FrameXyzKind::Single32(me) => FiringXyzSingle32RefIter(me.firings.iter()).into(),
-                FrameXyzKind::Dual16(me) => FiringXyzDual16RefIter(me.firings.iter()).into(),
-                FrameXyzKind::Dual32(me) => FiringXyzDual32RefIter(me.firings.iter()).into(),
+                FrameXyz::Single16(me) => FiringXyzSingle16RefIter(me.firings.iter()).into(),
+                FrameXyz::Single32(me) => FiringXyzSingle32RefIter(me.firings.iter()).into(),
+                FrameXyz::Dual16(me) => FiringXyzDual16RefIter(me.firings.iter()).into(),
+                FrameXyz::Dual32(me) => FiringXyzDual32RefIter(me.firings.iter()).into(),
             }
         }
 
         pub fn into_firing_iter(
             self,
         ) -> FiringXyzKindIter<
-            impl Iterator<Item = FiringXyzSingle16>,
-            impl Iterator<Item = FiringXyzSingle32>,
-            impl Iterator<Item = FiringXyzDual16>,
-            impl Iterator<Item = FiringXyzDual32>,
+            impl Iterator<Item = FiringXyzS16>,
+            impl Iterator<Item = FiringXyzS32>,
+            impl Iterator<Item = FiringXyzD16>,
+            impl Iterator<Item = FiringXyzD32>,
         > {
             match self {
-                FrameXyzKind::Single16(me) => FiringXyzSingle16Iter(me.firings.into_iter()).into(),
-                FrameXyzKind::Single32(me) => FiringXyzSingle32Iter(me.firings.into_iter()).into(),
-                FrameXyzKind::Dual16(me) => FiringXyzDual16Iter(me.firings.into_iter()).into(),
-                FrameXyzKind::Dual32(me) => FiringXyzDual32Iter(me.firings.into_iter()).into(),
+                FrameXyz::Single16(me) => FiringXyzS16Iter(me.firings.into_iter()).into(),
+                FrameXyz::Single32(me) => FiringXyzS32Iter(me.firings.into_iter()).into(),
+                FrameXyz::Dual16(me) => FiringXyzD16Iter(me.firings.into_iter()).into(),
+                FrameXyz::Dual32(me) => FiringXyzD32Iter(me.firings.into_iter()).into(),
             }
         }
 
         pub fn point_iter<'a>(
             &'a self,
         ) -> PointRefIter<
-            impl Iterator<Item = &'a PointSingle>,
-            impl Iterator<Item = &'a PointSingle>,
-            impl Iterator<Item = &'a PointDual>,
-            impl Iterator<Item = &'a PointDual>,
+            impl Iterator<Item = &'a PointS>,
+            impl Iterator<Item = &'a PointS>,
+            impl Iterator<Item = &'a PointD>,
+            impl Iterator<Item = &'a PointD>,
         > {
             match self {
                 Self::Single16(frame) => PointRefIter::Single16(frame.point_iter()),
@@ -131,10 +131,10 @@ mod frame_kind {
         pub fn into_point_iter(
             self,
         ) -> PointIter<
-            impl Iterator<Item = PointSingle>,
-            impl Iterator<Item = PointSingle>,
-            impl Iterator<Item = PointDual>,
-            impl Iterator<Item = PointDual>,
+            impl Iterator<Item = PointS>,
+            impl Iterator<Item = PointS>,
+            impl Iterator<Item = PointD>,
+            impl Iterator<Item = PointD>,
         > {
             match self {
                 Self::Single16(frame) => PointIter::Single16(frame.into_point_iter()),
@@ -172,26 +172,26 @@ mod frame_kind {
         }
     }
 
-    impl From<FrameXyzDual16> for FrameXyzKind {
-        fn from(v: FrameXyzDual16) -> Self {
+    impl From<FrameXyzD16> for FrameXyz {
+        fn from(v: FrameXyzD16) -> Self {
             Self::Dual16(v)
         }
     }
 
-    impl From<FrameXyzDual32> for FrameXyzKind {
-        fn from(v: FrameXyzDual32) -> Self {
+    impl From<FrameXyzD32> for FrameXyz {
+        fn from(v: FrameXyzD32) -> Self {
             Self::Dual32(v)
         }
     }
 
-    impl From<FrameXyzSingle32> for FrameXyzKind {
-        fn from(v: FrameXyzSingle32) -> Self {
+    impl From<FrameXyzS32> for FrameXyz {
+        fn from(v: FrameXyzS32) -> Self {
             Self::Single32(v)
         }
     }
 
-    impl From<FrameXyzSingle16> for FrameXyzKind {
-        fn from(v: FrameXyzSingle16) -> Self {
+    impl From<FrameXyzS16> for FrameXyz {
+        fn from(v: FrameXyzS16) -> Self {
             Self::Single16(v)
         }
     }
@@ -259,8 +259,8 @@ mod frame_types {
         };
     }
 
-    declare_type!(FrameXyzSingle16, FiringXyzSingle16, 16, PointSingle);
-    declare_type!(FrameXyzSingle32, FiringXyzSingle32, 32, PointSingle);
-    declare_type!(FrameXyzDual16, FiringXyzDual16, 16, PointDual);
-    declare_type!(FrameXyzDual32, FiringXyzDual32, 32, PointDual);
+    declare_type!(FrameXyzS16, FiringXyzS16, 16, PointS);
+    declare_type!(FrameXyzS32, FiringXyzS32, 32, PointS);
+    declare_type!(FrameXyzD16, FiringXyzD16, 16, PointD);
+    declare_type!(FrameXyzD32, FiringXyzD32, 32, PointD);
 }

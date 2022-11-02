@@ -2,18 +2,18 @@ use crate::{
     common::*,
     config::Beam,
     consts::{CHANNEL_PERIOD, FIRING_PERIOD},
-    firing::types::{FiringDual16, FiringDual32, FiringSingle16, FiringSingle32},
-    firing_xyz::types::{FiringXyzDual16, FiringXyzDual32, FiringXyzSingle16, FiringXyzSingle32},
-    point::types::{Measurement, MeasurementDual, PointDual, PointSingle},
+    firing_block::types::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
+    firing_xyz::types::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+    point::types::{Measurement, MeasurementDual, PointD, PointS},
     utils::{AngleExt as _, DurationExt as _},
 };
 
 pub fn firing_single_16_to_xyz(
-    firing: &FiringSingle16,
+    firing: &FiringBlockS16,
     distance_resolution: Length,
     lasers: &[Beam; 16],
-) -> FiringXyzSingle16 {
-    let FiringSingle16 {
+) -> FiringXyzS16 {
+    let FiringBlockS16 {
         time: firing_time,
         ref azimuth_range,
         channels,
@@ -48,7 +48,7 @@ pub fn firing_single_16_to_xyz(
                 horizontal_offset,
             );
 
-            PointSingle {
+            PointS {
                 laser_id,
                 time: channel_time,
                 azimuth,
@@ -62,7 +62,7 @@ pub fn firing_single_16_to_xyz(
         .collect();
     let points: [_; 16] = points.try_into().unwrap_or_else(|_| unreachable!());
 
-    FiringXyzSingle16 {
+    FiringXyzS16 {
         time: firing_time,
         azimuth_range: azimuth_range.clone(),
         points,
@@ -70,11 +70,11 @@ pub fn firing_single_16_to_xyz(
 }
 
 pub fn firing_single_32_to_xyz(
-    firing: &FiringSingle32,
+    firing: &FiringBlockS32,
     distance_resolution: Length,
     lasers: &[Beam; 32],
-) -> FiringXyzSingle32 {
-    let FiringSingle32 {
+) -> FiringXyzS32 {
+    let FiringBlockS32 {
         time: firing_time,
         ref azimuth_range,
         channels,
@@ -112,7 +112,7 @@ pub fn firing_single_32_to_xyz(
                 horizontal_offset,
             );
 
-            PointSingle {
+            PointS {
                 laser_id,
                 time: channel_time,
                 azimuth,
@@ -127,7 +127,7 @@ pub fn firing_single_32_to_xyz(
 
     let points = points.try_into().unwrap_or_else(|_| unreachable!());
 
-    FiringXyzSingle32 {
+    FiringXyzS32 {
         time: firing_time,
         azimuth_range: azimuth_range.clone(),
         points,
@@ -135,11 +135,11 @@ pub fn firing_single_32_to_xyz(
 }
 
 pub fn firing_dual_16_to_xyz(
-    firing: &FiringDual16,
+    firing: &FiringBlockD16,
     distance_resolution: Length,
     lasers: &[Beam; 16],
-) -> FiringXyzDual16 {
-    let FiringDual16 {
+) -> FiringXyzD16 {
+    let FiringBlockD16 {
         time: firing_time,
         ref azimuth_range,
         channels_strongest,
@@ -191,7 +191,7 @@ pub fn firing_dual_16_to_xyz(
                 horizontal_offset,
             );
 
-            PointDual {
+            PointD {
                 laser_id,
                 time: channel_time,
                 azimuth,
@@ -213,7 +213,7 @@ pub fn firing_dual_16_to_xyz(
     .collect();
     let points: [_; 16] = points.try_into().unwrap_or_else(|_| unreachable!());
 
-    FiringXyzDual16 {
+    FiringXyzD16 {
         time: firing_time,
         azimuth_range: azimuth_range.clone(),
         points,
@@ -221,11 +221,11 @@ pub fn firing_dual_16_to_xyz(
 }
 
 pub fn firing_dual_32_to_xyz(
-    firing: &FiringDual32,
+    firing: &FiringBlockD32,
     distance_resolution: Length,
     lasers: &[Beam; 32],
-) -> FiringXyzDual32 {
-    let FiringDual32 {
+) -> FiringXyzD32 {
+    let FiringBlockD32 {
         time: firing_time,
         ref azimuth_range,
         channels_strongest,
@@ -280,7 +280,7 @@ pub fn firing_dual_32_to_xyz(
                 horizontal_offset,
             );
 
-            PointDual {
+            PointD {
                 laser_id,
                 time: channel_time,
                 azimuth,
@@ -303,7 +303,7 @@ pub fn firing_dual_32_to_xyz(
 
     let points: [_; 32] = points.try_into().unwrap_or_else(|_| unreachable!());
 
-    FiringXyzDual32 {
+    FiringXyzD32 {
         time: firing_time,
         azimuth_range: azimuth_range.clone(),
         points,

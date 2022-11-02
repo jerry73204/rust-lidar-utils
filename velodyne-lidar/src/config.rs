@@ -4,7 +4,7 @@ use crate::{
     common::*,
     consts,
     convert::types::ConverterKind,
-    firing::types::FiringFormat,
+    firing_block::types::FiringFormat,
     frame_xyz::batcher::FrameXyzBatcherKind,
     packet::{ProductID, ReturnMode},
 };

@@ -2,24 +2,19 @@ use super::functions;
 use crate::{
     common::*,
     config::{Beam, BeamConfig, Config},
-    firing::types::{
-        FiringDual16, FiringDual32, FiringFormat, FiringKind, FiringSingle16, FiringSingle32,
+    firing_block::types::{
+        FiringBlock, FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32, FiringFormat,
     },
     firing_xyz::{
         iter::{
-            FiringXyzDual16Iter, FiringXyzDual32Iter, FiringXyzKindIter, FiringXyzSingle16Iter,
-            FiringXyzSingle32Iter,
+            FiringXyzD16Iter, FiringXyzD32Iter, FiringXyzKindIter, FiringXyzS16Iter,
+            FiringXyzS32Iter,
         },
-        types::{
-            FiringXyzDual16, FiringXyzDual32, FiringXyzKind, FiringXyzSingle16, FiringXyzSingle32,
-        },
+        types::{FiringXyzD16, FiringXyzD32, FiringXyzKind, FiringXyzS16, FiringXyzS32},
     },
     frame_xyz::{
-        iter::{
-            FrameXyzDual16Iter, FrameXyzDual32Iter, FrameXyzIter, FrameXyzSingle16Iter,
-            FrameXyzSingle32Iter,
-        },
-        types::{FrameXyzDual16, FrameXyzDual32, FrameXyzSingle16, FrameXyzSingle32},
+        iter::{FrameXyzD16Iter, FrameXyzD32Iter, FrameXyzIter, FrameXyzS16Iter, FrameXyzS32Iter},
+        types::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
     },
     packet::DataPacket,
 };
@@ -113,49 +108,49 @@ macro_rules! declare_converter {
 declare_converter!(
     ConverterSingle16,
     16,
-    FiringSingle16,
-    FiringXyzSingle16,
-    FiringXyzSingle16Iter,
+    FiringBlockS16,
+    FiringXyzS16,
+    FiringXyzS16Iter,
     functions::firing_single_16_to_xyz,
     single_16_firings,
-    FrameXyzSingle16,
-    FrameXyzSingle16Iter,
+    FrameXyzS16,
+    FrameXyzS16Iter,
 );
 
 declare_converter!(
     ConverterSingle32,
     32,
-    FiringSingle32,
-    FiringXyzSingle32,
-    FiringXyzSingle32Iter,
+    FiringBlockS32,
+    FiringXyzS32,
+    FiringXyzS32Iter,
     functions::firing_single_32_to_xyz,
     single_32_firings,
-    FrameXyzSingle32,
-    FrameXyzSingle32Iter,
+    FrameXyzS32,
+    FrameXyzS32Iter,
 );
 
 declare_converter!(
     ConverterDual16,
     16,
-    FiringDual16,
-    FiringXyzDual16,
-    FiringXyzDual16Iter,
+    FiringBlockD16,
+    FiringXyzD16,
+    FiringXyzD16Iter,
     functions::firing_dual_16_to_xyz,
     dual_16_firings,
-    FrameXyzDual16,
-    FrameXyzDual16Iter,
+    FrameXyzD16,
+    FrameXyzD16Iter,
 );
 
 declare_converter!(
     ConverterDual32,
     32,
-    FiringDual32,
-    FiringXyzDual32,
-    FiringXyzDual32Iter,
+    FiringBlockD32,
+    FiringXyzD32,
+    FiringXyzD32Iter,
     functions::firing_dual_32_to_xyz,
     dual_32_firings,
-    FrameXyzDual32,
-    FrameXyzDual32Iter,
+    FrameXyzD32,
+    FrameXyzD32Iter,
 );
 
 pub use kind::*;
@@ -209,9 +204,9 @@ mod kind {
 
         pub fn firing_to_firing_xyz<'a>(
             &self,
-            firing: FiringKind<'a>,
-        ) -> Result<FiringXyzKind, FiringKind<'a>> {
-            use FiringKind as F;
+            firing: FiringBlock<'a>,
+        ) -> Result<FiringXyzKind, FiringBlock<'a>> {
+            use FiringBlock as F;
 
             Ok(match (self, firing) {
                 (Self::Single16(conv), F::Single16(firing)) => {
@@ -268,10 +263,10 @@ mod kind {
             &'a self,
             packet: &'a DataPacket,
         ) -> FiringXyzKindIter<
-            impl Iterator<Item = FiringXyzSingle16> + 'a,
-            impl Iterator<Item = FiringXyzSingle32> + 'a,
-            impl Iterator<Item = FiringXyzDual16> + 'a,
-            impl Iterator<Item = FiringXyzDual32> + 'a,
+            impl Iterator<Item = FiringXyzS16> + 'a,
+            impl Iterator<Item = FiringXyzS32> + 'a,
+            impl Iterator<Item = FiringXyzD16> + 'a,
+            impl Iterator<Item = FiringXyzD32> + 'a,
         > {
             match self {
                 Self::Single16(conv) => conv.packet_to_firing_xyz_iter(packet).into(),
@@ -285,10 +280,10 @@ mod kind {
             &'a self,
             packets: I,
         ) -> FiringXyzKindIter<
-            impl Iterator<Item = FiringXyzSingle16> + 'a,
-            impl Iterator<Item = FiringXyzSingle32> + 'a,
-            impl Iterator<Item = FiringXyzDual16> + 'a,
-            impl Iterator<Item = FiringXyzDual32> + 'a,
+            impl Iterator<Item = FiringXyzS16> + 'a,
+            impl Iterator<Item = FiringXyzS32> + 'a,
+            impl Iterator<Item = FiringXyzD16> + 'a,
+            impl Iterator<Item = FiringXyzD32> + 'a,
         >
         where
             I: IntoIterator<Item = P> + 'a,
@@ -307,10 +302,10 @@ mod kind {
             &'a self,
             packets: I,
         ) -> FrameXyzIter<
-            impl Iterator<Item = FrameXyzSingle16> + 'a,
-            impl Iterator<Item = FrameXyzSingle32> + 'a,
-            impl Iterator<Item = FrameXyzDual16> + 'a,
-            impl Iterator<Item = FrameXyzDual32> + 'a,
+            impl Iterator<Item = FrameXyzS16> + 'a,
+            impl Iterator<Item = FrameXyzS32> + 'a,
+            impl Iterator<Item = FrameXyzD16> + 'a,
+            impl Iterator<Item = FrameXyzD32> + 'a,
         >
         where
             I: IntoIterator<Item = P> + 'a,

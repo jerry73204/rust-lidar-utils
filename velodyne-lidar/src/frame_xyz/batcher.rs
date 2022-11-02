@@ -1,14 +1,11 @@
 use crate::{
     common::*,
     config::Config,
-    firing::types::FiringFormat,
+    firing_block::types::FiringFormat,
     firing_xyz::types::{
-        FiringXyz, FiringXyzDual16, FiringXyzDual32, FiringXyzKind, FiringXyzSingle16,
-        FiringXyzSingle32,
+        FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzKind, FiringXyzS16, FiringXyzS32,
     },
-    frame_xyz::types::{
-        FrameXyzDual16, FrameXyzDual32, FrameXyzKind, FrameXyzSingle16, FrameXyzSingle32,
-    },
+    frame_xyz::types::{FrameXyz, FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
 };
 #[cfg(feature = "async")]
 use futures::stream::{self, Stream, StreamExt as _};
@@ -95,10 +92,10 @@ macro_rules! declare_converter {
     };
 }
 
-declare_converter!(FrameXyzBatcherSingle16, FiringXyzSingle16, FrameXyzSingle16);
-declare_converter!(FrameXyzBatcherSingle32, FiringXyzSingle32, FrameXyzSingle32);
-declare_converter!(FrameXyzBatcherDual16, FiringXyzDual16, FrameXyzDual16);
-declare_converter!(FrameXyzBatcherDual32, FiringXyzDual32, FrameXyzDual32);
+declare_converter!(FrameXyzBatcherS16, FiringXyzS16, FrameXyzS16);
+declare_converter!(FrameXyzBatcherS32, FiringXyzS32, FrameXyzS32);
+declare_converter!(FrameXyzBatcherD16, FiringXyzD16, FrameXyzD16);
+declare_converter!(FrameXyzBatcherD32, FiringXyzD32, FrameXyzD32);
 
 pub use kind::*;
 mod kind {
@@ -107,10 +104,10 @@ mod kind {
 
     #[derive(Debug)]
     pub enum FrameXyzBatcherKind {
-        Single16(FrameXyzBatcherSingle16),
-        Single32(FrameXyzBatcherSingle32),
-        Dual16(FrameXyzBatcherDual16),
-        Dual32(FrameXyzBatcherDual32),
+        Single16(FrameXyzBatcherS16),
+        Single32(FrameXyzBatcherS32),
+        Dual16(FrameXyzBatcherD16),
+        Dual32(FrameXyzBatcherD32),
     }
 
     impl FrameXyzBatcherKind {
@@ -121,14 +118,14 @@ mod kind {
                 .ok_or_else(|| format_err!("product is not supported"))?;
 
             Ok(match firing_format {
-                F::Single16 => FrameXyzBatcherSingle16::new().into(),
-                F::Dual16 => FrameXyzBatcherDual16::new().into(),
-                F::Single32 => FrameXyzBatcherSingle32::new().into(),
-                F::Dual32 => FrameXyzBatcherDual32::new().into(),
+                F::Single16 => FrameXyzBatcherS16::new().into(),
+                F::Dual16 => FrameXyzBatcherD16::new().into(),
+                F::Single32 => FrameXyzBatcherS32::new().into(),
+                F::Dual32 => FrameXyzBatcherD32::new().into(),
             })
         }
 
-        pub fn try_into_single16(self) -> Result<FrameXyzBatcherSingle16, Self> {
+        pub fn try_into_single16(self) -> Result<FrameXyzBatcherS16, Self> {
             if let Self::Single16(v) = self {
                 Ok(v)
             } else {
@@ -136,7 +133,7 @@ mod kind {
             }
         }
 
-        pub fn try_into_single32(self) -> Result<FrameXyzBatcherSingle32, Self> {
+        pub fn try_into_single32(self) -> Result<FrameXyzBatcherS32, Self> {
             if let Self::Single32(v) = self {
                 Ok(v)
             } else {
@@ -144,7 +141,7 @@ mod kind {
             }
         }
 
-        pub fn try_into_dual16(self) -> Result<FrameXyzBatcherDual16, Self> {
+        pub fn try_into_dual16(self) -> Result<FrameXyzBatcherD16, Self> {
             if let Self::Dual16(v) = self {
                 Ok(v)
             } else {
@@ -152,7 +149,7 @@ mod kind {
             }
         }
 
-        pub fn try_into_dual32(self) -> Result<FrameXyzBatcherDual32, Self> {
+        pub fn try_into_dual32(self) -> Result<FrameXyzBatcherD32, Self> {
             if let Self::Dual32(v) = self {
                 Ok(v)
             } else {
@@ -160,23 +157,23 @@ mod kind {
             }
         }
 
-        pub fn into_single16(self) -> FrameXyzBatcherSingle16 {
+        pub fn into_single16(self) -> FrameXyzBatcherS16 {
             self.try_into_single16().unwrap()
         }
 
-        pub fn into_single32(self) -> FrameXyzBatcherSingle32 {
+        pub fn into_single32(self) -> FrameXyzBatcherS32 {
             self.try_into_single32().unwrap()
         }
 
-        pub fn into_dual16(self) -> FrameXyzBatcherDual16 {
+        pub fn into_dual16(self) -> FrameXyzBatcherD16 {
             self.try_into_dual16().unwrap()
         }
 
-        pub fn into_dual32(self) -> FrameXyzBatcherDual32 {
+        pub fn into_dual32(self) -> FrameXyzBatcherD32 {
             self.try_into_dual32().unwrap()
         }
 
-        pub fn push_one(&mut self, firing: FiringXyzKind) -> Result<Option<FrameXyzKind>> {
+        pub fn push_one(&mut self, firing: FiringXyzKind) -> Result<Option<FrameXyz>> {
             use FiringXyzKind as F;
 
             let frame = match (self, firing) {
@@ -193,39 +190,39 @@ mod kind {
         pub fn push_many<'a, I>(
             &'a mut self,
             firings: I,
-        ) -> impl Iterator<Item = Result<FrameXyzKind>> + 'a
+        ) -> impl Iterator<Item = Result<FrameXyz>> + 'a
         where
             I: IntoIterator<Item = FiringXyzKind> + 'a,
         {
             let firings = firings.into_iter();
             let err = || format_err!("batcher and firing type mismatch");
 
-            let frame_iter: Box<dyn Iterator<Item = Result<Option<FrameXyzKind>>>> = match self {
+            let frame_iter: Box<dyn Iterator<Item = Result<Option<FrameXyz>>>> = match self {
                 Self::Single16(me) => Box::new(firings.map(move |firing| {
                     let firing = firing.try_into_single16().map_err(|_| err())?;
-                    let frame: Option<FrameXyzKind> = me.push_one(firing).map(Into::into);
+                    let frame: Option<FrameXyz> = me.push_one(firing).map(Into::into);
                     Ok(frame)
                 })),
                 Self::Single32(me) => Box::new(firings.map(move |firing| {
                     let firing = firing.try_into_single32().map_err(|_| err())?;
-                    let frame: Option<FrameXyzKind> = me.push_one(firing).map(Into::into);
+                    let frame: Option<FrameXyz> = me.push_one(firing).map(Into::into);
                     Ok(frame)
                 })),
                 Self::Dual16(me) => Box::new(firings.map(move |firing| {
                     let firing = firing.try_into_dual16().map_err(|_| err())?;
-                    let frame: Option<FrameXyzKind> = me.push_one(firing).map(Into::into);
+                    let frame: Option<FrameXyz> = me.push_one(firing).map(Into::into);
                     Ok(frame)
                 })),
                 Self::Dual32(me) => Box::new(firings.map(move |firing| {
                     let firing = firing.try_into_dual32().map_err(|_| err())?;
-                    let frame: Option<FrameXyzKind> = me.push_one(firing).map(Into::into);
+                    let frame: Option<FrameXyz> = me.push_one(firing).map(Into::into);
                     Ok(frame)
                 })),
             };
             frame_iter.flat_map(|frame| frame.transpose())
         }
 
-        pub fn take(&mut self) -> Option<FrameXyzKind> {
+        pub fn take(&mut self) -> Option<FrameXyz> {
             match self {
                 Self::Single16(me) => me.take().map(Into::into),
                 Self::Single32(me) => me.take().map(Into::into),
@@ -235,26 +232,26 @@ mod kind {
         }
     }
 
-    impl From<FrameXyzBatcherDual32> for FrameXyzBatcherKind {
-        fn from(v: FrameXyzBatcherDual32) -> Self {
+    impl From<FrameXyzBatcherD32> for FrameXyzBatcherKind {
+        fn from(v: FrameXyzBatcherD32) -> Self {
             Self::Dual32(v)
         }
     }
 
-    impl From<FrameXyzBatcherDual16> for FrameXyzBatcherKind {
-        fn from(v: FrameXyzBatcherDual16) -> Self {
+    impl From<FrameXyzBatcherD16> for FrameXyzBatcherKind {
+        fn from(v: FrameXyzBatcherD16) -> Self {
             Self::Dual16(v)
         }
     }
 
-    impl From<FrameXyzBatcherSingle32> for FrameXyzBatcherKind {
-        fn from(v: FrameXyzBatcherSingle32) -> Self {
+    impl From<FrameXyzBatcherS32> for FrameXyzBatcherKind {
+        fn from(v: FrameXyzBatcherS32) -> Self {
             Self::Single32(v)
         }
     }
 
-    impl From<FrameXyzBatcherSingle16> for FrameXyzBatcherKind {
-        fn from(v: FrameXyzBatcherSingle16) -> Self {
+    impl From<FrameXyzBatcherS16> for FrameXyzBatcherKind {
+        fn from(v: FrameXyzBatcherS16) -> Self {
             Self::Single16(v)
         }
     }

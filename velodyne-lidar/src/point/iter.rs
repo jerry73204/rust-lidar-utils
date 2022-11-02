@@ -1,4 +1,4 @@
-use crate::point::types::{PointDual, PointKind, PointKindRef, PointSingle};
+use crate::point::types::{PointD, PointKind, PointKindRef, PointS};
 
 pub use point_iter_::*;
 pub mod point_iter_ {
@@ -6,10 +6,10 @@ pub mod point_iter_ {
 
     pub enum PointIter<A, B, C, D>
     where
-        A: Iterator<Item = PointSingle>,
-        B: Iterator<Item = PointSingle>,
-        C: Iterator<Item = PointDual>,
-        D: Iterator<Item = PointDual>,
+        A: Iterator<Item = PointS>,
+        B: Iterator<Item = PointS>,
+        C: Iterator<Item = PointD>,
+        D: Iterator<Item = PointD>,
     {
         Single16(A),
         Single32(B),
@@ -19,10 +19,10 @@ pub mod point_iter_ {
 
     impl<A, B, C, D> Iterator for PointIter<A, B, C, D>
     where
-        A: Iterator<Item = PointSingle>,
-        B: Iterator<Item = PointSingle>,
-        C: Iterator<Item = PointDual>,
-        D: Iterator<Item = PointDual>,
+        A: Iterator<Item = PointS>,
+        B: Iterator<Item = PointS>,
+        C: Iterator<Item = PointD>,
+        D: Iterator<Item = PointD>,
     {
         type Item = PointKind;
 
@@ -43,10 +43,10 @@ pub mod point_ref_iter {
 
     pub enum PointRefIter<'a, A, B, C, D>
     where
-        A: Iterator<Item = &'a PointSingle>,
-        B: Iterator<Item = &'a PointSingle>,
-        C: Iterator<Item = &'a PointDual>,
-        D: Iterator<Item = &'a PointDual>,
+        A: Iterator<Item = &'a PointS>,
+        B: Iterator<Item = &'a PointS>,
+        C: Iterator<Item = &'a PointD>,
+        D: Iterator<Item = &'a PointD>,
     {
         Single16(A),
         Single32(B),
@@ -56,10 +56,10 @@ pub mod point_ref_iter {
 
     impl<'a, A, B, C, D> Iterator for PointRefIter<'a, A, B, C, D>
     where
-        A: Iterator<Item = &'a PointSingle>,
-        B: Iterator<Item = &'a PointSingle>,
-        C: Iterator<Item = &'a PointDual>,
-        D: Iterator<Item = &'a PointDual>,
+        A: Iterator<Item = &'a PointS>,
+        B: Iterator<Item = &'a PointS>,
+        C: Iterator<Item = &'a PointD>,
+        D: Iterator<Item = &'a PointD>,
     {
         type Item = PointKindRef<'a>;
 

@@ -46,7 +46,7 @@ mod point_types {
     use super::*;
 
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct PointSingle {
+    pub struct PointS {
         pub laser_id: usize,
         pub time: Duration,
         pub azimuth: Angle,
@@ -54,14 +54,14 @@ mod point_types {
     }
 
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct PointDual {
+    pub struct PointD {
         pub laser_id: usize,
         pub time: Duration,
         pub azimuth: Angle,
         pub measurements: MeasurementDual,
     }
 
-    impl PointDual {
+    impl PointD {
         pub fn measurement_strongest(&self) -> &Measurement {
             &self.measurements.strongest
         }
@@ -84,9 +84,9 @@ mod point_kind {
         pub measurement: MeasurementKind,
     }
 
-    impl From<PointSingle> for PointKind {
-        fn from(from: PointSingle) -> Self {
-            let PointSingle {
+    impl From<PointS> for PointKind {
+        fn from(from: PointS) -> Self {
+            let PointS {
                 laser_id,
                 time,
                 azimuth,
@@ -101,9 +101,9 @@ mod point_kind {
         }
     }
 
-    impl From<PointDual> for PointKind {
-        fn from(from: PointDual) -> Self {
-            let PointDual {
+    impl From<PointD> for PointKind {
+        fn from(from: PointD) -> Self {
+            let PointD {
                 laser_id,
                 time,
                 azimuth,
@@ -120,8 +120,8 @@ mod point_kind {
 
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum PointKindRef<'a> {
-        Single(&'a PointSingle),
-        Dual(&'a PointDual),
+        Single(&'a PointS),
+        Dual(&'a PointD),
     }
 
     impl<'a> PointKindRef<'a> {
@@ -146,7 +146,7 @@ mod point_kind {
             }
         }
 
-        pub fn try_into_single(self) -> Result<&'a PointSingle, Self> {
+        pub fn try_into_single(self) -> Result<&'a PointS, Self> {
             if let Self::Single(v) = self {
                 Ok(v)
             } else {
@@ -154,7 +154,7 @@ mod point_kind {
             }
         }
 
-        pub fn try_into_dual(self) -> Result<&'a PointDual, Self> {
+        pub fn try_into_dual(self) -> Result<&'a PointD, Self> {
             if let Self::Dual(v) = self {
                 Ok(v)
             } else {
@@ -162,7 +162,7 @@ mod point_kind {
             }
         }
 
-        pub fn as_single(&self) -> Option<&&'a PointSingle> {
+        pub fn as_single(&self) -> Option<&&'a PointS> {
             if let Self::Single(v) = self {
                 Some(v)
             } else {
@@ -170,7 +170,7 @@ mod point_kind {
             }
         }
 
-        pub fn as_dual(&self) -> Option<&&'a PointDual> {
+        pub fn as_dual(&self) -> Option<&&'a PointD> {
             if let Self::Dual(v) = self {
                 Some(v)
             } else {
@@ -179,14 +179,14 @@ mod point_kind {
         }
     }
 
-    impl<'a> From<&'a PointDual> for PointKindRef<'a> {
-        fn from(v: &'a PointDual) -> Self {
+    impl<'a> From<&'a PointD> for PointKindRef<'a> {
+        fn from(v: &'a PointD) -> Self {
             Self::Dual(v)
         }
     }
 
-    impl<'a> From<&'a PointSingle> for PointKindRef<'a> {
-        fn from(v: &'a PointSingle) -> Self {
+    impl<'a> From<&'a PointS> for PointKindRef<'a> {
+        fn from(v: &'a PointS) -> Self {
             Self::Single(v)
         }
     }
