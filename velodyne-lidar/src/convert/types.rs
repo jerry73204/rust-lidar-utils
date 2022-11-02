@@ -15,6 +15,7 @@ use crate::{
         iter::{FrameXyzIter, FrameXyzIterD16, FrameXyzIterD32, FrameXyzIterS16, FrameXyzIterS32},
         types::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
     },
+    kinds::{Format, FormatKind},
     packet::DataPacket,
 };
 
@@ -105,7 +106,7 @@ macro_rules! declare_converter {
 }
 
 declare_converter!(
-    ConverterSingle16,
+    ConverterS16,
     16,
     FiringBlockS16,
     FiringXyzS16,
@@ -117,7 +118,7 @@ declare_converter!(
 );
 
 declare_converter!(
-    ConverterSingle32,
+    ConverterS32,
     32,
     FiringBlockS32,
     FiringXyzS32,
@@ -129,7 +130,7 @@ declare_converter!(
 );
 
 declare_converter!(
-    ConverterDual16,
+    ConverterD16,
     16,
     FiringBlockD16,
     FiringXyzD16,
@@ -141,7 +142,7 @@ declare_converter!(
 );
 
 declare_converter!(
-    ConverterDual32,
+    ConverterD32,
     32,
     FiringBlockD32,
     FiringXyzD32,
@@ -155,43 +156,35 @@ declare_converter!(
 pub use kind::*;
 mod kind {
 
-    use crate::kinds::Format;
-
     use super::*;
 
-    #[derive(Debug, Clone)]
-    pub enum ConverterKind {
-        Single16(ConverterSingle16),
-        Single32(ConverterSingle32),
-        Dual16(ConverterDual16),
-        Dual32(ConverterDual32),
-    }
+    pub type Converter = FormatKind<ConverterS16, ConverterS32, ConverterD16, ConverterD32>;
 
-    impl From<ConverterDual32> for ConverterKind {
-        fn from(v: ConverterDual32) -> Self {
+    impl From<ConverterD32> for Converter {
+        fn from(v: ConverterD32) -> Self {
             Self::Dual32(v)
         }
     }
 
-    impl From<ConverterDual16> for ConverterKind {
-        fn from(v: ConverterDual16) -> Self {
+    impl From<ConverterD16> for Converter {
+        fn from(v: ConverterD16) -> Self {
             Self::Dual16(v)
         }
     }
 
-    impl From<ConverterSingle32> for ConverterKind {
-        fn from(v: ConverterSingle32) -> Self {
+    impl From<ConverterS32> for Converter {
+        fn from(v: ConverterS32) -> Self {
             Self::Single32(v)
         }
     }
 
-    impl From<ConverterSingle16> for ConverterKind {
-        fn from(v: ConverterSingle16) -> Self {
+    impl From<ConverterS16> for Converter {
+        fn from(v: ConverterS16) -> Self {
             Self::Single16(v)
         }
     }
 
-    impl ConverterKind {
+    impl Converter {
         pub fn firing_format(&self) -> Format {
             use Format as F;
 
@@ -335,22 +328,22 @@ mod kind {
             let err = || format_err!("the number of laser parameters is invalid");
 
             Ok(match firing_format {
-                F::Single16 => ConverterSingle16 {
+                F::Single16 => ConverterS16 {
                     lasers: lasers.try_into().map_err(|_| err())?,
                     distance_resolution,
                 }
                 .into(),
-                F::Dual16 => ConverterDual16 {
+                F::Dual16 => ConverterD16 {
                     lasers: lasers.try_into().map_err(|_| err())?,
                     distance_resolution,
                 }
                 .into(),
-                F::Single32 => ConverterSingle32 {
+                F::Single32 => ConverterS32 {
                     lasers: lasers.try_into().map_err(|_| err())?,
                     distance_resolution,
                 }
                 .into(),
-                F::Dual32 => ConverterDual32 {
+                F::Dual32 => ConverterD32 {
                     lasers: lasers.try_into().map_err(|_| err())?,
                     distance_resolution,
                 }
@@ -358,7 +351,7 @@ mod kind {
             })
         }
 
-        pub fn try_into_single16(self) -> Result<ConverterSingle16, Self> {
+        pub fn try_into_single16(self) -> Result<ConverterS16, Self> {
             if let Self::Single16(v) = self {
                 Ok(v)
             } else {
@@ -366,7 +359,7 @@ mod kind {
             }
         }
 
-        pub fn try_into_single32(self) -> Result<ConverterSingle32, Self> {
+        pub fn try_into_single32(self) -> Result<ConverterS32, Self> {
             if let Self::Single32(v) = self {
                 Ok(v)
             } else {
@@ -374,7 +367,7 @@ mod kind {
             }
         }
 
-        pub fn try_into_dual16(self) -> Result<ConverterDual16, Self> {
+        pub fn try_into_dual16(self) -> Result<ConverterD16, Self> {
             if let Self::Dual16(v) = self {
                 Ok(v)
             } else {
@@ -382,7 +375,7 @@ mod kind {
             }
         }
 
-        pub fn try_into_dual32(self) -> Result<ConverterDual32, Self> {
+        pub fn try_into_dual32(self) -> Result<ConverterD32, Self> {
             if let Self::Dual32(v) = self {
                 Ok(v)
             } else {
@@ -390,19 +383,19 @@ mod kind {
             }
         }
 
-        pub fn into_single16(self) -> ConverterSingle16 {
+        pub fn into_single16(self) -> ConverterS16 {
             self.try_into_single16().unwrap()
         }
 
-        pub fn into_single32(self) -> ConverterSingle32 {
+        pub fn into_single32(self) -> ConverterS32 {
             self.try_into_single32().unwrap()
         }
 
-        pub fn into_dual16(self) -> ConverterDual16 {
+        pub fn into_dual16(self) -> ConverterD16 {
             self.try_into_dual16().unwrap()
         }
 
-        pub fn into_dual32(self) -> ConverterDual32 {
+        pub fn into_dual32(self) -> ConverterD32 {
             self.try_into_dual32().unwrap()
         }
     }

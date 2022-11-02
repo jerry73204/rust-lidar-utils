@@ -3,7 +3,7 @@
 use crate::{
     common::*,
     consts,
-    convert::types::ConverterKind,
+    convert::types::Converter,
     frame_xyz::batcher::FrameXyzBatcherKind,
     packet::{ProductID, ReturnMode},
 };
@@ -31,8 +31,8 @@ mod config_ {
             Format::from_model(self.product_id, self.return_mode)
         }
 
-        pub fn build_converter(&self) -> Result<ConverterKind> {
-            ConverterKind::from_config(self)
+        pub fn build_converter(&self) -> Result<Converter> {
+            Converter::from_config(self)
         }
 
         pub fn build_frame_xyz_batcher(&self) -> Result<FrameXyzBatcherKind> {
