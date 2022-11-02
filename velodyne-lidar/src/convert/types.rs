@@ -7,12 +7,12 @@ use crate::{
     },
     firing_xyz::{
         iter::{
-            FiringXyzD16Iter, FiringXyzD32Iter, FiringXyzIter, FiringXyzS16Iter, FiringXyzS32Iter,
+            FiringXyzIter, FiringXyzIterD16, FiringXyzIterD32, FiringXyzIterS16, FiringXyzIterS32,
         },
         types::{FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
     },
     frame_xyz::{
-        iter::{FrameXyzD16Iter, FrameXyzD32Iter, FrameXyzIter, FrameXyzS16Iter, FrameXyzS32Iter},
+        iter::{FrameXyzIter, FrameXyzIterD16, FrameXyzIterD32, FrameXyzIterS16, FrameXyzIterS32},
         types::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
     },
     packet::DataPacket,
@@ -109,11 +109,11 @@ declare_converter!(
     16,
     FiringBlockS16,
     FiringXyzS16,
-    FiringXyzS16Iter,
+    FiringXyzIterS16,
     functions::firing_block_to_xyz_s16,
     single_16_firings,
     FrameXyzS16,
-    FrameXyzS16Iter,
+    FrameXyzIterS16,
 );
 
 declare_converter!(
@@ -121,11 +121,11 @@ declare_converter!(
     32,
     FiringBlockS32,
     FiringXyzS32,
-    FiringXyzS32Iter,
+    FiringXyzIterS32,
     functions::firing_block_to_xyz_s32,
     single_32_firings,
     FrameXyzS32,
-    FrameXyzS32Iter,
+    FrameXyzIterS32,
 );
 
 declare_converter!(
@@ -133,11 +133,11 @@ declare_converter!(
     16,
     FiringBlockD16,
     FiringXyzD16,
-    FiringXyzD16Iter,
+    FiringXyzIterD16,
     functions::firing_block_to_xyz_d16,
     dual_16_firings,
     FrameXyzD16,
-    FrameXyzD16Iter,
+    FrameXyzIterD16,
 );
 
 declare_converter!(
@@ -145,11 +145,11 @@ declare_converter!(
     32,
     FiringBlockD32,
     FiringXyzD32,
-    FiringXyzD32Iter,
+    FiringXyzIterD32,
     functions::firing_block_to_xyz_d32,
     dual_32_firings,
     FrameXyzD32,
-    FrameXyzD32Iter,
+    FrameXyzIterD32,
 );
 
 pub use kind::*;

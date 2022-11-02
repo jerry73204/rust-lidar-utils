@@ -5,7 +5,7 @@ use crate::{
     },
     frame_xyz::{
         batcher::{FrameXyzBatcherD16, FrameXyzBatcherD32, FrameXyzBatcherS16, FrameXyzBatcherS32},
-        iter::{FrameXyzD16Iter, FrameXyzD32Iter, FrameXyzS16Iter, FrameXyzS32Iter},
+        iter::{FrameXyzIterD16, FrameXyzIterD32, FrameXyzIterS16, FrameXyzIterS32},
         types::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
     },
 };
@@ -61,32 +61,32 @@ macro_rules! declare_iter {
 }
 
 declare_iter!(
-    FiringXyzS16Iter,
+    FiringXyzIterS16,
     FiringXyzS16,
     FrameXyzBatcherS16,
     FrameXyzS16,
-    FrameXyzS16Iter
+    FrameXyzIterS16
 );
 declare_iter!(
-    FiringXyzS32Iter,
+    FiringXyzIterS32,
     FiringXyzS32,
     FrameXyzBatcherS32,
     FrameXyzS32,
-    FrameXyzS32Iter
+    FrameXyzIterS32
 );
 declare_iter!(
-    FiringXyzD16Iter,
+    FiringXyzIterD16,
     FiringXyzD16,
     FrameXyzBatcherD16,
     FrameXyzD16,
-    FrameXyzD16Iter
+    FrameXyzIterD16
 );
 declare_iter!(
-    FiringXyzD32Iter,
+    FiringXyzIterD32,
     FiringXyzD32,
     FrameXyzBatcherD32,
     FrameXyzD32,
-    FrameXyzD32Iter
+    FrameXyzIterD32
 );
 
 macro_rules! declare_ref_iter {
@@ -113,10 +113,10 @@ macro_rules! declare_ref_iter {
     };
 }
 
-declare_ref_iter!(FiringXyzSingle16RefIter, FiringXyzS16,);
-declare_ref_iter!(FiringXyzSingle32RefIter, FiringXyzS32,);
-declare_ref_iter!(FiringXyzDual16RefIter, FiringXyzD16,);
-declare_ref_iter!(FiringXyzDual32RefIter, FiringXyzD32,);
+declare_ref_iter!(FiringXyzRefIterS16, FiringXyzS16);
+declare_ref_iter!(FiringXyzRefIterS32, FiringXyzS32);
+declare_ref_iter!(FiringXyzRefIterD16, FiringXyzD16);
+declare_ref_iter!(FiringXyzRefIterD32, FiringXyzD32);
 
 pub use firing_xyz_kind_iter::*;
 mod firing_xyz_kind_iter {
@@ -130,56 +130,56 @@ mod firing_xyz_kind_iter {
         C: Iterator<Item = FiringXyzD16>,
         D: Iterator<Item = FiringXyzD32>,
     {
-        Single16(FiringXyzS16Iter<A>),
-        Single32(FiringXyzS32Iter<B>),
-        Dual16(FiringXyzD16Iter<C>),
-        Dual32(FiringXyzD32Iter<D>),
+        Single16(FiringXyzIterS16<A>),
+        Single32(FiringXyzIterS32<B>),
+        Dual16(FiringXyzIterD16<C>),
+        Dual32(FiringXyzIterD32<D>),
     }
 
-    impl<A, B, C, D> From<FiringXyzD32Iter<D>> for FiringXyzIter<A, B, C, D>
+    impl<A, B, C, D> From<FiringXyzIterD32<D>> for FiringXyzIter<A, B, C, D>
     where
         A: Iterator<Item = FiringXyzS16>,
         B: Iterator<Item = FiringXyzS32>,
         C: Iterator<Item = FiringXyzD16>,
         D: Iterator<Item = FiringXyzD32>,
     {
-        fn from(v: FiringXyzD32Iter<D>) -> Self {
+        fn from(v: FiringXyzIterD32<D>) -> Self {
             Self::Dual32(v)
         }
     }
 
-    impl<A, B, C, D> From<FiringXyzD16Iter<C>> for FiringXyzIter<A, B, C, D>
+    impl<A, B, C, D> From<FiringXyzIterD16<C>> for FiringXyzIter<A, B, C, D>
     where
         A: Iterator<Item = FiringXyzS16>,
         B: Iterator<Item = FiringXyzS32>,
         C: Iterator<Item = FiringXyzD16>,
         D: Iterator<Item = FiringXyzD32>,
     {
-        fn from(v: FiringXyzD16Iter<C>) -> Self {
+        fn from(v: FiringXyzIterD16<C>) -> Self {
             Self::Dual16(v)
         }
     }
 
-    impl<A, B, C, D> From<FiringXyzS32Iter<B>> for FiringXyzIter<A, B, C, D>
+    impl<A, B, C, D> From<FiringXyzIterS32<B>> for FiringXyzIter<A, B, C, D>
     where
         A: Iterator<Item = FiringXyzS16>,
         B: Iterator<Item = FiringXyzS32>,
         C: Iterator<Item = FiringXyzD16>,
         D: Iterator<Item = FiringXyzD32>,
     {
-        fn from(v: FiringXyzS32Iter<B>) -> Self {
+        fn from(v: FiringXyzIterS32<B>) -> Self {
             Self::Single32(v)
         }
     }
 
-    impl<A, B, C, D> From<FiringXyzS16Iter<A>> for FiringXyzIter<A, B, C, D>
+    impl<A, B, C, D> From<FiringXyzIterS16<A>> for FiringXyzIter<A, B, C, D>
     where
         A: Iterator<Item = FiringXyzS16>,
         B: Iterator<Item = FiringXyzS32>,
         C: Iterator<Item = FiringXyzD16>,
         D: Iterator<Item = FiringXyzD32>,
     {
-        fn from(v: FiringXyzS16Iter<A>) -> Self {
+        fn from(v: FiringXyzIterS16<A>) -> Self {
             Self::Single16(v)
         }
     }
@@ -217,56 +217,56 @@ mod firing_xyz_kind_ref_iter {
         C: Iterator<Item = &'a FiringXyzD16>,
         D: Iterator<Item = &'a FiringXyzD32>,
     {
-        Single16(FiringXyzSingle16RefIter<'a, A>),
-        Single32(FiringXyzSingle32RefIter<'a, B>),
-        Dual16(FiringXyzDual16RefIter<'a, C>),
-        Dual32(FiringXyzDual32RefIter<'a, D>),
+        Single16(FiringXyzRefIterS16<'a, A>),
+        Single32(FiringXyzRefIterS32<'a, B>),
+        Dual16(FiringXyzRefIterD16<'a, C>),
+        Dual32(FiringXyzRefIterD32<'a, D>),
     }
 
-    impl<'a, A, B, C, D> From<FiringXyzDual32RefIter<'a, D>> for FiringXyzRefIter<'a, A, B, C, D>
+    impl<'a, A, B, C, D> From<FiringXyzRefIterD32<'a, D>> for FiringXyzRefIter<'a, A, B, C, D>
     where
         A: Iterator<Item = &'a FiringXyzS16>,
         B: Iterator<Item = &'a FiringXyzS32>,
         C: Iterator<Item = &'a FiringXyzD16>,
         D: Iterator<Item = &'a FiringXyzD32>,
     {
-        fn from(v: FiringXyzDual32RefIter<'a, D>) -> Self {
+        fn from(v: FiringXyzRefIterD32<'a, D>) -> Self {
             Self::Dual32(v)
         }
     }
 
-    impl<'a, A, B, C, D> From<FiringXyzDual16RefIter<'a, C>> for FiringXyzRefIter<'a, A, B, C, D>
+    impl<'a, A, B, C, D> From<FiringXyzRefIterD16<'a, C>> for FiringXyzRefIter<'a, A, B, C, D>
     where
         A: Iterator<Item = &'a FiringXyzS16>,
         B: Iterator<Item = &'a FiringXyzS32>,
         C: Iterator<Item = &'a FiringXyzD16>,
         D: Iterator<Item = &'a FiringXyzD32>,
     {
-        fn from(v: FiringXyzDual16RefIter<'a, C>) -> Self {
+        fn from(v: FiringXyzRefIterD16<'a, C>) -> Self {
             Self::Dual16(v)
         }
     }
 
-    impl<'a, A, B, C, D> From<FiringXyzSingle32RefIter<'a, B>> for FiringXyzRefIter<'a, A, B, C, D>
+    impl<'a, A, B, C, D> From<FiringXyzRefIterS32<'a, B>> for FiringXyzRefIter<'a, A, B, C, D>
     where
         A: Iterator<Item = &'a FiringXyzS16>,
         B: Iterator<Item = &'a FiringXyzS32>,
         C: Iterator<Item = &'a FiringXyzD16>,
         D: Iterator<Item = &'a FiringXyzD32>,
     {
-        fn from(v: FiringXyzSingle32RefIter<'a, B>) -> Self {
+        fn from(v: FiringXyzRefIterS32<'a, B>) -> Self {
             Self::Single32(v)
         }
     }
 
-    impl<'a, A, B, C, D> From<FiringXyzSingle16RefIter<'a, A>> for FiringXyzRefIter<'a, A, B, C, D>
+    impl<'a, A, B, C, D> From<FiringXyzRefIterS16<'a, A>> for FiringXyzRefIter<'a, A, B, C, D>
     where
         A: Iterator<Item = &'a FiringXyzS16>,
         B: Iterator<Item = &'a FiringXyzS32>,
         C: Iterator<Item = &'a FiringXyzD16>,
         D: Iterator<Item = &'a FiringXyzD32>,
     {
-        fn from(v: FiringXyzSingle16RefIter<'a, A>) -> Self {
+        fn from(v: FiringXyzRefIterS16<'a, A>) -> Self {
             Self::Single16(v)
         }
     }

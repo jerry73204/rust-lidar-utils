@@ -24,10 +24,10 @@ macro_rules! declare_iter {
     };
 }
 
-declare_iter!(FiringBlockS16Iter, FiringBlockS16);
-declare_iter!(FiringBlockS32Iter, FiringBlockS32);
-declare_iter!(FiringBlockD16Iter, FiringBlockD16);
-declare_iter!(FiringBlockD32Iter, FiringBlockD32);
+declare_iter!(FiringBlockIterS16, FiringBlockS16);
+declare_iter!(FiringBlockIterS32, FiringBlockS32);
+declare_iter!(FiringBlockIterD16, FiringBlockD16);
+declare_iter!(FiringBlockIterD32, FiringBlockD32);
 
 pub use firing_iter_kind::*;
 mod firing_iter_kind {
@@ -41,56 +41,56 @@ mod firing_iter_kind {
         C: Iterator<Item = FiringBlockD16<'a>>,
         D: Iterator<Item = FiringBlockD32<'a>>,
     {
-        Single16(FiringBlockS16Iter<'a, A>),
-        Single32(FiringBlockS32Iter<'a, B>),
-        Dual16(FiringBlockD16Iter<'a, C>),
-        Dual32(FiringBlockD32Iter<'a, D>),
+        Single16(FiringBlockIterS16<'a, A>),
+        Single32(FiringBlockIterS32<'a, B>),
+        Dual16(FiringBlockIterD16<'a, C>),
+        Dual32(FiringBlockIterD32<'a, D>),
     }
 
-    impl<'a, A, B, C, D> From<FiringBlockD32Iter<'a, D>> for FiringBlockIter<'a, A, B, C, D>
+    impl<'a, A, B, C, D> From<FiringBlockIterD32<'a, D>> for FiringBlockIter<'a, A, B, C, D>
     where
         A: Iterator<Item = FiringBlockS16<'a>>,
         B: Iterator<Item = FiringBlockS32<'a>>,
         C: Iterator<Item = FiringBlockD16<'a>>,
         D: Iterator<Item = FiringBlockD32<'a>>,
     {
-        fn from(v: FiringBlockD32Iter<'a, D>) -> Self {
+        fn from(v: FiringBlockIterD32<'a, D>) -> Self {
             Self::Dual32(v)
         }
     }
 
-    impl<'a, A, B, C, D> From<FiringBlockD16Iter<'a, C>> for FiringBlockIter<'a, A, B, C, D>
+    impl<'a, A, B, C, D> From<FiringBlockIterD16<'a, C>> for FiringBlockIter<'a, A, B, C, D>
     where
         A: Iterator<Item = FiringBlockS16<'a>>,
         B: Iterator<Item = FiringBlockS32<'a>>,
         C: Iterator<Item = FiringBlockD16<'a>>,
         D: Iterator<Item = FiringBlockD32<'a>>,
     {
-        fn from(v: FiringBlockD16Iter<'a, C>) -> Self {
+        fn from(v: FiringBlockIterD16<'a, C>) -> Self {
             Self::Dual16(v)
         }
     }
 
-    impl<'a, A, B, C, D> From<FiringBlockS32Iter<'a, B>> for FiringBlockIter<'a, A, B, C, D>
+    impl<'a, A, B, C, D> From<FiringBlockIterS32<'a, B>> for FiringBlockIter<'a, A, B, C, D>
     where
         A: Iterator<Item = FiringBlockS16<'a>>,
         B: Iterator<Item = FiringBlockS32<'a>>,
         C: Iterator<Item = FiringBlockD16<'a>>,
         D: Iterator<Item = FiringBlockD32<'a>>,
     {
-        fn from(v: FiringBlockS32Iter<'a, B>) -> Self {
+        fn from(v: FiringBlockIterS32<'a, B>) -> Self {
             Self::Single32(v)
         }
     }
 
-    impl<'a, A, B, C, D> From<FiringBlockS16Iter<'a, A>> for FiringBlockIter<'a, A, B, C, D>
+    impl<'a, A, B, C, D> From<FiringBlockIterS16<'a, A>> for FiringBlockIter<'a, A, B, C, D>
     where
         A: Iterator<Item = FiringBlockS16<'a>>,
         B: Iterator<Item = FiringBlockS32<'a>>,
         C: Iterator<Item = FiringBlockD16<'a>>,
         D: Iterator<Item = FiringBlockD32<'a>>,
     {
-        fn from(v: FiringBlockS16Iter<'a, A>) -> Self {
+        fn from(v: FiringBlockIterS16<'a, A>) -> Self {
             Self::Single16(v)
         }
     }

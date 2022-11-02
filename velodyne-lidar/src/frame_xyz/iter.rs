@@ -25,10 +25,10 @@ macro_rules! declare_iter {
     };
 }
 
-declare_iter!(FrameXyzS16Iter, FrameXyzS16);
-declare_iter!(FrameXyzS32Iter, FrameXyzS32);
-declare_iter!(FrameXyzD16Iter, FrameXyzD16);
-declare_iter!(FrameXyzD32Iter, FrameXyzD32);
+declare_iter!(FrameXyzIterS16, FrameXyzS16);
+declare_iter!(FrameXyzIterS32, FrameXyzS32);
+declare_iter!(FrameXyzIterD16, FrameXyzD16);
+declare_iter!(FrameXyzIterD32, FrameXyzD32);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FrameXyzIter<A, B, C, D>
@@ -38,56 +38,56 @@ where
     C: Iterator<Item = FrameXyzD16>,
     D: Iterator<Item = FrameXyzD32>,
 {
-    Single16(FrameXyzS16Iter<A>),
-    Single32(FrameXyzS32Iter<B>),
-    Dual16(FrameXyzD16Iter<C>),
-    Dual32(FrameXyzD32Iter<D>),
+    Single16(FrameXyzIterS16<A>),
+    Single32(FrameXyzIterS32<B>),
+    Dual16(FrameXyzIterD16<C>),
+    Dual32(FrameXyzIterD32<D>),
 }
 
-impl<A, B, C, D> From<FrameXyzD32Iter<D>> for FrameXyzIter<A, B, C, D>
+impl<A, B, C, D> From<FrameXyzIterD32<D>> for FrameXyzIter<A, B, C, D>
 where
     A: Iterator<Item = FrameXyzS16>,
     B: Iterator<Item = FrameXyzS32>,
     C: Iterator<Item = FrameXyzD16>,
     D: Iterator<Item = FrameXyzD32>,
 {
-    fn from(v: FrameXyzD32Iter<D>) -> Self {
+    fn from(v: FrameXyzIterD32<D>) -> Self {
         Self::Dual32(v)
     }
 }
 
-impl<A, B, C, D> From<FrameXyzD16Iter<C>> for FrameXyzIter<A, B, C, D>
+impl<A, B, C, D> From<FrameXyzIterD16<C>> for FrameXyzIter<A, B, C, D>
 where
     A: Iterator<Item = FrameXyzS16>,
     B: Iterator<Item = FrameXyzS32>,
     C: Iterator<Item = FrameXyzD16>,
     D: Iterator<Item = FrameXyzD32>,
 {
-    fn from(v: FrameXyzD16Iter<C>) -> Self {
+    fn from(v: FrameXyzIterD16<C>) -> Self {
         Self::Dual16(v)
     }
 }
 
-impl<A, B, C, D> From<FrameXyzS32Iter<B>> for FrameXyzIter<A, B, C, D>
+impl<A, B, C, D> From<FrameXyzIterS32<B>> for FrameXyzIter<A, B, C, D>
 where
     A: Iterator<Item = FrameXyzS16>,
     B: Iterator<Item = FrameXyzS32>,
     C: Iterator<Item = FrameXyzD16>,
     D: Iterator<Item = FrameXyzD32>,
 {
-    fn from(v: FrameXyzS32Iter<B>) -> Self {
+    fn from(v: FrameXyzIterS32<B>) -> Self {
         Self::Single32(v)
     }
 }
 
-impl<A, B, C, D> From<FrameXyzS16Iter<A>> for FrameXyzIter<A, B, C, D>
+impl<A, B, C, D> From<FrameXyzIterS16<A>> for FrameXyzIter<A, B, C, D>
 where
     A: Iterator<Item = FrameXyzS16>,
     B: Iterator<Item = FrameXyzS32>,
     C: Iterator<Item = FrameXyzD16>,
     D: Iterator<Item = FrameXyzD32>,
 {
-    fn from(v: FrameXyzS16Iter<A>) -> Self {
+    fn from(v: FrameXyzIterS16<A>) -> Self {
         Self::Single16(v)
     }
 }

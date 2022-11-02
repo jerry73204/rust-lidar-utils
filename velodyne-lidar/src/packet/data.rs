@@ -3,8 +3,8 @@ use crate::{
     consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK, FIRING_PERIOD},
     firing_block::{
         iter::{
-            FiringBlockD16Iter, FiringBlockD32Iter, FiringBlockIter, FiringBlockS16Iter,
-            FiringBlockS32Iter,
+            FiringBlockIter, FiringBlockIterD16, FiringBlockIterD32, FiringBlockIterS16,
+            FiringBlockIterS32,
         },
         types::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
     },
@@ -161,7 +161,7 @@ impl DataPacket {
 
     pub fn single_16_firings(
         &self,
-    ) -> FiringBlockS16Iter<impl Iterator<Item = FiringBlockS16<'_>> + Clone> {
+    ) -> FiringBlockIterS16<impl Iterator<Item = FiringBlockS16<'_>> + Clone> {
         let block_period = FIRING_PERIOD.mul_f64(2.0);
         let times = iter::successors(Some(self.time()), move |prev| Some(*prev + block_period));
         let firing_azimuths = {
@@ -213,12 +213,12 @@ impl DataPacket {
             },
         );
 
-        FiringBlockS16Iter(iter)
+        FiringBlockIterS16(iter)
     }
 
     pub fn dual_16_firings(
         &self,
-    ) -> FiringBlockD16Iter<impl Iterator<Item = FiringBlockD16<'_>> + Clone> {
+    ) -> FiringBlockIterD16<impl Iterator<Item = FiringBlockD16<'_>> + Clone> {
         let block_period = FIRING_PERIOD.mul_f64(2.0);
         let times = iter::successors(Some(self.time()), move |prev| Some(*prev + block_period));
         let firing_azimuths = {
@@ -285,12 +285,12 @@ impl DataPacket {
             },
         );
 
-        FiringBlockD16Iter(firings)
+        FiringBlockIterD16(firings)
     }
 
     pub fn single_32_firings(
         &self,
-    ) -> FiringBlockS32Iter<impl Iterator<Item = FiringBlockS32<'_>> + Clone> {
+    ) -> FiringBlockIterS32<impl Iterator<Item = FiringBlockS32<'_>> + Clone> {
         let times = iter::successors(Some(self.time()), move |prev| Some(*prev + FIRING_PERIOD));
         let azimuths = {
             let block_azimuths: Vec<_> = self.blocks.iter().map(|block| block.azimuth()).collect();
@@ -325,12 +325,12 @@ impl DataPacket {
                 }
             });
 
-        FiringBlockS32Iter(iter)
+        FiringBlockIterS32(iter)
     }
 
     pub fn dual_32_firings(
         &self,
-    ) -> FiringBlockD32Iter<impl Iterator<Item = FiringBlockD32<'_>> + Clone> {
+    ) -> FiringBlockIterD32<impl Iterator<Item = FiringBlockD32<'_>> + Clone> {
         let times = iter::successors(Some(self.time()), move |prev| Some(*prev + FIRING_PERIOD));
         let azimuths = {
             let azimuths: Vec<_> = self
@@ -373,6 +373,6 @@ impl DataPacket {
             },
         );
 
-        FiringBlockD32Iter(iter)
+        FiringBlockIterD32(iter)
     }
 }

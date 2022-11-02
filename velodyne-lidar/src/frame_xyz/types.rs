@@ -2,9 +2,9 @@ use crate::{
     common::*,
     firing_xyz::{
         iter::{
-            FiringXyzD16Iter, FiringXyzD32Iter, FiringXyzDual16RefIter, FiringXyzDual32RefIter,
-            FiringXyzIter, FiringXyzRefIter, FiringXyzS16Iter, FiringXyzS32Iter,
-            FiringXyzSingle16RefIter, FiringXyzSingle32RefIter,
+            FiringXyzIter, FiringXyzIterD16, FiringXyzIterD32, FiringXyzIterS16, FiringXyzIterS32,
+            FiringXyzRefIter, FiringXyzRefIterD16, FiringXyzRefIterD32, FiringXyzRefIterS16,
+            FiringXyzRefIterS32,
         },
         types::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
     },
@@ -58,10 +58,10 @@ mod frame_kind {
             impl Iterator<Item = &'a FiringXyzD32>,
         > {
             match self {
-                FrameXyz::Single16(me) => FiringXyzSingle16RefIter(me.firings.iter()).into(),
-                FrameXyz::Single32(me) => FiringXyzSingle32RefIter(me.firings.iter()).into(),
-                FrameXyz::Dual16(me) => FiringXyzDual16RefIter(me.firings.iter()).into(),
-                FrameXyz::Dual32(me) => FiringXyzDual32RefIter(me.firings.iter()).into(),
+                FrameXyz::Single16(me) => FiringXyzRefIterS16(me.firings.iter()).into(),
+                FrameXyz::Single32(me) => FiringXyzRefIterS32(me.firings.iter()).into(),
+                FrameXyz::Dual16(me) => FiringXyzRefIterD16(me.firings.iter()).into(),
+                FrameXyz::Dual32(me) => FiringXyzRefIterD32(me.firings.iter()).into(),
             }
         }
 
@@ -74,10 +74,10 @@ mod frame_kind {
             impl Iterator<Item = FiringXyzD32>,
         > {
             match self {
-                FrameXyz::Single16(me) => FiringXyzS16Iter(me.firings.into_iter()).into(),
-                FrameXyz::Single32(me) => FiringXyzS32Iter(me.firings.into_iter()).into(),
-                FrameXyz::Dual16(me) => FiringXyzD16Iter(me.firings.into_iter()).into(),
-                FrameXyz::Dual32(me) => FiringXyzD32Iter(me.firings.into_iter()).into(),
+                FrameXyz::Single16(me) => FiringXyzIterS16(me.firings.into_iter()).into(),
+                FrameXyz::Single32(me) => FiringXyzIterS32(me.firings.into_iter()).into(),
+                FrameXyz::Dual16(me) => FiringXyzIterD16(me.firings.into_iter()).into(),
+                FrameXyz::Dual32(me) => FiringXyzIterD32(me.firings.into_iter()).into(),
             }
         }
 
