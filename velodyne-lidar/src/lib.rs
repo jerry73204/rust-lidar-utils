@@ -19,5 +19,5 @@ pub use config::*;
 pub use firing::*;
 pub use firing_xyz::*;
 pub use frame_xyz::*;
-pub use packet::{DataPacket, PacketKind, PositionPacket, ProductID, ReturnMode};
+pub use packet::{DataPacket, Packet, PositionPacket, ProductID, ReturnMode};
 pub use point::*;

@@ -18,10 +18,9 @@ mod config_ {
     /// Config type for Velodyne LiDARs.
     #[derive(Debug, Clone)]
     pub struct Config {
-        pub lasers: Vec<LaserParameter>,
         pub return_mode: ReturnMode,
         pub product_id: ProductID,
-        pub distance_resolution: Length,
+        pub beams: BeamConfig,
     }
 
     // impls
@@ -30,9 +29,7 @@ mod config_ {
         pub fn firing_format(&self) -> Option<FiringFormat> {
             FiringFormat::new(self.product_id, self.return_mode)
         }
-    }
 
-    impl Config {
         pub fn build_converter(&self) -> Result<ConverterKind> {
             ConverterKind::from_config(self)
         }
@@ -43,109 +40,97 @@ mod config_ {
 
         pub fn new_vlp_16_last() -> Self {
             Self {
-                lasers: LaserParameter::vlp_16().to_vec(),
                 return_mode: ReturnMode::Last,
                 product_id: ProductID::VLP16,
-                distance_resolution: *consts::vlp_16::DISTANCE_RESOLUTION,
+                beams: BeamConfig::new_vlp_16(),
             }
         }
 
         pub fn new_vlp_16_strongest() -> Self {
             Self {
-                lasers: LaserParameter::vlp_16().to_vec(),
                 return_mode: ReturnMode::Strongest,
                 product_id: ProductID::VLP16,
-                distance_resolution: *consts::vlp_16::DISTANCE_RESOLUTION,
+                beams: BeamConfig::new_vlp_16(),
             }
         }
 
         pub fn new_vlp_16_dual() -> Self {
             Self {
-                lasers: LaserParameter::vlp_16().to_vec(),
                 return_mode: ReturnMode::Dual,
                 product_id: ProductID::VLP16,
-                distance_resolution: *consts::vlp_16::DISTANCE_RESOLUTION,
+                beams: BeamConfig::new_vlp_16(),
             }
         }
 
         pub fn new_puck_hires_last() -> Self {
             Self {
-                lasers: LaserParameter::puck_hires().to_vec(),
                 return_mode: ReturnMode::Last,
                 product_id: ProductID::PuckHiRes,
-                distance_resolution: *consts::puck_hires::DISTANCE_RESOLUTION,
+                beams: BeamConfig::new_puck_hires(),
             }
         }
 
         pub fn new_puck_hires_strongest() -> Self {
             Self {
-                lasers: LaserParameter::puck_hires().to_vec(),
                 return_mode: ReturnMode::Strongest,
                 product_id: ProductID::PuckHiRes,
-                distance_resolution: *consts::puck_hires::DISTANCE_RESOLUTION,
+                beams: BeamConfig::new_puck_hires(),
             }
         }
 
         pub fn new_puck_hires_dual() -> Self {
             Self {
-                lasers: LaserParameter::puck_hires().to_vec(),
                 return_mode: ReturnMode::Dual,
                 product_id: ProductID::PuckHiRes,
-                distance_resolution: *consts::puck_hires::DISTANCE_RESOLUTION,
+                beams: BeamConfig::new_puck_hires(),
             }
         }
 
         pub fn new_puck_lite_last() -> Self {
             Self {
-                lasers: LaserParameter::puck_lite().to_vec(),
                 return_mode: ReturnMode::Last,
                 product_id: ProductID::PuckLite,
-                distance_resolution: *consts::puck_lite::DISTANCE_RESOLUTION,
+                beams: BeamConfig::new_puck_lite(),
             }
         }
 
         pub fn new_puck_lite_strongest() -> Self {
             Self {
-                lasers: LaserParameter::puck_lite().to_vec(),
                 return_mode: ReturnMode::Strongest,
                 product_id: ProductID::PuckLite,
-                distance_resolution: *consts::puck_lite::DISTANCE_RESOLUTION,
+                beams: BeamConfig::new_puck_lite(),
             }
         }
 
         pub fn new_puck_lite_dual() -> Self {
             Self {
-                lasers: LaserParameter::puck_lite().to_vec(),
                 return_mode: ReturnMode::Dual,
                 product_id: ProductID::PuckLite,
-                distance_resolution: *consts::puck_lite::DISTANCE_RESOLUTION,
+                beams: BeamConfig::new_puck_lite(),
             }
         }
 
         pub fn new_vlp_32c_last() -> Self {
             Self {
-                lasers: LaserParameter::vlp_32c().to_vec(),
                 return_mode: ReturnMode::Last,
                 product_id: ProductID::VLP32C,
-                distance_resolution: *consts::vlp_32c::DISTANCE_RESOLUTION,
+                beams: BeamConfig::new_vlp_32c(),
             }
         }
 
         pub fn new_vlp_32c_strongest() -> Self {
             Self {
-                lasers: LaserParameter::vlp_32c().to_vec(),
                 return_mode: ReturnMode::Strongest,
                 product_id: ProductID::VLP32C,
-                distance_resolution: *consts::vlp_32c::DISTANCE_RESOLUTION,
+                beams: BeamConfig::new_vlp_32c(),
             }
         }
 
         pub fn new_vlp_32c_dual() -> Self {
             Self {
-                lasers: LaserParameter::vlp_32c().to_vec(),
                 return_mode: ReturnMode::Dual,
                 product_id: ProductID::VLP32C,
-                distance_resolution: *consts::vlp_32c::DISTANCE_RESOLUTION,
+                beams: BeamConfig::new_vlp_32c(),
             }
         }
     }
@@ -156,23 +141,31 @@ mod params {
     use super::*;
 
     #[derive(Debug, Clone)]
-    pub struct LaserParameter {
+    pub struct BeamConfig {
+        pub lasers: Vec<Beam>,
+        pub distance_resolution: Length,
+    }
+
+    impl BeamConfig {}
+
+    #[derive(Debug, Clone)]
+    pub struct Beam {
         pub elevation: Angle,
         pub azimuth_offset: Angle,
         pub vertical_offset: Length,
         pub horizontal_offset: Length,
     }
 
-    impl LaserParameter {
-        pub fn vlp_16() -> [LaserParameter; 16] {
-            let params: Vec<_> = izip!(
+    impl BeamConfig {
+        pub fn new_vlp_16() -> Self {
+            let lasers: Vec<_> = izip!(
                 consts::vlp_16::ELEVAION_DEGREES,
                 consts::vlp_16::VERTICAL_OFFSETS,
                 consts::vlp_16::HORIZONTAL_OFFSETS,
                 consts::vlp_16::AZIMUTH_OFFSETS,
             )
             .map(
-                |(elevation, vertical_offset, horizontal_offset, azimuth_offset)| LaserParameter {
+                |(elevation, vertical_offset, horizontal_offset, azimuth_offset)| Beam {
                     elevation: Angle::from_degrees(elevation),
                     vertical_offset: Length::from_millimeters(vertical_offset),
                     horizontal_offset: Length::from_millimeters(horizontal_offset),
@@ -181,18 +174,21 @@ mod params {
             )
             .collect();
 
-            params.try_into().unwrap_or_else(|_| unreachable!())
+            Self {
+                lasers,
+                distance_resolution: *consts::vlp_16::DISTANCE_RESOLUTION,
+            }
         }
 
-        pub fn puck_hires() -> [LaserParameter; 16] {
-            let params: Vec<_> = izip!(
+        pub fn new_puck_hires() -> Self {
+            let lasers: Vec<_> = izip!(
                 consts::puck_hires::ELEVAION_DEGREES,
                 consts::puck_hires::VERTICAL_OFFSETS,
                 consts::puck_hires::HORIZONTAL_OFFSETS,
                 consts::puck_hires::AZIMUTH_OFFSETS,
             )
             .map(
-                |(elevation, vertical_offset, horizontal_offset, azimuth_offset)| LaserParameter {
+                |(elevation, vertical_offset, horizontal_offset, azimuth_offset)| Beam {
                     elevation: Angle::from_degrees(elevation),
                     vertical_offset: Length::from_millimeters(vertical_offset),
                     horizontal_offset: Length::from_millimeters(horizontal_offset),
@@ -201,18 +197,21 @@ mod params {
             )
             .collect();
 
-            params.try_into().unwrap_or_else(|_| unreachable!())
+            Self {
+                lasers,
+                distance_resolution: *consts::puck_hires::DISTANCE_RESOLUTION,
+            }
         }
 
-        pub fn puck_lite() -> [LaserParameter; 16] {
-            let params: Vec<_> = izip!(
+        pub fn new_puck_lite() -> Self {
+            let lasers: Vec<_> = izip!(
                 consts::puck_lite::ELEVAION_DEGREES,
                 consts::puck_lite::VERTICAL_OFFSETS,
                 consts::puck_lite::HORIZONTAL_OFFSETS,
                 consts::puck_lite::AZIMUTH_OFFSETS,
             )
             .map(
-                |(elevation, vertical_offset, horizontal_offset, azimuth_offset)| LaserParameter {
+                |(elevation, vertical_offset, horizontal_offset, azimuth_offset)| Beam {
                     elevation: Angle::from_degrees(elevation),
                     vertical_offset: Length::from_millimeters(vertical_offset),
                     horizontal_offset: Length::from_millimeters(horizontal_offset),
@@ -221,18 +220,21 @@ mod params {
             )
             .collect();
 
-            params.try_into().unwrap_or_else(|_| unreachable!())
+            Self {
+                lasers,
+                distance_resolution: *consts::puck_lite::DISTANCE_RESOLUTION,
+            }
         }
 
-        pub fn vlp_32c() -> [LaserParameter; 32] {
-            let params: Vec<_> = izip!(
+        pub fn new_vlp_32c() -> Self {
+            let lasers: Vec<_> = izip!(
                 consts::vlp_32c::ELEVAION_DEGREES,
                 consts::vlp_32c::VERTICAL_OFFSETS,
                 consts::vlp_32c::HORIZONTAL_OFFSETS,
                 consts::vlp_32c::AZIMUTH_OFFSETS,
             )
             .map(
-                |(elevation, vertical_offset, horizontal_offset, azimuth_offset)| LaserParameter {
+                |(elevation, vertical_offset, horizontal_offset, azimuth_offset)| Beam {
                     elevation: Angle::from_degrees(elevation),
                     vertical_offset: Length::from_millimeters(vertical_offset),
                     horizontal_offset: Length::from_millimeters(horizontal_offset),
@@ -241,7 +243,10 @@ mod params {
             )
             .collect();
 
-            params.try_into().unwrap_or_else(|_| unreachable!())
+            Self {
+                lasers,
+                distance_resolution: *consts::vlp_32c::DISTANCE_RESOLUTION,
+            }
         }
     }
 }

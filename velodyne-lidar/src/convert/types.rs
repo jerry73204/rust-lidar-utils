@@ -1,7 +1,7 @@
 use super::functions;
 use crate::{
     common::*,
-    config::{Config, LaserParameter},
+    config::{Beam, BeamConfig, Config},
     firing::types::{
         FiringDual16, FiringDual32, FiringFormat, FiringKind, FiringSingle16, FiringSingle32,
     },
@@ -38,7 +38,7 @@ macro_rules! declare_converter {
     ) => {
         #[derive(Debug, Clone)]
         pub struct $name {
-            pub(crate) lasers: [LaserParameter; $size],
+            pub(crate) lasers: [Beam; $size],
             pub(crate) distance_resolution: Length,
         }
 
@@ -331,32 +331,31 @@ mod kind {
             let firing_format = config
                 .firing_format()
                 .ok_or_else(|| format_err!("product is not supported"))?;
-            let Config {
-                ref lasers,
+            let BeamConfig {
+                lasers,
                 distance_resolution,
-                ..
-            } = *config;
+            } = config.beams.clone();
 
             let err = || format_err!("the number of laser parameters is invalid");
 
             Ok(match firing_format {
                 F::Single16 => ConverterSingle16 {
-                    lasers: lasers.clone().try_into().map_err(|_| err())?,
+                    lasers: lasers.try_into().map_err(|_| err())?,
                     distance_resolution,
                 }
                 .into(),
                 F::Dual16 => ConverterDual16 {
-                    lasers: lasers.clone().try_into().map_err(|_| err())?,
+                    lasers: lasers.try_into().map_err(|_| err())?,
                     distance_resolution,
                 }
                 .into(),
                 F::Single32 => ConverterSingle32 {
-                    lasers: lasers.clone().try_into().map_err(|_| err())?,
+                    lasers: lasers.try_into().map_err(|_| err())?,
                     distance_resolution,
                 }
                 .into(),
                 F::Dual32 => ConverterDual32 {
-                    lasers: lasers.clone().try_into().map_err(|_| err())?,
+                    lasers: lasers.try_into().map_err(|_| err())?,
                     distance_resolution,
                 }
                 .into(),
@@ -425,8 +424,8 @@ mod kind {
 
 //         let mut rng = rand::thread_rng();
 
-//         LaserParameter::vlp_32c().into_iter().for_each(|laser| {
-//             let LaserParameter {
+//         Beam::vlp_32c().into_iter().for_each(|laser| {
+//             let Beam {
 //                 elevation,
 //                 azimuth_offset,
 //                 vertical_offset,

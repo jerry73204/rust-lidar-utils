@@ -19,12 +19,12 @@ mod kind {
     use super::*;
 
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub enum PacketKind {
+    pub enum Packet {
         Data(Box<DataPacket>),
         Position(Box<PositionPacket>),
     }
 
-    impl PacketKind {
+    impl Packet {
         pub fn from_slice(buffer: &[u8]) -> Result<Self> {
             Ok(if let Ok(packet) = DataPacket::from_slice(buffer) {
                 (*packet).into()
@@ -68,13 +68,13 @@ mod kind {
         }
     }
 
-    impl From<PositionPacket> for PacketKind {
+    impl From<PositionPacket> for Packet {
         fn from(v: PositionPacket) -> Self {
             Self::Position(Box::new(v))
         }
     }
 
-    impl From<DataPacket> for PacketKind {
+    impl From<DataPacket> for Packet {
         fn from(v: DataPacket) -> Self {
             Self::Data(Box::new(v))
         }

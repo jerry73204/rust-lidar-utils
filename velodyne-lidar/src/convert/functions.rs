@@ -1,6 +1,6 @@
 use crate::{
     common::*,
-    config::LaserParameter,
+    config::Beam,
     consts::{CHANNEL_PERIOD, FIRING_PERIOD},
     firing::types::{FiringDual16, FiringDual32, FiringSingle16, FiringSingle32},
     firing_xyz::types::{FiringXyzDual16, FiringXyzDual32, FiringXyzSingle16, FiringXyzSingle32},
@@ -11,7 +11,7 @@ use crate::{
 pub fn firing_single_16_to_xyz(
     firing: &FiringSingle16,
     distance_resolution: Length,
-    lasers: &[LaserParameter; 16],
+    lasers: &[Beam; 16],
 ) -> FiringXyzSingle16 {
     let FiringSingle16 {
         time: firing_time,
@@ -25,7 +25,7 @@ pub fn firing_single_16_to_xyz(
     let points: Vec<_> = izip!(0.., channel_times, channels, lasers)
         .map(move |(laser_id, channel_time, channel, laser)| {
             let ratio = (channel_time - firing_time).div_duration(FIRING_PERIOD);
-            let LaserParameter {
+            let Beam {
                 elevation,
                 azimuth_offset,
                 vertical_offset,
@@ -72,7 +72,7 @@ pub fn firing_single_16_to_xyz(
 pub fn firing_single_32_to_xyz(
     firing: &FiringSingle32,
     distance_resolution: Length,
-    lasers: &[LaserParameter; 32],
+    lasers: &[Beam; 32],
 ) -> FiringXyzSingle32 {
     let FiringSingle32 {
         time: firing_time,
@@ -89,7 +89,7 @@ pub fn firing_single_32_to_xyz(
             // let timestamp = lower_timestamp + CHANNEL_PERIOD.mul_f64((channel_idx / 2) as f64);
 
             let ratio = (channel_time - firing_time).div_duration(FIRING_PERIOD);
-            let LaserParameter {
+            let Beam {
                 elevation,
                 azimuth_offset,
                 vertical_offset,
@@ -137,7 +137,7 @@ pub fn firing_single_32_to_xyz(
 pub fn firing_dual_16_to_xyz(
     firing: &FiringDual16,
     distance_resolution: Length,
-    lasers: &[LaserParameter; 16],
+    lasers: &[Beam; 16],
 ) -> FiringXyzDual16 {
     let FiringDual16 {
         time: firing_time,
@@ -159,7 +159,7 @@ pub fn firing_dual_16_to_xyz(
     .map(
         move |(laser_id, channel_time, channel_strongest, channel_last, laser)| {
             let ratio = (channel_time - firing_time).div_duration(FIRING_PERIOD);
-            let LaserParameter {
+            let Beam {
                 elevation,
                 azimuth_offset,
                 vertical_offset,
@@ -223,7 +223,7 @@ pub fn firing_dual_16_to_xyz(
 pub fn firing_dual_32_to_xyz(
     firing: &FiringDual32,
     distance_resolution: Length,
-    lasers: &[LaserParameter; 32],
+    lasers: &[Beam; 32],
 ) -> FiringXyzDual32 {
     let FiringDual32 {
         time: firing_time,
@@ -248,7 +248,7 @@ pub fn firing_dual_32_to_xyz(
             // let timestamp = lower_timestamp + CHANNEL_PERIOD.mul_f64((channel_idx / 2) as f64);
 
             let ratio = (channel_time - firing_time).div_duration(FIRING_PERIOD);
-            let LaserParameter {
+            let Beam {
                 elevation,
                 azimuth_offset,
                 vertical_offset,

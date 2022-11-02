@@ -1,4 +1,4 @@
-use crate::{common::*, packet::PacketKind};
+use crate::{common::*, packet::Packet};
 use pcap::Capture;
 
 const UDP_HEADER_SIZE: usize = 42;
@@ -19,14 +19,14 @@ impl PcapFileReader {
 }
 
 impl Iterator for PcapFileReader {
-    type Item = PacketKind;
+    type Item = Packet;
 
     fn next(&mut self) -> Option<Self::Item> {
         Some(loop {
             let packet = self.capture.next().ok()?;
             let slice = &packet.data[UDP_HEADER_SIZE..];
 
-            if let Ok(packet) = PacketKind::from_slice(slice) {
+            if let Ok(packet) = Packet::from_slice(slice) {
                 break packet;
             }
         })
