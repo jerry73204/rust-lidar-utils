@@ -5,7 +5,7 @@ use crate::{
         FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzKind, FiringXyzS16, FiringXyzS32,
     },
     frame_xyz::types::{FrameXyz, FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
-    kinds::Format,
+    kinds::{Format, FormatKind},
 };
 #[cfg(feature = "async")]
 use futures::stream::{self, Stream, StreamExt as _};
@@ -99,18 +99,12 @@ declare_converter!(FrameXyzBatcherD32, FiringXyzD32, FrameXyzD32);
 
 pub use kind::*;
 mod kind {
-
     use super::*;
 
-    #[derive(Debug)]
-    pub enum FrameXyzBatcherKind {
-        Single16(FrameXyzBatcherS16),
-        Single32(FrameXyzBatcherS32),
-        Dual16(FrameXyzBatcherD16),
-        Dual32(FrameXyzBatcherD32),
-    }
+    pub type FrameXyzBatcher =
+        FormatKind<FrameXyzBatcherS16, FrameXyzBatcherS32, FrameXyzBatcherD16, FrameXyzBatcherD32>;
 
-    impl FrameXyzBatcherKind {
+    impl FrameXyzBatcher {
         pub fn from_config(config: &Config) -> Result<Self> {
             use Format as F;
             let firing_format = config
@@ -232,25 +226,25 @@ mod kind {
         }
     }
 
-    impl From<FrameXyzBatcherD32> for FrameXyzBatcherKind {
+    impl From<FrameXyzBatcherD32> for FrameXyzBatcher {
         fn from(v: FrameXyzBatcherD32) -> Self {
             Self::Dual32(v)
         }
     }
 
-    impl From<FrameXyzBatcherD16> for FrameXyzBatcherKind {
+    impl From<FrameXyzBatcherD16> for FrameXyzBatcher {
         fn from(v: FrameXyzBatcherD16) -> Self {
             Self::Dual16(v)
         }
     }
 
-    impl From<FrameXyzBatcherS32> for FrameXyzBatcherKind {
+    impl From<FrameXyzBatcherS32> for FrameXyzBatcher {
         fn from(v: FrameXyzBatcherS32) -> Self {
             Self::Single32(v)
         }
     }
 
-    impl From<FrameXyzBatcherS16> for FrameXyzBatcherKind {
+    impl From<FrameXyzBatcherS16> for FrameXyzBatcher {
         fn from(v: FrameXyzBatcherS16) -> Self {
             Self::Single16(v)
         }

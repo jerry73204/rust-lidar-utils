@@ -4,7 +4,7 @@ use crate::{
     common::*,
     consts,
     convert::types::Converter,
-    frame_xyz::batcher::FrameXyzBatcherKind,
+    frame_xyz::batcher::FrameXyzBatcher,
     packet::{ProductID, ReturnMode},
 };
 
@@ -35,8 +35,8 @@ mod config_ {
             Converter::from_config(self)
         }
 
-        pub fn build_frame_xyz_batcher(&self) -> Result<FrameXyzBatcherKind> {
-            FrameXyzBatcherKind::from_config(self)
+        pub fn build_frame_xyz_batcher(&self) -> Result<FrameXyzBatcher> {
+            FrameXyzBatcher::from_config(self)
         }
 
         pub fn new_vlp_16_last() -> Self {
