@@ -3,7 +3,7 @@ use crate::{
     common::*,
     config::{Beam, BeamConfig, Config},
     firing_block::types::{
-        FiringBlock, FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32, FiringFormat,
+        FiringBlock, FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32,
     },
     firing_xyz::{
         iter::{
@@ -156,6 +156,8 @@ declare_converter!(
 pub use kind::*;
 mod kind {
 
+    use crate::kinds::Format;
+
     use super::*;
 
     #[derive(Debug, Clone)]
@@ -191,8 +193,8 @@ mod kind {
     }
 
     impl ConverterKind {
-        pub fn firing_format(&self) -> FiringFormat {
-            use FiringFormat as F;
+        pub fn firing_format(&self) -> Format {
+            use Format as F;
 
             match self {
                 Self::Single16(_) => F::Single16,
@@ -321,7 +323,7 @@ mod kind {
         }
 
         pub fn from_config(config: &Config) -> Result<Self> {
-            use FiringFormat as F;
+            use Format as F;
 
             let firing_format = config
                 .firing_format()

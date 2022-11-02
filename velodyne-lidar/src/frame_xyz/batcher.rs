@@ -1,11 +1,11 @@
 use crate::{
     common::*,
     config::Config,
-    firing_block::types::FiringFormat,
     firing_xyz::types::{
         FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzKind, FiringXyzS16, FiringXyzS32,
     },
     frame_xyz::types::{FrameXyz, FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
+    kinds::Format,
 };
 #[cfg(feature = "async")]
 use futures::stream::{self, Stream, StreamExt as _};
@@ -112,7 +112,7 @@ mod kind {
 
     impl FrameXyzBatcherKind {
         pub fn from_config(config: &Config) -> Result<Self> {
-            use FiringFormat as F;
+            use Format as F;
             let firing_format = config
                 .firing_format()
                 .ok_or_else(|| format_err!("product is not supported"))?;

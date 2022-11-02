@@ -1,39 +1,7 @@
 use crate::{
     common::*,
-    packet::{Block, Channel, ProductID, ReturnMode},
+    packet::{Block, Channel},
 };
-
-pub use firing_format::*;
-mod firing_format {
-    use super::*;
-
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-    pub enum FiringFormat {
-        Single16,
-        Dual16,
-        Single32,
-        Dual32,
-    }
-
-    impl FiringFormat {
-        pub fn new(product_id: ProductID, return_mode: ReturnMode) -> Option<FiringFormat> {
-            use FiringFormat::*;
-            use ProductID::*;
-            use ReturnMode::*;
-
-            Some(match (product_id, return_mode) {
-                (HDL32E | VLP32C, Strongest | Last) => Single32,
-                (HDL32E | VLP32C, Dual) => Dual32,
-                (VLP16 | PuckLite | PuckHiRes, Strongest | Last) => Single16,
-                (VLP16 | PuckLite | PuckHiRes, Dual) => Dual16,
-                (Velarray, Strongest | Last) => return None,
-                (Velarray, Dual) => return None,
-                (VLS128, Strongest | Last) => return None,
-                (VLS128, Dual) => return None,
-            })
-        }
-    }
-}
 
 pub use firing_types::*;
 mod firing_types {

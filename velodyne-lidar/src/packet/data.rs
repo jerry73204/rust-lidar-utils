@@ -6,8 +6,9 @@ use crate::{
             FiringBlockD16Iter, FiringBlockD32Iter, FiringBlockIter, FiringBlockS16Iter,
             FiringBlockS32Iter,
         },
-        types::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32, FiringFormat},
+        types::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
     },
+    kinds::Format,
     utils::AngleExt as _,
 };
 use std::f64::consts::PI;
@@ -133,8 +134,8 @@ impl DataPacket {
         Duration::from_micros(self.timestamp as u64)
     }
 
-    pub fn firing_format(&self) -> Option<FiringFormat> {
-        FiringFormat::new(self.product_id, self.return_mode)
+    pub fn firing_format(&self) -> Option<Format> {
+        Format::from_model(self.product_id, self.return_mode)
     }
 
     pub fn firings(
@@ -148,7 +149,7 @@ impl DataPacket {
         >,
     > {
         use FiringBlockIter as F;
-        use FiringFormat::*;
+        use Format::*;
 
         Some(match self.firing_format()? {
             Single16 => F::Single16(self.single_16_firings()),

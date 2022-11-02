@@ -4,13 +4,14 @@ use crate::{
     common::*,
     consts,
     convert::types::ConverterKind,
-    firing_block::types::FiringFormat,
     frame_xyz::batcher::FrameXyzBatcherKind,
     packet::{ProductID, ReturnMode},
 };
 
 pub use config_::*;
 mod config_ {
+    use crate::kinds::Format;
+
     use super::*;
 
     // type
@@ -26,8 +27,8 @@ mod config_ {
     // impls
 
     impl Config {
-        pub fn firing_format(&self) -> Option<FiringFormat> {
-            FiringFormat::new(self.product_id, self.return_mode)
+        pub fn firing_format(&self) -> Option<Format> {
+            Format::from_model(self.product_id, self.return_mode)
         }
 
         pub fn build_converter(&self) -> Result<ConverterKind> {
