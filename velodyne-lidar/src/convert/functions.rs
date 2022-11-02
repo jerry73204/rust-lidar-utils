@@ -8,7 +8,7 @@ use crate::{
     utils::{AngleExt as _, DurationExt as _},
 };
 
-pub fn firing_single_16_to_xyz(
+pub fn firing_block_to_xyz_s16(
     firing: &FiringBlockS16,
     distance_resolution: Length,
     lasers: &[Beam; 16],
@@ -69,7 +69,7 @@ pub fn firing_single_16_to_xyz(
     }
 }
 
-pub fn firing_single_32_to_xyz(
+pub fn firing_block_to_xyz_s32(
     firing: &FiringBlockS32,
     distance_resolution: Length,
     lasers: &[Beam; 32],
@@ -134,7 +134,7 @@ pub fn firing_single_32_to_xyz(
     }
 }
 
-pub fn firing_dual_16_to_xyz(
+pub fn firing_block_to_xyz_d16(
     firing: &FiringBlockD16,
     distance_resolution: Length,
     lasers: &[Beam; 16],
@@ -220,7 +220,7 @@ pub fn firing_dual_16_to_xyz(
     }
 }
 
-pub fn firing_dual_32_to_xyz(
+pub fn firing_block_to_xyz_d32(
     firing: &FiringBlockD32,
     distance_resolution: Length,
     lasers: &[Beam; 32],
