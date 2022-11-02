@@ -1,4 +1,4 @@
-use super::firing::{FiringDual16, FiringDual32, FiringKind, FiringSingle16, FiringSingle32};
+use super::types::{FiringDual16, FiringDual32, FiringKind, FiringSingle16, FiringSingle32};
 
 macro_rules! declare_iter {
     ($name:ident, $item:ident) => {

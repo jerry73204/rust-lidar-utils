@@ -1,4 +1,4 @@
-use crate::point::{PointDual, PointKind, PointKindRef, PointSingle};
+use crate::point::types::{PointDual, PointKind, PointKindRef, PointSingle};
 
 pub use point_iter_::*;
 pub mod point_iter_ {

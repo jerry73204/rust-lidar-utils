@@ -1,13 +1,17 @@
 use crate::{
     common::*,
-    firing_xyz::{FiringXyzDual16, FiringXyzDual32, FiringXyzSingle16, FiringXyzSingle32},
-    firing_xyz_iter::{
-        FiringXyzDual16Iter, FiringXyzDual16RefIter, FiringXyzDual32Iter, FiringXyzDual32RefIter,
-        FiringXyzKindIter, FiringXyzKindRefIter, FiringXyzSingle16Iter, FiringXyzSingle16RefIter,
-        FiringXyzSingle32Iter, FiringXyzSingle32RefIter,
+    firing_xyz::{
+        iter::{
+            FiringXyzDual16Iter, FiringXyzDual16RefIter, FiringXyzDual32Iter,
+            FiringXyzDual32RefIter, FiringXyzKindIter, FiringXyzKindRefIter, FiringXyzSingle16Iter,
+            FiringXyzSingle16RefIter, FiringXyzSingle32Iter, FiringXyzSingle32RefIter,
+        },
+        types::{FiringXyzDual16, FiringXyzDual32, FiringXyzSingle16, FiringXyzSingle32},
     },
-    point::{PointDual, PointKind, PointKindRef, PointSingle},
-    point_iter::{PointIter, PointRefIter},
+    point::{
+        iter::{PointIter, PointRefIter},
+        types::{PointDual, PointKind, PointKindRef, PointSingle},
+    },
 };
 
 pub use frame_kind::*;

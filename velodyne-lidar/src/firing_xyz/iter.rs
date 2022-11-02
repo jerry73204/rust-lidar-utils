@@ -1,16 +1,18 @@
 use crate::{
     common::*,
-    firing_xyz::{
+    firing_xyz::types::{
         FiringXyzDual16, FiringXyzDual32, FiringXyzKind, FiringXyzRefKind, FiringXyzSingle16,
         FiringXyzSingle32,
     },
-    frame_xyz::{FrameXyzDual16, FrameXyzDual32, FrameXyzSingle16, FrameXyzSingle32},
-    frame_xyz_batcher::{
-        FrameXyzBatcherDual16, FrameXyzBatcherDual32, FrameXyzBatcherSingle16,
-        FrameXyzBatcherSingle32,
-    },
-    frame_xyz_iter::{
-        FrameXyzDual16Iter, FrameXyzDual32Iter, FrameXyzSingle16Iter, FrameXyzSingle32Iter,
+    frame_xyz::{
+        batcher::{
+            FrameXyzBatcherDual16, FrameXyzBatcherDual32, FrameXyzBatcherSingle16,
+            FrameXyzBatcherSingle32,
+        },
+        iter::{
+            FrameXyzDual16Iter, FrameXyzDual32Iter, FrameXyzSingle16Iter, FrameXyzSingle32Iter,
+        },
+        types::{FrameXyzDual16, FrameXyzDual32, FrameXyzSingle16, FrameXyzSingle32},
     },
 };
 

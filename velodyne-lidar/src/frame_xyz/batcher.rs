@@ -1,12 +1,14 @@
 use crate::{
     common::*,
     config::Config,
-    firing::FiringFormat,
-    firing_xyz::{
+    firing::types::FiringFormat,
+    firing_xyz::types::{
         FiringXyz, FiringXyzDual16, FiringXyzDual32, FiringXyzKind, FiringXyzSingle16,
         FiringXyzSingle32,
     },
-    frame_xyz::{FrameXyzDual16, FrameXyzDual32, FrameXyzKind, FrameXyzSingle16, FrameXyzSingle32},
+    frame_xyz::types::{
+        FrameXyzDual16, FrameXyzDual32, FrameXyzKind, FrameXyzSingle16, FrameXyzSingle32,
+    },
 };
 #[cfg(feature = "async")]
 use futures::stream::{self, Stream, StreamExt as _};

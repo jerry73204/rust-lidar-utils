@@ -1,5 +1,7 @@
-use crate::frame_xyz::FrameXyzKind;
-pub use crate::frame_xyz::{FrameXyzDual16, FrameXyzDual32, FrameXyzSingle16, FrameXyzSingle32};
+use crate::frame_xyz::types::FrameXyzKind;
+pub use crate::frame_xyz::types::{
+    FrameXyzDual16, FrameXyzDual32, FrameXyzSingle16, FrameXyzSingle32,
+};
 
 macro_rules! declare_iter {
     ($name:ident, $item:ident) => {

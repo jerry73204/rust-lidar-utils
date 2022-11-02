@@ -1,6 +1,6 @@
 use crate::{
     common::*,
-    point::{PointDual, PointSingle},
+    point::types::{PointDual, PointSingle},
 };
 
 pub(crate) use firing_trait::*;

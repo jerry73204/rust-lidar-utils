@@ -3,9 +3,12 @@
 use crate::{
     common::*,
     consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK, FIRING_PERIOD},
-    firing::{FiringDual16, FiringDual32, FiringFormat, FiringSingle16, FiringSingle32},
-    firing_iter::{
-        FiringDual16Iter, FiringDual32Iter, FiringIterKind, FiringSingle16Iter, FiringSingle32Iter,
+    firing::{
+        iter::{
+            FiringDual16Iter, FiringDual32Iter, FiringIterKind, FiringSingle16Iter,
+            FiringSingle32Iter,
+        },
+        types::{FiringDual16, FiringDual32, FiringFormat, FiringSingle16, FiringSingle32},
     },
     utils::AngleExt as _,
 };

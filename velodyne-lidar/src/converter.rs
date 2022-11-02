@@ -2,23 +2,27 @@ use crate::{
     common::*,
     config::{Config, LaserParameter},
     consts::{CHANNEL_PERIOD, FIRING_PERIOD},
-    firing::{
+    firing::types::{
         FiringDual16, FiringDual32, FiringFormat, FiringKind, FiringSingle16, FiringSingle32,
     },
     firing_xyz::{
-        FiringXyzDual16, FiringXyzDual32, FiringXyzKind, FiringXyzSingle16, FiringXyzSingle32,
+        iter::{
+            FiringXyzDual16Iter, FiringXyzDual32Iter, FiringXyzKindIter, FiringXyzSingle16Iter,
+            FiringXyzSingle32Iter,
+        },
+        types::{
+            FiringXyzDual16, FiringXyzDual32, FiringXyzKind, FiringXyzSingle16, FiringXyzSingle32,
+        },
     },
-    firing_xyz_iter::{
-        FiringXyzDual16Iter, FiringXyzDual32Iter, FiringXyzKindIter, FiringXyzSingle16Iter,
-        FiringXyzSingle32Iter,
-    },
-    frame_xyz::{FrameXyzDual16, FrameXyzDual32, FrameXyzSingle16, FrameXyzSingle32},
-    frame_xyz_iter::{
-        FrameXyzDual16Iter, FrameXyzDual32Iter, FrameXyzIter, FrameXyzSingle16Iter,
-        FrameXyzSingle32Iter,
+    frame_xyz::{
+        iter::{
+            FrameXyzDual16Iter, FrameXyzDual32Iter, FrameXyzIter, FrameXyzSingle16Iter,
+            FrameXyzSingle32Iter,
+        },
+        types::{FrameXyzDual16, FrameXyzDual32, FrameXyzSingle16, FrameXyzSingle32},
     },
     packet::DataPacket,
-    point::{Measurement, MeasurementDual, PointDual, PointSingle},
+    point::types::{Measurement, MeasurementDual, PointDual, PointSingle},
     utils::{AngleExt as _, DurationExt as _},
 };
 

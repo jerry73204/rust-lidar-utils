@@ -4,8 +4,8 @@ use crate::{
     common::*,
     consts,
     converter::ConverterKind,
-    firing::FiringFormat,
-    frame_xyz_batcher::FrameXyzBatcherKind,
+    firing::types::FiringFormat,
+    frame_xyz::batcher::FrameXyzBatcherKind,
     packet::{ProductID, ReturnMode},
 };
 
