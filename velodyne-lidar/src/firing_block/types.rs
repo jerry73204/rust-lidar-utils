@@ -1,5 +1,6 @@
 use crate::{
     common::*,
+    kinds::FormatKind,
     packet::{Block, Channel},
 };
 
@@ -118,14 +119,11 @@ mod firing_types {
 
 pub use firing_kind::*;
 mod firing_kind {
+
     use super::*;
 
-    pub enum FiringBlock<'a> {
-        Single16(FiringBlockS16<'a>),
-        Single32(FiringBlockS32<'a>),
-        Dual16(FiringBlockD16<'a>),
-        Dual32(FiringBlockD32<'a>),
-    }
+    pub type FiringBlock<'a> =
+        FormatKind<FiringBlockS16<'a>, FiringBlockS32<'a>, FiringBlockD16<'a>, FiringBlockD32<'a>>;
 
     impl<'a> FiringBlock<'a> {
         pub fn try_into_single16(self) -> Result<FiringBlockS16<'a>, Self> {

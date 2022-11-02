@@ -1,5 +1,6 @@
 use crate::{
     common::*,
+    kinds::FormatKind,
     point::types::{PointD, PointS},
 };
 
@@ -68,13 +69,7 @@ pub use kind::*;
 mod kind {
     use super::*;
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub enum FiringXyz {
-        Single16(FiringXyzS16),
-        Single32(FiringXyzS32),
-        Dual16(FiringXyzD16),
-        Dual32(FiringXyzD32),
-    }
+    pub type FiringXyz = FormatKind<FiringXyzS16, FiringXyzS32, FiringXyzD16, FiringXyzD32>;
 
     impl FiringXyz {
         pub fn time(&self) -> Duration {

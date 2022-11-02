@@ -8,6 +8,7 @@ use crate::{
         },
         types::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
     },
+    kinds::FormatKind,
     point::{
         iter::{PointIter, PointRefIter},
         types::{Point, PointD, PointRef, PointS},
@@ -18,12 +19,7 @@ pub use frame_kind::*;
 mod frame_kind {
     use super::*;
 
-    pub enum FrameXyz {
-        Single16(FrameXyzS16),
-        Single32(FrameXyzS32),
-        Dual16(FrameXyzD16),
-        Dual32(FrameXyzD32),
-    }
+    pub type FrameXyz = FormatKind<FrameXyzS16, FrameXyzS32, FrameXyzD16, FrameXyzD32>;
 
     impl FrameXyz {
         pub fn nrows(&self) -> usize {
