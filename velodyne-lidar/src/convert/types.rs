@@ -1,7 +1,7 @@
 use super::functions;
 use crate::{
     common::*,
-    config::{Beam, BeamConfig, Config},
+    config::Config,
     firing_block::types::{
         FiringBlock, FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32,
     },
@@ -17,12 +17,13 @@ use crate::{
     },
     kinds::{Format, FormatKind},
     packet::DataPacket,
+    BeamConfig16, BeamConfig32,
 };
 
 macro_rules! declare_converter {
     (
         $name:ident,
-        $size:expr,
+        $beam_config:path,
         $firing:ident,
         $firing_xyz:ident,
         $firing_xyz_iter:ident,
@@ -33,13 +34,12 @@ macro_rules! declare_converter {
     ) => {
         #[derive(Debug, Clone)]
         pub struct $name {
-            pub(crate) lasers: [Beam; $size],
-            pub(crate) distance_resolution: Length,
+            pub(crate) beams: $beam_config,
         }
 
         impl $name {
             pub fn firing_to_firing_xyz<'a>(&'a self, firing: $firing<'a>) -> $firing_xyz {
-                $convert_fn(&firing, self.distance_resolution, &self.lasers)
+                $convert_fn(&firing, &self.beams)
             }
 
             pub fn firing_iter_to_firing_xyz_iter<'a, I>(
@@ -107,7 +107,7 @@ macro_rules! declare_converter {
 
 declare_converter!(
     ConverterS16,
-    16,
+    BeamConfig16,
     FiringBlockS16,
     FiringXyzS16,
     FiringXyzIterS16,
@@ -119,7 +119,7 @@ declare_converter!(
 
 declare_converter!(
     ConverterS32,
-    32,
+    BeamConfig32,
     FiringBlockS32,
     FiringXyzS32,
     FiringXyzIterS32,
@@ -131,7 +131,7 @@ declare_converter!(
 
 declare_converter!(
     ConverterD16,
-    16,
+    BeamConfig16,
     FiringBlockD16,
     FiringXyzD16,
     FiringXyzIterD16,
@@ -143,7 +143,7 @@ declare_converter!(
 
 declare_converter!(
     ConverterD32,
-    32,
+    BeamConfig32,
     FiringBlockD32,
     FiringXyzD32,
     FiringXyzIterD32,
@@ -309,32 +309,24 @@ mod kind {
             let firing_format = config
                 .firing_format()
                 .ok_or_else(|| format_err!("product is not supported"))?;
-            let BeamConfig {
-                lasers,
-                distance_resolution,
-            } = config.beams.clone();
 
             let err = || format_err!("the number of laser parameters is invalid");
 
             Ok(match firing_format {
                 F::Single16 => ConverterS16 {
-                    lasers: lasers.try_into().map_err(|_| err())?,
-                    distance_resolution,
+                    beams: config.beams.clone().try_into().map_err(|_| err())?,
                 }
                 .into(),
                 F::Dual16 => ConverterD16 {
-                    lasers: lasers.try_into().map_err(|_| err())?,
-                    distance_resolution,
+                    beams: config.beams.clone().try_into().map_err(|_| err())?,
                 }
                 .into(),
                 F::Single32 => ConverterS32 {
-                    lasers: lasers.try_into().map_err(|_| err())?,
-                    distance_resolution,
+                    beams: config.beams.clone().try_into().map_err(|_| err())?,
                 }
                 .into(),
                 F::Dual32 => ConverterD32 {
-                    lasers: lasers.try_into().map_err(|_| err())?,
-                    distance_resolution,
+                    beams: config.beams.clone().try_into().map_err(|_| err())?,
                 }
                 .into(),
             })

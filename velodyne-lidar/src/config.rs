@@ -147,7 +147,17 @@ mod params {
         pub distance_resolution: Length,
     }
 
-    impl BeamConfig {}
+    #[derive(Debug, Clone)]
+    pub struct BeamConfig16 {
+        pub lasers: [Beam; 16],
+        pub distance_resolution: Length,
+    }
+
+    #[derive(Debug, Clone)]
+    pub struct BeamConfig32 {
+        pub lasers: [Beam; 32],
+        pub distance_resolution: Length,
+    }
 
     #[derive(Debug, Clone)]
     pub struct Beam {
@@ -248,6 +258,74 @@ mod params {
                 lasers,
                 distance_resolution: *consts::vlp_32c::DISTANCE_RESOLUTION,
             }
+        }
+    }
+
+    impl From<BeamConfig16> for BeamConfig {
+        fn from(from: BeamConfig16) -> Self {
+            let BeamConfig16 {
+                lasers,
+                distance_resolution,
+            } = from;
+            Self {
+                lasers: lasers.into(),
+                distance_resolution,
+            }
+        }
+    }
+
+    impl From<BeamConfig32> for BeamConfig {
+        fn from(from: BeamConfig32) -> Self {
+            let BeamConfig32 {
+                lasers,
+                distance_resolution,
+            } = from;
+            Self {
+                lasers: lasers.into(),
+                distance_resolution,
+            }
+        }
+    }
+
+    impl TryFrom<BeamConfig> for BeamConfig16 {
+        type Error = BeamConfig;
+
+        fn try_from(from: BeamConfig) -> Result<Self, Self::Error> {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = from;
+
+            let lasers = lasers.try_into().map_err(|lasers| BeamConfig {
+                lasers,
+                distance_resolution,
+            })?;
+
+            Ok(Self {
+                lasers,
+                distance_resolution,
+            })
+        }
+    }
+
+    impl TryFrom<BeamConfig> for BeamConfig32 {
+        type Error = BeamConfig;
+
+        fn try_from(from: BeamConfig) -> Result<Self, Self::Error> {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = from;
+
+            let lasers = lasers.try_into().map_err(|lasers| BeamConfig {
+                lasers,
+                distance_resolution,
+            })?;
+
+            Ok(Self {
+                lasers,
+                distance_resolution,
+            })
         }
     }
 }
