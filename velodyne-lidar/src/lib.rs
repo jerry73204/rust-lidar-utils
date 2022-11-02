@@ -3,7 +3,7 @@
 mod common;
 pub mod config;
 pub mod consts;
-pub mod converter;
+pub mod convert;
 pub mod firing;
 pub mod firing_xyz;
 pub mod frame_xyz;
@@ -16,7 +16,6 @@ mod utils;
 #[cfg(feature = "pcap")]
 pub use crate::pcap::PcapFileReader;
 pub use config::*;
-pub use converter::*;
 pub use firing::*;
 pub use firing_xyz::*;
 pub use frame_xyz::*;

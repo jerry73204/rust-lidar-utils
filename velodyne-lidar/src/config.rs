@@ -3,7 +3,7 @@
 use crate::{
     common::*,
     consts,
-    converter::ConverterKind,
+    convert::types::ConverterKind,
     firing::types::FiringFormat,
     frame_xyz::batcher::FrameXyzBatcherKind,
     packet::{ProductID, ReturnMode},
