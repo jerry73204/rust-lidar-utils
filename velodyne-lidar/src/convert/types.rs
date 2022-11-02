@@ -185,17 +185,6 @@ mod kind {
     }
 
     impl Converter {
-        pub fn firing_format(&self) -> Format {
-            use Format as F;
-
-            match self {
-                Self::Single16(_) => F::Single16,
-                Self::Single32(_) => F::Single32,
-                Self::Dual16(_) => F::Dual16,
-                Self::Dual32(_) => F::Dual32,
-            }
-        }
-
         pub fn firing_to_firing_xyz<'a>(
             &self,
             firing: FiringBlock<'a>,

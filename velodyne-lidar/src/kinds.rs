@@ -37,3 +37,14 @@ pub enum FormatKind<S16, S32, D16, D32> {
     Dual16(D16),
     Dual32(D32),
 }
+
+impl<S16, S32, D16, D32> FormatKind<S16, S32, D16, D32> {
+    pub fn format(&self) -> Format {
+        match self {
+            FormatKind::Single16(_) => Format::Single16,
+            FormatKind::Single32(_) => Format::Single32,
+            FormatKind::Dual16(_) => Format::Dual16,
+            FormatKind::Dual32(_) => Format::Dual32,
+        }
+    }
+}
