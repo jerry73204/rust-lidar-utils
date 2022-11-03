@@ -14,10 +14,10 @@ mod frame_kind {
         pub fn firing_iter<'a>(
             &'a self,
         ) -> FormatKind<
-            impl Iterator<Item = &'a FiringXyzS16>,
-            impl Iterator<Item = &'a FiringXyzS32>,
-            impl Iterator<Item = &'a FiringXyzD16>,
-            impl Iterator<Item = &'a FiringXyzD32>,
+            impl Iterator<Item = &'a FiringXyzS16> + Clone + Sync + Send,
+            impl Iterator<Item = &'a FiringXyzS32> + Clone + Sync + Send,
+            impl Iterator<Item = &'a FiringXyzD16> + Clone + Sync + Send,
+            impl Iterator<Item = &'a FiringXyzD32> + Clone + Sync + Send,
         > {
             match self {
                 FrameXyz::Single16(me) => FormatKind::from_s16(me.firings.iter()),
@@ -30,10 +30,10 @@ mod frame_kind {
         pub fn into_firing_iter(
             self,
         ) -> FormatKind<
-            impl Iterator<Item = FiringXyzS16>,
-            impl Iterator<Item = FiringXyzS32>,
-            impl Iterator<Item = FiringXyzD16>,
-            impl Iterator<Item = FiringXyzD32>,
+            impl Iterator<Item = FiringXyzS16> + Clone + Sync + Send,
+            impl Iterator<Item = FiringXyzS32> + Clone + Sync + Send,
+            impl Iterator<Item = FiringXyzD16> + Clone + Sync + Send,
+            impl Iterator<Item = FiringXyzD32> + Clone + Sync + Send + Clone + Sync + Send,
         > {
             match self {
                 FrameXyz::Single16(me) => FormatKind::from_s16(me.firings.into_iter()),
@@ -136,13 +136,13 @@ mod frame_types {
             }
 
             impl $name {
-                pub fn into_point_iter(self) -> impl Iterator<Item = $point> {
+                pub fn into_point_iter(self) -> impl Iterator<Item = $point> + Clone + Sync + Send {
                     self.firings.into_iter().flat_map(|firing| firing.points)
                 }
 
                 pub fn into_indexed_point_iter(
                     self,
-                ) -> impl Iterator<Item = ((usize, usize), $point)> {
+                ) -> impl Iterator<Item = ((usize, usize), $point)> + Clone + Sync + Send {
                     self.firings
                         .into_iter()
                         .enumerate()

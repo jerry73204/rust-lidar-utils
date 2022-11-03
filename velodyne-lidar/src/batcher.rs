@@ -44,8 +44,7 @@ where
     {
         firings
             .into_iter()
-            .map(|firing| self.push_one(firing))
-            .flatten()
+            .filter_map(|firing| self.push_one(firing))
     }
 
     pub fn take(&mut self) -> Option<Vec<E>> {
