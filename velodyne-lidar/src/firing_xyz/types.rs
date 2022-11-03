@@ -48,19 +48,6 @@ mod kind {
             }
         }
 
-        pub fn azimuth(&self) -> Angle {
-            self.azimuth_range().start
-        }
-
-        pub fn azimuth_range(&self) -> &Range<Angle> {
-            match self {
-                FiringXyz::Single16(me) => &me.azimuth_range,
-                FiringXyz::Single32(me) => &me.azimuth_range,
-                FiringXyz::Dual16(me) => &me.azimuth_range,
-                FiringXyz::Dual32(me) => &me.azimuth_range,
-            }
-        }
-
         pub fn try_into_single16(self) -> Result<FiringXyzS16, Self> {
             if let Self::Single16(v) = self {
                 Ok(v)

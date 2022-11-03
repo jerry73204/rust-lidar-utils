@@ -1,6 +1,7 @@
 use crate::{
     common::*,
     packet::{ProductID, ReturnMode},
+    traits::AzimuthRange,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -160,6 +161,23 @@ impl<S16, S32, D16, D32> FormatKind<S16, S32, D16, D32> {
         match self {
             Self::Dual32(d32) => Some(d32),
             _ => None,
+        }
+    }
+}
+
+impl<S16, S32, D16, D32> AzimuthRange for FormatKind<S16, S32, D16, D32>
+where
+    S16: AzimuthRange,
+    S32: AzimuthRange,
+    D16: AzimuthRange,
+    D32: AzimuthRange,
+{
+    fn azimuth_range(&self) -> Range<Angle> {
+        match self {
+            FormatKind::Single16(inner) => inner.azimuth_range(),
+            FormatKind::Single32(inner) => inner.azimuth_range(),
+            FormatKind::Dual16(inner) => inner.azimuth_range(),
+            FormatKind::Dual32(inner) => inner.azimuth_range(),
         }
     }
 }
