@@ -125,40 +125,6 @@ mod firing_kind {
     pub type FiringBlock<'a> =
         FormatKind<FiringBlockS16<'a>, FiringBlockS32<'a>, FiringBlockD16<'a>, FiringBlockD32<'a>>;
 
-    impl<'a> FiringBlock<'a> {
-        pub fn try_into_single16(self) -> Result<FiringBlockS16<'a>, Self> {
-            if let Self::Single16(v) = self {
-                Ok(v)
-            } else {
-                Err(self)
-            }
-        }
-
-        pub fn try_into_single32(self) -> Result<FiringBlockS32<'a>, Self> {
-            if let Self::Single32(v) = self {
-                Ok(v)
-            } else {
-                Err(self)
-            }
-        }
-
-        pub fn try_into_dual16(self) -> Result<FiringBlockD16<'a>, Self> {
-            if let Self::Dual16(v) = self {
-                Ok(v)
-            } else {
-                Err(self)
-            }
-        }
-
-        pub fn try_into_dual32(self) -> Result<FiringBlockD32<'a>, Self> {
-            if let Self::Dual32(v) = self {
-                Ok(v)
-            } else {
-                Err(self)
-            }
-        }
-    }
-
     impl<'a> From<FiringBlockD32<'a>> for FiringBlock<'a> {
         fn from(v: FiringBlockD32<'a>) -> Self {
             Self::Dual32(v)

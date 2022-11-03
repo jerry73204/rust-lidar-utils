@@ -47,38 +47,6 @@ mod kind {
                 FiringXyz::Dual32(me) => me.time,
             }
         }
-
-        pub fn try_into_single16(self) -> Result<FiringXyzS16, Self> {
-            if let Self::Single16(v) = self {
-                Ok(v)
-            } else {
-                Err(self)
-            }
-        }
-
-        pub fn try_into_single32(self) -> Result<FiringXyzS32, Self> {
-            if let Self::Single32(v) = self {
-                Ok(v)
-            } else {
-                Err(self)
-            }
-        }
-
-        pub fn try_into_dual16(self) -> Result<FiringXyzD16, Self> {
-            if let Self::Dual16(v) = self {
-                Ok(v)
-            } else {
-                Err(self)
-            }
-        }
-
-        pub fn try_into_dual32(self) -> Result<FiringXyzD32, Self> {
-            if let Self::Dual32(v) = self {
-                Ok(v)
-            } else {
-                Err(self)
-            }
-        }
     }
 
     impl From<FiringXyzD32> for FiringXyz {
@@ -125,51 +93,6 @@ mod ref_kind {
                 FiringXyzRef::Single32(me) => me.time,
                 FiringXyzRef::Dual16(me) => me.time,
                 FiringXyzRef::Dual32(me) => me.time,
-            }
-        }
-
-        pub fn azimuth(&self) -> Angle {
-            self.azimuth_range().start
-        }
-
-        pub fn azimuth_range(&self) -> &Range<Angle> {
-            match self {
-                FiringXyzRef::Single16(me) => &me.azimuth_range,
-                FiringXyzRef::Single32(me) => &me.azimuth_range,
-                FiringXyzRef::Dual16(me) => &me.azimuth_range,
-                FiringXyzRef::Dual32(me) => &me.azimuth_range,
-            }
-        }
-
-        pub fn to_single16(&self) -> Option<&'a FiringXyzS16> {
-            if let Self::Single16(v) = self {
-                Some(v)
-            } else {
-                None
-            }
-        }
-
-        pub fn to_single32(&self) -> Option<&'a FiringXyzS32> {
-            if let Self::Single32(v) = self {
-                Some(v)
-            } else {
-                None
-            }
-        }
-
-        pub fn to_dual16(&self) -> Option<&'a FiringXyzD16> {
-            if let Self::Dual16(v) = self {
-                Some(v)
-            } else {
-                None
-            }
-        }
-
-        pub fn to_dual32(&self) -> Option<&'a FiringXyzD32> {
-            if let Self::Dual32(v) = self {
-                Some(v)
-            } else {
-                None
             }
         }
     }
