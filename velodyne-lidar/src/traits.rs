@@ -3,9 +3,9 @@ pub type BoxIterator<'a, T> = Box<dyn Iterator<Item = T> + Sync + Send + 'a>;
 pub use azimuth::*;
 mod azimuth {
     use crate::{
-        firing_block::types::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
-        firing_xyz::types::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
-        frame_xyz::types::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
+        firing_block::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
+        firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+        frame_xyz::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
     };
     use measurements::Angle;
     use std::ops::Range;

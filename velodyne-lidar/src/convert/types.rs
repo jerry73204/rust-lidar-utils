@@ -2,10 +2,8 @@ use super::functions;
 use crate::{
     common::*,
     config::Config,
-    firing_block::types::{
-        FiringBlock, FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32,
-    },
-    firing_xyz::types::{FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+    firing_block::{FiringBlock, FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
+    firing_xyz::{FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
     kinds::{Format, FormatKind},
     packet::DataPacket,
     BeamConfig16, BeamConfig32,

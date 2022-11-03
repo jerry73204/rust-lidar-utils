@@ -2,7 +2,7 @@ pub use frame_kind::*;
 mod frame_kind {
     use super::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32};
     use crate::{
-        firing_xyz::types::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+        firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
         kinds::FormatKind,
         point::types::Point,
         traits::BoxIterator,
@@ -107,7 +107,7 @@ pub use frame_types::*;
 mod frame_types {
     use crate::{
         common::*,
-        firing_xyz::types::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+        firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
         point::types::{PointD, PointS},
         traits::PointField,
     };
