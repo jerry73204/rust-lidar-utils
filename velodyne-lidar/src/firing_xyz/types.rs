@@ -1,7 +1,7 @@
 use crate::{
     common::*,
     kinds::FormatKind,
-    point::types::{PointD, PointS},
+    point::{PointD, PointS},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
