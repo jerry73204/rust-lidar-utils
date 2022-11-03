@@ -4,7 +4,9 @@ use crate::{
         FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzRef, FiringXyzS16, FiringXyzS32,
     },
     frame_xyz::{
-        batcher::{FrameXyzBatcherD16, FrameXyzBatcherD32, FrameXyzBatcherS16, FrameXyzBatcherS32},
+        batcher::{
+            FiringXyzBatcherD16, FiringXyzBatcherD32, FiringXyzBatcherS16, FiringXyzBatcherS32,
+        },
         iter::{FrameXyzIterD16, FrameXyzIterD32, FrameXyzIterS16, FrameXyzIterS32},
         types::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
     },
@@ -17,31 +19,31 @@ macro_rules! declare_iter {
         where
             I: Iterator<Item = $item>;
 
-        impl<I> $name<I>
-        where
-            I: Iterator<Item = $item>,
-        {
-            pub fn into_frame_iter(self) -> $frame_iter<impl Iterator<Item = $frame>> {
-                let conv = $frame_conv::new();
+        // impl<I> $name<I>
+        // where
+        //     I: Iterator<Item = $item>,
+        // {
+        //     pub fn into_frame_iter(self) -> impl Iterator<Item = $frame> {
+        //         let conv = $frame_conv::new();
 
-                let iter = itertools::unfold(Some((self, conv)), |state| {
-                    if let Some((iter, conv)) = state {
-                        Some(if let Some(firing) = iter.next() {
-                            conv.push_one(firing)
-                        } else {
-                            let output = conv.take();
-                            *state = None;
-                            output
-                        })
-                    } else {
-                        None
-                    }
-                })
-                .flatten();
+        //         let iter = itertools::unfold(Some((self, conv)), |state| {
+        //             if let Some((iter, conv)) = state {
+        //                 Some(if let Some(firing) = iter.next() {
+        //                     conv.push_one(firing)
+        //                 } else {
+        //                     let output = conv.take();
+        //                     *state = None;
+        //                     output
+        //                 })
+        //             } else {
+        //                 None
+        //             }
+        //         })
+        //         .flatten();
 
-                $frame_iter(iter)
-            }
-        }
+        //         $frame_iter(iter)
+        //     }
+        // }
 
         impl<I> Iterator for $name<I>
         where
@@ -63,28 +65,28 @@ macro_rules! declare_iter {
 declare_iter!(
     FiringXyzIterS16,
     FiringXyzS16,
-    FrameXyzBatcherS16,
+    FiringXyzBatcherS16,
     FrameXyzS16,
     FrameXyzIterS16
 );
 declare_iter!(
     FiringXyzIterS32,
     FiringXyzS32,
-    FrameXyzBatcherS32,
+    FiringXyzBatcherS32,
     FrameXyzS32,
     FrameXyzIterS32
 );
 declare_iter!(
     FiringXyzIterD16,
     FiringXyzD16,
-    FrameXyzBatcherD16,
+    FiringXyzBatcherD16,
     FrameXyzD16,
     FrameXyzIterD16
 );
 declare_iter!(
     FiringXyzIterD32,
     FiringXyzD32,
-    FrameXyzBatcherD32,
+    FiringXyzBatcherD32,
     FrameXyzD32,
     FrameXyzIterD32
 );

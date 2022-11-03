@@ -39,6 +39,21 @@ pub enum FormatKind<S16, S32, D16, D32> {
 }
 
 impl<S16, S32, D16, D32> FormatKind<S16, S32, D16, D32> {
+    pub fn from_format_default(format: Format) -> Self
+    where
+        S16: Default,
+        S32: Default,
+        D16: Default,
+        D32: Default,
+    {
+        match format {
+            Format::Single16 => Self::Single16(S16::default()),
+            Format::Single32 => Self::Single32(S32::default()),
+            Format::Dual16 => Self::Dual16(D16::default()),
+            Format::Dual32 => Self::Dual32(D32::default()),
+        }
+    }
+
     pub fn format(&self) -> Format {
         match self {
             FormatKind::Single16(_) => Format::Single16,
@@ -46,5 +61,133 @@ impl<S16, S32, D16, D32> FormatKind<S16, S32, D16, D32> {
             FormatKind::Dual16(_) => Format::Dual16,
             FormatKind::Dual32(_) => Format::Dual32,
         }
+    }
+
+    pub fn from_s16(from: S16) -> Self {
+        Self::Single16(from)
+    }
+
+    pub fn from_s32(from: S32) -> Self {
+        Self::Single32(from)
+    }
+
+    pub fn from_d16(from: D16) -> Self {
+        Self::Dual16(from)
+    }
+
+    pub fn from_d32(from: D32) -> Self {
+        Self::Dual32(from)
+    }
+
+    pub fn try_into_s16(self) -> Result<S16, Self> {
+        match self {
+            Self::Single16(s16) => Ok(s16),
+            _ => Err(self),
+        }
+    }
+
+    pub fn try_into_s32(self) -> Result<S32, Self> {
+        match self {
+            Self::Single32(s16) => Ok(s16),
+            _ => Err(self),
+        }
+    }
+
+    pub fn try_into_d16(self) -> Result<D16, Self> {
+        match self {
+            Self::Dual16(s16) => Ok(s16),
+            _ => Err(self),
+        }
+    }
+
+    pub fn try_into_d32(self) -> Result<D32, Self> {
+        match self {
+            Self::Dual32(s16) => Ok(s16),
+            _ => Err(self),
+        }
+    }
+
+    pub fn as_s16(&self) -> Option<&S16> {
+        match self {
+            Self::Single16(s16) => Some(s16),
+            _ => None,
+        }
+    }
+
+    pub fn as_s32(&self) -> Option<&S32> {
+        match self {
+            Self::Single32(s32) => Some(s32),
+            _ => None,
+        }
+    }
+
+    pub fn as_d16(&self) -> Option<&D16> {
+        match self {
+            Self::Dual16(d16) => Some(d16),
+            _ => None,
+        }
+    }
+
+    pub fn as_d32(&self) -> Option<&D32> {
+        match self {
+            Self::Dual32(d32) => Some(d32),
+            _ => None,
+        }
+    }
+
+    pub fn as_s16_mut(&mut self) -> Option<&mut S16> {
+        match self {
+            Self::Single16(s16) => Some(s16),
+            _ => None,
+        }
+    }
+
+    pub fn as_s32_mut(&mut self) -> Option<&mut S32> {
+        match self {
+            Self::Single32(s32) => Some(s32),
+            _ => None,
+        }
+    }
+
+    pub fn as_d16_mut(&mut self) -> Option<&mut D16> {
+        match self {
+            Self::Dual16(d16) => Some(d16),
+            _ => None,
+        }
+    }
+
+    pub fn as_d32_mut(&mut self) -> Option<&mut D32> {
+        match self {
+            Self::Dual32(d32) => Some(d32),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct FormatKindIter<S16, S32, D16, D32>(FormatKind<S16, S32, D16, D32>)
+where
+    S16: Iterator,
+    S32: Iterator,
+    D16: Iterator,
+    D32: Iterator;
+
+impl<S16, S32, D16, D32> Iterator for FormatKindIter<S16, S32, D16, D32>
+where
+    S16: Iterator,
+    S32: Iterator,
+    D16: Iterator,
+    D32: Iterator,
+{
+    type Item = FormatKind<S16::Item, S32::Item, D16::Item, D32::Item>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let item = match &mut self.0 {
+            FormatKind::Single16(iter) => FormatKind::from_s16(iter.next()?),
+            FormatKind::Single32(iter) => FormatKind::from_s32(iter.next()?),
+            FormatKind::Dual16(iter) => FormatKind::from_d16(iter.next()?),
+            FormatKind::Dual32(iter) => FormatKind::from_d32(iter.next()?),
+        };
+        Some(item)
     }
 }

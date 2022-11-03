@@ -4,7 +4,7 @@ use crate::{
     common::*,
     consts,
     convert::types::Converter,
-    frame_xyz::batcher::FrameXyzBatcher,
+    frame_xyz::batcher::FiringXyzBatcher,
     packet::{ProductID, ReturnMode},
 };
 
@@ -35,8 +35,12 @@ mod config_ {
             Converter::from_config(self)
         }
 
-        pub fn build_frame_xyz_batcher(&self) -> Result<FrameXyzBatcher> {
-            FrameXyzBatcher::from_config(self)
+        pub fn build_firing_xyz_batcher(&self) -> Result<FiringXyzBatcher> {
+            let format = self
+                .firing_format()
+                .ok_or_else(|| format_err!("product is not supported"))?;
+
+            Ok(FiringXyzBatcher::from_format_default(format))
         }
 
         pub fn new_vlp_16_last() -> Self {

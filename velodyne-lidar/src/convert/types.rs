@@ -56,16 +56,16 @@ macro_rules! declare_converter {
                 $firing_xyz_iter(iter)
             }
 
-            pub fn firing_iter_to_frame_xyz_iter<'a, I>(
-                &'a self,
-                firings: I,
-            ) -> $frame_xyz_iter<impl Iterator<Item = $frame_xyz> + 'a>
-            where
-                I: IntoIterator<Item = $firing<'a>> + 'a,
-            {
-                self.firing_iter_to_firing_xyz_iter(firings)
-                    .into_frame_iter()
-            }
+            // pub fn firing_iter_to_frame_xyz_iter<'a, I>(
+            //     &'a self,
+            //     firings: I,
+            // ) -> $frame_xyz_iter<impl Iterator<Item = $frame_xyz> + 'a>
+            // where
+            //     I: IntoIterator<Item = $firing<'a>> + 'a,
+            // {
+            //     self.firing_iter_to_firing_xyz_iter(firings)
+            //         .into_frame_iter()
+            // }
 
             pub fn packet_to_firing_xyz_iter<'a>(
                 &'a self,
@@ -90,17 +90,17 @@ macro_rules! declare_converter {
                 $firing_xyz_iter(iter)
             }
 
-            pub fn packet_iter_to_frame_xyz_iter<'a, P, I>(
-                &'a self,
-                packets: I,
-            ) -> $frame_xyz_iter<impl Iterator<Item = $frame_xyz> + 'a>
-            where
-                I: IntoIterator<Item = P> + 'a,
-                P: Borrow<DataPacket> + 'a,
-            {
-                self.packet_iter_to_firing_xyz_iter(packets)
-                    .into_frame_iter()
-            }
+            // pub fn packet_iter_to_frame_xyz_iter<'a, P, I>(
+            //     &'a self,
+            //     packets: I,
+            // ) -> $frame_xyz_iter<impl Iterator<Item = $frame_xyz> + 'a>
+            // where
+            //     I: IntoIterator<Item = P> + 'a,
+            //     P: Borrow<DataPacket> + 'a,
+            // {
+            //     self.packet_iter_to_firing_xyz_iter(packets)
+            //         .into_frame_iter()
+            // }
         }
     };
 }
@@ -281,27 +281,27 @@ mod kind {
             }
         }
 
-        pub fn packet_iter_to_frame_xyz_iter<'a, P, I>(
-            &'a self,
-            packets: I,
-        ) -> FrameXyzIter<
-            impl Iterator<Item = FrameXyzS16> + 'a,
-            impl Iterator<Item = FrameXyzS32> + 'a,
-            impl Iterator<Item = FrameXyzD16> + 'a,
-            impl Iterator<Item = FrameXyzD32> + 'a,
-        >
-        where
-            I: IntoIterator<Item = P> + 'a,
-            I::IntoIter: 'a,
-            P: Borrow<DataPacket> + 'a,
-        {
-            match self {
-                Self::Single16(conv) => conv.packet_iter_to_frame_xyz_iter(packets).into(),
-                Self::Single32(conv) => conv.packet_iter_to_frame_xyz_iter(packets).into(),
-                Self::Dual16(conv) => conv.packet_iter_to_frame_xyz_iter(packets).into(),
-                Self::Dual32(conv) => conv.packet_iter_to_frame_xyz_iter(packets).into(),
-            }
-        }
+        // pub fn packet_iter_to_frame_xyz_iter<'a, P, I>(
+        //     &'a self,
+        //     packets: I,
+        // ) -> FrameXyzIter<
+        //     impl Iterator<Item = FrameXyzS16> + 'a,
+        //     impl Iterator<Item = FrameXyzS32> + 'a,
+        //     impl Iterator<Item = FrameXyzD16> + 'a,
+        //     impl Iterator<Item = FrameXyzD32> + 'a,
+        // >
+        // where
+        //     I: IntoIterator<Item = P> + 'a,
+        //     I::IntoIter: 'a,
+        //     P: Borrow<DataPacket> + 'a,
+        // {
+        //     match self {
+        //         Self::Single16(conv) => conv.packet_iter_to_frame_xyz_iter(packets).into(),
+        //         Self::Single32(conv) => conv.packet_iter_to_frame_xyz_iter(packets).into(),
+        //         Self::Dual16(conv) => conv.packet_iter_to_frame_xyz_iter(packets).into(),
+        //         Self::Dual32(conv) => conv.packet_iter_to_frame_xyz_iter(packets).into(),
+        //     }
+        // }
 
         pub fn from_config(config: &Config) -> Result<Self> {
             use Format as F;
