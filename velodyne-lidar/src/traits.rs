@@ -1,3 +1,5 @@
+pub type BoxIterator<'a, T> = Box<dyn Iterator<Item = T> + Sync + Send + 'a>;
+
 pub use azimuth::*;
 mod azimuth {
     use crate::{
@@ -97,6 +99,42 @@ mod azimuth {
             let start = self.firings[0].azimuth_range().start;
             let end = self.firings.last().unwrap().azimuth_range().end;
             start..end
+        }
+    }
+}
+
+pub use point_field::*;
+mod point_field {
+    use itertools::iproduct;
+
+    use super::BoxIterator;
+
+    pub trait PointField {
+        type Point<'a>
+        where
+            Self: 'a;
+
+        fn nrows(&self) -> usize;
+
+        fn ncols(&self) -> usize;
+
+        fn point_at<'a>(&'a self, row: usize, col: usize) -> Option<Self::Point<'a>>;
+
+        fn indexed_point_iter<'a>(&'a self) -> BoxIterator<'a, ((usize, usize), Self::Point<'a>)>
+        where
+            Self: Sync,
+        {
+            Box::new(
+                iproduct!(0..self.nrows(), 0..self.ncols())
+                    .map(|(row, col)| ((row, col), self.point_at(row, col).unwrap())),
+            )
+        }
+
+        fn point_iter<'a>(&'a self) -> BoxIterator<'a, Self::Point<'a>>
+        where
+            Self: Sync,
+        {
+            Box::new(self.indexed_point_iter().map(|(_index, point)| point))
         }
     }
 }

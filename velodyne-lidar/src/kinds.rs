@@ -1,7 +1,7 @@
 use crate::{
     common::*,
     packet::{ProductID, ReturnMode},
-    traits::AzimuthRange,
+    traits::{AzimuthRange, PointField},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -182,15 +182,7 @@ where
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct FormatKindIter<S16, S32, D16, D32>(FormatKind<S16, S32, D16, D32>)
-where
-    S16: Iterator,
-    S32: Iterator,
-    D16: Iterator,
-    D32: Iterator;
-
-impl<S16, S32, D16, D32> Iterator for FormatKindIter<S16, S32, D16, D32>
+impl<S16, S32, D16, D32> Iterator for FormatKind<S16, S32, D16, D32>
 where
     S16: Iterator,
     S32: Iterator,
@@ -200,12 +192,55 @@ where
     type Item = FormatKind<S16::Item, S32::Item, D16::Item, D32::Item>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let item = match &mut self.0 {
+        let item = match self {
             FormatKind::Single16(iter) => FormatKind::from_s16(iter.next()?),
             FormatKind::Single32(iter) => FormatKind::from_s32(iter.next()?),
             FormatKind::Dual16(iter) => FormatKind::from_d16(iter.next()?),
             FormatKind::Dual32(iter) => FormatKind::from_d32(iter.next()?),
         };
         Some(item)
+    }
+}
+
+impl<S16, S32, D16, D32> PointField for FormatKind<S16, S32, D16, D32>
+where
+    S16: PointField,
+    S32: PointField,
+    D16: PointField,
+    D32: PointField,
+{
+    type Point<'a> = FormatKind<S16::Point<'a>, S32::Point<'a>, D16::Point<'a>, D32::Point<'a>>
+    where
+        S16: 'a,
+        S32: 'a,
+        D16: 'a,
+        D32: 'a;
+
+    fn nrows(&self) -> usize {
+        match self {
+            FormatKind::Single16(inner) => inner.nrows(),
+            FormatKind::Single32(inner) => inner.nrows(),
+            FormatKind::Dual16(inner) => inner.nrows(),
+            FormatKind::Dual32(inner) => inner.nrows(),
+        }
+    }
+
+    fn ncols(&self) -> usize {
+        match self {
+            FormatKind::Single16(inner) => inner.ncols(),
+            FormatKind::Single32(inner) => inner.ncols(),
+            FormatKind::Dual16(inner) => inner.ncols(),
+            FormatKind::Dual32(inner) => inner.ncols(),
+        }
+    }
+
+    fn point_at<'a>(&'a self, row: usize, col: usize) -> Option<Self::Point<'a>> {
+        let point = match self {
+            FormatKind::Single16(inner) => FormatKind::from_s16(inner.point_at(row, col)?),
+            FormatKind::Single32(inner) => FormatKind::from_s32(inner.point_at(row, col)?),
+            FormatKind::Dual16(inner) => FormatKind::from_d16(inner.point_at(row, col)?),
+            FormatKind::Dual32(inner) => FormatKind::from_d32(inner.point_at(row, col)?),
+        };
+        Some(point)
     }
 }

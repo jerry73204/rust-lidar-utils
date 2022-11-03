@@ -10,45 +10,20 @@ use crate::{
     },
     kinds::FormatKind,
     point::{
-        iter::{PointIter, PointRefIter},
-        types::{Point, PointD, PointRef, PointS},
+        iter::PointIter,
+        types::{Point, PointD, PointS},
     },
+    traits::PointField,
 };
 
 pub use frame_kind::*;
 mod frame_kind {
+
     use super::*;
 
     pub type FrameXyz = FormatKind<FrameXyzS16, FrameXyzS32, FrameXyzD16, FrameXyzD32>;
 
     impl FrameXyz {
-        pub fn nrows(&self) -> usize {
-            match self {
-                Self::Single16(frame) => frame.nrows(),
-                Self::Single32(frame) => frame.nrows(),
-                Self::Dual16(frame) => frame.nrows(),
-                Self::Dual32(frame) => frame.nrows(),
-            }
-        }
-
-        pub fn ncols(&self) -> usize {
-            match self {
-                Self::Single16(frame) => frame.ncols(),
-                Self::Single32(frame) => frame.ncols(),
-                Self::Dual16(frame) => frame.ncols(),
-                Self::Dual32(frame) => frame.ncols(),
-            }
-        }
-
-        pub fn point_at(&self, row: usize, col: usize) -> Option<PointRef<'_>> {
-            Some(match self {
-                Self::Single16(frame) => frame.point_at(row, col)?.into(),
-                Self::Single32(frame) => frame.point_at(row, col)?.into(),
-                Self::Dual16(frame) => frame.point_at(row, col)?.into(),
-                Self::Dual32(frame) => frame.point_at(row, col)?.into(),
-            })
-        }
-
         pub fn firing_iter<'a>(
             &'a self,
         ) -> FiringXyzRefIter<
@@ -78,49 +53,6 @@ mod frame_kind {
                 FrameXyz::Single32(me) => FiringXyzIterS32(me.firings.into_iter()).into(),
                 FrameXyz::Dual16(me) => FiringXyzIterD16(me.firings.into_iter()).into(),
                 FrameXyz::Dual32(me) => FiringXyzIterD32(me.firings.into_iter()).into(),
-            }
-        }
-
-        pub fn point_iter<'a>(
-            &'a self,
-        ) -> PointRefIter<
-            impl Iterator<Item = &'a PointS>,
-            impl Iterator<Item = &'a PointS>,
-            impl Iterator<Item = &'a PointD>,
-            impl Iterator<Item = &'a PointD>,
-        > {
-            match self {
-                Self::Single16(frame) => PointRefIter::Single16(frame.point_iter()),
-                Self::Single32(frame) => PointRefIter::Single32(frame.point_iter()),
-                Self::Dual16(frame) => PointRefIter::Dual16(frame.point_iter()),
-                Self::Dual32(frame) => PointRefIter::Dual32(frame.point_iter()),
-            }
-        }
-
-        pub fn indexed_point_iter<'a>(
-            &'a self,
-        ) -> Box<dyn Iterator<Item = ((usize, usize), PointRef<'a>)> + 'a> {
-            match self {
-                Self::Single16(frame) => Box::new(
-                    frame
-                        .indexed_point_iter()
-                        .map(|(index, point)| (index, PointRef::from(point))),
-                ),
-                Self::Single32(frame) => Box::new(
-                    frame
-                        .indexed_point_iter()
-                        .map(|(index, point)| (index, PointRef::from(point))),
-                ),
-                Self::Dual16(frame) => Box::new(
-                    frame
-                        .indexed_point_iter()
-                        .map(|(index, point)| (index, PointRef::from(point))),
-                ),
-                Self::Dual32(frame) => Box::new(
-                    frame
-                        .indexed_point_iter()
-                        .map(|(index, point)| (index, PointRef::from(point))),
-                ),
             }
         }
 
@@ -202,35 +134,23 @@ mod frame_types {
                 pub firings: Vec<$firing>,
             }
 
-            impl $name {
-                pub fn nrows(&self) -> usize {
+            impl PointField for $name {
+                type Point<'a> = &'a $point;
+
+                fn nrows(&self) -> usize {
                     $nrows
                 }
 
-                pub fn ncols(&self) -> usize {
+                fn ncols(&self) -> usize {
                     self.firings.len()
                 }
 
-                pub fn point_at(&self, row: usize, col: usize) -> Option<&$point> {
+                fn point_at(&self, row: usize, col: usize) -> Option<Self::Point<'_>> {
                     self.firings.get(col)?.points.get(row)
                 }
+            }
 
-                pub fn point_iter(&self) -> impl Iterator<Item = &$point> {
-                    self.firings.iter().flat_map(|firing| &firing.points)
-                }
-
-                pub fn indexed_point_iter(
-                    &self,
-                ) -> impl Iterator<Item = ((usize, usize), &$point)> {
-                    self.firings.iter().enumerate().flat_map(|(col, firing)| {
-                        firing
-                            .points
-                            .iter()
-                            .enumerate()
-                            .map(move |(row, point)| ((row, col), point))
-                    })
-                }
-
+            impl $name {
                 pub fn into_point_iter(self) -> impl Iterator<Item = $point> {
                     self.firings.into_iter().flat_map(|firing| firing.points)
                 }
