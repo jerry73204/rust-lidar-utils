@@ -4,39 +4,6 @@ use crate::{
     point::types::{PointD, PointS},
 };
 
-pub(crate) use firing_trait::*;
-mod firing_trait {
-    use super::*;
-
-    pub trait FiringXyzKind {
-        fn azimuth(&self) -> Angle;
-    }
-
-    impl FiringXyzKind for FiringXyzS16 {
-        fn azimuth(&self) -> Angle {
-            self.azimuth_range.start
-        }
-    }
-
-    impl FiringXyzKind for FiringXyzS32 {
-        fn azimuth(&self) -> Angle {
-            self.azimuth_range.start
-        }
-    }
-
-    impl FiringXyzKind for FiringXyzD16 {
-        fn azimuth(&self) -> Angle {
-            self.azimuth_range.start
-        }
-    }
-
-    impl FiringXyzKind for FiringXyzD32 {
-        fn azimuth(&self) -> Angle {
-            self.azimuth_range.start
-        }
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringXyzS16 {
     pub time: Duration,

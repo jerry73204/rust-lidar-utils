@@ -12,6 +12,7 @@ pub mod packet;
 #[cfg(feature = "pcap")]
 pub mod pcap;
 pub mod point;
+pub mod traits;
 mod utils;
 
 #[cfg(feature = "pcap")]

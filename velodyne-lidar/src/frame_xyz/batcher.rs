@@ -1,11 +1,10 @@
 use crate::{
     common::*,
     config::Config,
-    firing_xyz::types::{
-        FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzKind, FiringXyzS16, FiringXyzS32,
-    },
+    firing_xyz::types::{FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
     frame_xyz::types::{FrameXyz, FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
     kinds::{Format, FormatKind},
+    traits::AzimuthRange,
 };
 #[cfg(feature = "async")]
 use futures::stream::{self, Stream, StreamExt as _};
@@ -251,8 +250,11 @@ mod kind {
     }
 }
 
-fn push_one<F: FiringXyzKind>(buffer: &mut Vec<F>, curr: F) -> Option<Vec<F>> {
-    let wrap = matches!(buffer.last(), Some(prev) if prev.azimuth() > curr.azimuth());
+fn push_one<F>(buffer: &mut Vec<F>, curr: F) -> Option<Vec<F>>
+where
+    F: AzimuthRange,
+{
+    let wrap = matches!(buffer.last(), Some(prev) if prev.start_azimuth() > curr.start_azimuth());
 
     if wrap {
         let output = mem::replace(buffer, vec![curr]);
@@ -263,13 +265,11 @@ fn push_one<F: FiringXyzKind>(buffer: &mut Vec<F>, curr: F) -> Option<Vec<F>> {
     }
 }
 
-fn push_many<'a, F: FiringXyzKind, I>(
-    buffer: &'a mut Vec<F>,
-    iter: I,
-) -> impl Iterator<Item = Vec<F>> + 'a
+fn push_many<'a, F, I>(buffer: &'a mut Vec<F>, iter: I) -> impl Iterator<Item = Vec<F>> + 'a
 where
     I: IntoIterator<Item = F>,
     I::IntoIter: 'a,
+    F: AzimuthRange,
 {
     iter.into_iter()
         .scan(buffer, |buffer, firing| Some(push_one(buffer, firing)))
