@@ -1,5 +1,6 @@
 //! Velodyne packet format types, configs and converters.
 
+pub mod batcher;
 mod common;
 pub mod config;
 pub mod consts;

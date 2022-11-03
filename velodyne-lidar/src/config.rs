@@ -1,10 +1,10 @@
 //! Defines a set of Velodyne LiDAR configurations.
 
 use crate::{
+    batcher::FiringXyzBatcher,
     common::*,
     consts,
     convert::types::Converter,
-    frame_xyz::batcher::FiringXyzBatcher,
     packet::{ProductID, ReturnMode},
 };
 
