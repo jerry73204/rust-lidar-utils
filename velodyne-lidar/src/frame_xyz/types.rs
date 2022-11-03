@@ -1,78 +1,58 @@
-use crate::{
-    common::*,
-    firing_xyz::{
-        iter::{
-            FiringXyzIter, FiringXyzIterD16, FiringXyzIterD32, FiringXyzIterS16, FiringXyzIterS32,
-            FiringXyzRefIter, FiringXyzRefIterD16, FiringXyzRefIterD32, FiringXyzRefIterS16,
-            FiringXyzRefIterS32,
-        },
-        types::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
-    },
-    kinds::FormatKind,
-    point::{
-        iter::PointIter,
-        types::{Point, PointD, PointS},
-    },
-    traits::PointField,
-};
-
 pub use frame_kind::*;
 mod frame_kind {
-
-    use super::*;
+    use super::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32};
+    use crate::{
+        firing_xyz::types::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+        kinds::FormatKind,
+        point::types::Point,
+        traits::BoxIterator,
+    };
 
     pub type FrameXyz = FormatKind<FrameXyzS16, FrameXyzS32, FrameXyzD16, FrameXyzD32>;
 
     impl FrameXyz {
         pub fn firing_iter<'a>(
             &'a self,
-        ) -> FiringXyzRefIter<
+        ) -> FormatKind<
             impl Iterator<Item = &'a FiringXyzS16>,
             impl Iterator<Item = &'a FiringXyzS32>,
             impl Iterator<Item = &'a FiringXyzD16>,
             impl Iterator<Item = &'a FiringXyzD32>,
         > {
             match self {
-                FrameXyz::Single16(me) => FiringXyzRefIterS16(me.firings.iter()).into(),
-                FrameXyz::Single32(me) => FiringXyzRefIterS32(me.firings.iter()).into(),
-                FrameXyz::Dual16(me) => FiringXyzRefIterD16(me.firings.iter()).into(),
-                FrameXyz::Dual32(me) => FiringXyzRefIterD32(me.firings.iter()).into(),
+                FrameXyz::Single16(me) => FormatKind::from_s16(me.firings.iter()),
+                FrameXyz::Single32(me) => FormatKind::from_s32(me.firings.iter()),
+                FrameXyz::Dual16(me) => FormatKind::from_d16(me.firings.iter()),
+                FrameXyz::Dual32(me) => FormatKind::from_d32(me.firings.iter()),
             }
         }
 
         pub fn into_firing_iter(
             self,
-        ) -> FiringXyzIter<
+        ) -> FormatKind<
             impl Iterator<Item = FiringXyzS16>,
             impl Iterator<Item = FiringXyzS32>,
             impl Iterator<Item = FiringXyzD16>,
             impl Iterator<Item = FiringXyzD32>,
         > {
             match self {
-                FrameXyz::Single16(me) => FiringXyzIterS16(me.firings.into_iter()).into(),
-                FrameXyz::Single32(me) => FiringXyzIterS32(me.firings.into_iter()).into(),
-                FrameXyz::Dual16(me) => FiringXyzIterD16(me.firings.into_iter()).into(),
-                FrameXyz::Dual32(me) => FiringXyzIterD32(me.firings.into_iter()).into(),
+                FrameXyz::Single16(me) => FormatKind::from_s16(me.firings.into_iter()),
+                FrameXyz::Single32(me) => FormatKind::from_s32(me.firings.into_iter()),
+                FrameXyz::Dual16(me) => FormatKind::from_d16(me.firings.into_iter()),
+                FrameXyz::Dual32(me) => FormatKind::from_d32(me.firings.into_iter()),
             }
         }
 
-        pub fn into_point_iter(
-            self,
-        ) -> PointIter<
-            impl Iterator<Item = PointS>,
-            impl Iterator<Item = PointS>,
-            impl Iterator<Item = PointD>,
-            impl Iterator<Item = PointD>,
-        > {
+        pub fn into_point_iter(self) -> BoxIterator<'static, Point> {
             match self {
-                Self::Single16(frame) => PointIter::Single16(frame.into_point_iter()),
-                Self::Single32(frame) => PointIter::Single32(frame.into_point_iter()),
-                Self::Dual16(frame) => PointIter::Dual16(frame.into_point_iter()),
-                Self::Dual32(frame) => PointIter::Dual32(frame.into_point_iter()),
+                Self::Single16(frame) => Box::new(frame.into_point_iter().map(Point::from)),
+                Self::Single32(frame) => Box::new(frame.into_point_iter().map(Point::from)),
+                Self::Dual16(frame) => Box::new(frame.into_point_iter().map(Point::from)),
+                Self::Dual32(frame) => Box::new(frame.into_point_iter().map(Point::from)),
             }
         }
 
-        pub fn into_indexed_point_iter(self) -> Box<dyn Iterator<Item = ((usize, usize), Point)>> {
+        pub fn into_indexed_point_iter(self) -> BoxIterator<'static, ((usize, usize), Point)> {
             match self {
                 Self::Single16(frame) => Box::new(
                     frame
@@ -125,7 +105,12 @@ mod frame_kind {
 
 pub use frame_types::*;
 mod frame_types {
-    use super::*;
+    use crate::{
+        common::*,
+        firing_xyz::types::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+        point::types::{PointD, PointS},
+        traits::PointField,
+    };
 
     macro_rules! declare_type {
         ($name:ident, $firing:ident, $nrows:expr, $point:ident) => {

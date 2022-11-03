@@ -5,7 +5,7 @@ mod azimuth {
     use crate::{
         firing_block::types::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
         firing_xyz::types::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
-        frame_xyz::iter::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
+        frame_xyz::types::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
     };
     use measurements::Angle;
     use std::ops::Range;

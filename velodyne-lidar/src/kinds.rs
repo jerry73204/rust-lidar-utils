@@ -244,3 +244,9 @@ where
         Some(point)
     }
 }
+
+// #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+// pub enum ModeKind<S, D> {
+//     Single(S),
+//     Dual(D),
+// }

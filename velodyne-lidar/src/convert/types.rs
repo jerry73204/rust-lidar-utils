@@ -5,16 +5,7 @@ use crate::{
     firing_block::types::{
         FiringBlock, FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32,
     },
-    firing_xyz::{
-        iter::{
-            FiringXyzIter, FiringXyzIterD16, FiringXyzIterD32, FiringXyzIterS16, FiringXyzIterS32,
-        },
-        types::{FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
-    },
-    frame_xyz::{
-        iter::{FrameXyzIter, FrameXyzIterD16, FrameXyzIterD32, FrameXyzIterS16, FrameXyzIterS32},
-        types::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
-    },
+    firing_xyz::types::{FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
     kinds::{Format, FormatKind},
     packet::DataPacket,
     BeamConfig16, BeamConfig32,
@@ -45,7 +36,7 @@ macro_rules! declare_converter {
             pub fn firing_iter_to_firing_xyz_iter<'a, I>(
                 &'a self,
                 firings: I,
-            ) -> $firing_xyz_iter<impl Iterator<Item = $firing_xyz> + 'a>
+            ) -> impl Iterator<Item = $firing_xyz> + 'a
             where
                 I: IntoIterator<Item = $firing<'a>>,
                 I::IntoIter: 'a,
@@ -53,7 +44,7 @@ macro_rules! declare_converter {
                 let iter = firings
                     .into_iter()
                     .map(|firing| self.firing_to_firing_xyz(firing));
-                $firing_xyz_iter(iter)
+                iter
             }
 
             // pub fn firing_iter_to_frame_xyz_iter<'a, I>(
@@ -70,14 +61,14 @@ macro_rules! declare_converter {
             pub fn packet_to_firing_xyz_iter<'a>(
                 &'a self,
                 packet: &'a DataPacket,
-            ) -> $firing_xyz_iter<impl Iterator<Item = $firing_xyz> + 'a> {
+            ) -> impl Iterator<Item = $firing_xyz> + 'a {
                 self.firing_iter_to_firing_xyz_iter(packet.$firing_method())
             }
 
             pub fn packet_iter_to_firing_xyz_iter<'a, P, I>(
                 &'a self,
                 packets: I,
-            ) -> $firing_xyz_iter<impl Iterator<Item = $firing_xyz> + 'a>
+            ) -> impl Iterator<Item = $firing_xyz> + 'a
             where
                 I: IntoIterator<Item = P>,
                 I::IntoIter: 'a,
@@ -87,7 +78,7 @@ macro_rules! declare_converter {
                     let firings: Vec<_> = self.packet_to_firing_xyz_iter(packet.borrow()).collect();
                     firings
                 });
-                $firing_xyz_iter(iter)
+                iter
             }
 
             // pub fn packet_iter_to_frame_xyz_iter<'a, P, I>(
@@ -245,24 +236,28 @@ mod kind {
         pub fn packet_to_firing_xyz_iter<'a>(
             &'a self,
             packet: &'a DataPacket,
-        ) -> FiringXyzIter<
+        ) -> FormatKind<
             impl Iterator<Item = FiringXyzS16> + 'a,
             impl Iterator<Item = FiringXyzS32> + 'a,
             impl Iterator<Item = FiringXyzD16> + 'a,
             impl Iterator<Item = FiringXyzD32> + 'a,
         > {
             match self {
-                Self::Single16(conv) => conv.packet_to_firing_xyz_iter(packet).into(),
-                Self::Single32(conv) => conv.packet_to_firing_xyz_iter(packet).into(),
-                Self::Dual16(conv) => conv.packet_to_firing_xyz_iter(packet).into(),
-                Self::Dual32(conv) => conv.packet_to_firing_xyz_iter(packet).into(),
+                Self::Single16(conv) => {
+                    FormatKind::from_s16(conv.packet_to_firing_xyz_iter(packet))
+                }
+                Self::Single32(conv) => {
+                    FormatKind::from_s32(conv.packet_to_firing_xyz_iter(packet))
+                }
+                Self::Dual16(conv) => FormatKind::from_d16(conv.packet_to_firing_xyz_iter(packet)),
+                Self::Dual32(conv) => FormatKind::from_d32(conv.packet_to_firing_xyz_iter(packet)),
             }
         }
 
         pub fn packet_iter_to_firing_xyz_iter<'a, P, I>(
             &'a self,
             packets: I,
-        ) -> FiringXyzIter<
+        ) -> FormatKind<
             impl Iterator<Item = FiringXyzS16> + 'a,
             impl Iterator<Item = FiringXyzS32> + 'a,
             impl Iterator<Item = FiringXyzD16> + 'a,
@@ -274,10 +269,18 @@ mod kind {
             P: Borrow<DataPacket> + 'a,
         {
             match self {
-                Self::Single16(conv) => conv.packet_iter_to_firing_xyz_iter(packets).into(),
-                Self::Single32(conv) => conv.packet_iter_to_firing_xyz_iter(packets).into(),
-                Self::Dual16(conv) => conv.packet_iter_to_firing_xyz_iter(packets).into(),
-                Self::Dual32(conv) => conv.packet_iter_to_firing_xyz_iter(packets).into(),
+                Self::Single16(conv) => {
+                    FormatKind::from_s16(conv.packet_iter_to_firing_xyz_iter(packets))
+                }
+                Self::Single32(conv) => {
+                    FormatKind::from_s32(conv.packet_iter_to_firing_xyz_iter(packets))
+                }
+                Self::Dual16(conv) => {
+                    FormatKind::from_d16(conv.packet_iter_to_firing_xyz_iter(packets))
+                }
+                Self::Dual32(conv) => {
+                    FormatKind::from_d32(conv.packet_iter_to_firing_xyz_iter(packets))
+                }
             }
         }
 
