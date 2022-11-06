@@ -13,21 +13,21 @@ pub enum Format {
 }
 
 impl Format {
-    pub fn from_model(product_id: ProductID, return_mode: ReturnMode) -> Option<Format> {
+    pub fn new(num_lines: usize, return_mode: ReturnMode) -> Option<Format> {
         use Format::*;
-        use ProductID::*;
         use ReturnMode::*;
 
-        Some(match (product_id, return_mode) {
-            (HDL32E | VLP32C, Strongest | Last) => Single32,
-            (HDL32E | VLP32C, Dual) => Dual32,
-            (VLP16 | PuckLite | PuckHiRes, Strongest | Last) => Single16,
-            (VLP16 | PuckLite | PuckHiRes, Dual) => Dual16,
-            (Velarray, Strongest | Last) => return None,
-            (Velarray, Dual) => return None,
-            (VLS128, Strongest | Last) => return None,
-            (VLS128, Dual) => return None,
+        Some(match (num_lines, return_mode) {
+            (16, Strongest | Last) => Single16,
+            (16, Dual) => Dual16,
+            (32, Strongest | Last) => Single32,
+            (32, Dual) => Dual32,
+            _ => return None,
         })
+    }
+
+    pub fn from_model(product_id: ProductID, return_mode: ReturnMode) -> Option<Format> {
+        Self::new(product_id.num_lines(), return_mode)
     }
 }
 
