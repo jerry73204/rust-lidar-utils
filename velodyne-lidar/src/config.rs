@@ -1,16 +1,10 @@
 //! Defines a set of Velodyne LiDAR configurations.
 
-use crate::{
-    batcher::FiringXyzBatcher,
-    common::*,
-    consts,
-    convert::types::Converter,
-    packet::{ProductID, ReturnMode},
-};
+use crate::{common::*, consts, packet::ReturnMode};
 
 pub use config_::*;
 mod config_ {
-    use crate::kinds::Format;
+    use crate::kinds::{Format, FormatKind};
 
     use super::*;
 
@@ -20,123 +14,334 @@ mod config_ {
     #[derive(Debug, Clone)]
     pub struct Config {
         pub return_mode: ReturnMode,
-        pub product_id: ProductID,
-        pub beams: BeamConfig,
+        pub distance_resolution: Length,
+        pub lasers: Vec<Beam>,
+    }
+
+    #[derive(Debug, Clone)]
+    pub struct Config16 {
+        pub return_mode: ReturnMode,
+        pub distance_resolution: Length,
+        pub lasers: [Beam; 16],
+    }
+
+    #[derive(Debug, Clone)]
+    pub struct Config32 {
+        pub return_mode: ReturnMode,
+        pub distance_resolution: Length,
+        pub lasers: [Beam; 32],
     }
 
     // impls
 
     impl Config {
-        pub fn firing_format(&self) -> Option<Format> {
-            Format::from_model(self.product_id, self.return_mode)
+        pub fn try_into_kind(
+            self,
+        ) -> Result<FormatKind<Config16, Config32, Config16, Config32>, Self> {
+            use FormatKind as K;
+            use ReturnMode::*;
+
+            let Self {
+                return_mode,
+                distance_resolution,
+                lasers,
+            } = self;
+
+            Ok(match (return_mode, lasers.len()) {
+                (Strongest | Last, 16) => K::from_s16(Config16 {
+                    return_mode,
+                    distance_resolution,
+                    lasers: lasers.try_into().unwrap(),
+                }),
+                (Dual, 16) => K::from_d16(Config16 {
+                    return_mode,
+                    distance_resolution,
+                    lasers: lasers.try_into().unwrap(),
+                }),
+                (Strongest | Last, 32) => K::from_s32(Config32 {
+                    return_mode,
+                    distance_resolution,
+                    lasers: lasers.try_into().unwrap(),
+                }),
+                (Dual, 32) => K::from_d32(Config32 {
+                    return_mode,
+                    distance_resolution,
+                    lasers: lasers.try_into().unwrap(),
+                }),
+                _ => {
+                    return Err(Self {
+                        return_mode,
+                        distance_resolution,
+                        lasers,
+                    })
+                }
+            })
         }
 
-        pub fn build_converter(&self) -> Result<Converter> {
-            Converter::from_config(self)
+        pub fn try_format(&self) -> Option<Format> {
+            Format::try_new(self.lasers.len(), self.return_mode)
         }
 
-        pub fn build_firing_xyz_batcher(&self) -> Result<FiringXyzBatcher> {
-            let format = self
-                .firing_format()
-                .ok_or_else(|| format_err!("product is not supported"))?;
-
-            Ok(FiringXyzBatcher::from_format_default(format))
+        pub fn format(&self) -> Format {
+            self.try_format().unwrap()
         }
 
         pub fn new_vlp_16_last() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_vlp_16();
+
             Self {
                 return_mode: ReturnMode::Last,
-                product_id: ProductID::VLP16,
-                beams: BeamConfig::new_vlp_16(),
+                lasers,
+                distance_resolution,
             }
         }
 
         pub fn new_vlp_16_strongest() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_vlp_16();
+
             Self {
                 return_mode: ReturnMode::Strongest,
-                product_id: ProductID::VLP16,
-                beams: BeamConfig::new_vlp_16(),
+                lasers,
+                distance_resolution,
             }
         }
 
         pub fn new_vlp_16_dual() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_vlp_16();
+
             Self {
                 return_mode: ReturnMode::Dual,
-                product_id: ProductID::VLP16,
-                beams: BeamConfig::new_vlp_16(),
+                lasers,
+                distance_resolution,
             }
         }
 
         pub fn new_puck_hires_last() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_puck_hires();
+
             Self {
                 return_mode: ReturnMode::Last,
-                product_id: ProductID::PuckHiRes,
-                beams: BeamConfig::new_puck_hires(),
+                lasers,
+                distance_resolution,
             }
         }
 
         pub fn new_puck_hires_strongest() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_puck_hires();
+
             Self {
                 return_mode: ReturnMode::Strongest,
-                product_id: ProductID::PuckHiRes,
-                beams: BeamConfig::new_puck_hires(),
+                lasers,
+                distance_resolution,
             }
         }
 
         pub fn new_puck_hires_dual() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_puck_hires();
+
             Self {
                 return_mode: ReturnMode::Dual,
-                product_id: ProductID::PuckHiRes,
-                beams: BeamConfig::new_puck_hires(),
+                lasers,
+                distance_resolution,
             }
         }
 
         pub fn new_puck_lite_last() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_puck_lite();
+
             Self {
                 return_mode: ReturnMode::Last,
-                product_id: ProductID::PuckLite,
-                beams: BeamConfig::new_puck_lite(),
+                lasers,
+                distance_resolution,
             }
         }
 
         pub fn new_puck_lite_strongest() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_puck_lite();
+
             Self {
                 return_mode: ReturnMode::Strongest,
-                product_id: ProductID::PuckLite,
-                beams: BeamConfig::new_puck_lite(),
+                lasers,
+                distance_resolution,
             }
         }
 
         pub fn new_puck_lite_dual() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_puck_lite();
+
             Self {
                 return_mode: ReturnMode::Dual,
-                product_id: ProductID::PuckLite,
-                beams: BeamConfig::new_puck_lite(),
+                lasers,
+                distance_resolution,
             }
         }
 
         pub fn new_vlp_32c_last() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_vlp_32c();
+
             Self {
                 return_mode: ReturnMode::Last,
-                product_id: ProductID::VLP32C,
-                beams: BeamConfig::new_vlp_32c(),
+                lasers,
+                distance_resolution,
             }
         }
 
         pub fn new_vlp_32c_strongest() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_vlp_32c();
+
             Self {
                 return_mode: ReturnMode::Strongest,
-                product_id: ProductID::VLP32C,
-                beams: BeamConfig::new_vlp_32c(),
+                lasers,
+                distance_resolution,
             }
         }
 
         pub fn new_vlp_32c_dual() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_vlp_32c();
+
             Self {
                 return_mode: ReturnMode::Dual,
-                product_id: ProductID::VLP32C,
-                beams: BeamConfig::new_vlp_32c(),
+                lasers,
+                distance_resolution,
             }
+        }
+    }
+
+    impl Config16 {
+        pub fn format(&self) -> Format {
+            use Format::*;
+            use ReturnMode::*;
+
+            match self.return_mode {
+                Strongest | Last => Single16,
+                Dual => Dual16,
+            }
+        }
+    }
+
+    impl Config32 {
+        pub fn format(&self) -> Format {
+            use Format::*;
+            use ReturnMode::*;
+
+            match self.return_mode {
+                Strongest | Last => Single32,
+                Dual => Dual32,
+            }
+        }
+    }
+
+    impl From<Config16> for Config {
+        fn from(from: Config16) -> Self {
+            let Config16 {
+                return_mode,
+                lasers,
+                distance_resolution,
+            } = from;
+            Self {
+                return_mode,
+                lasers: lasers.into(),
+                distance_resolution,
+            }
+        }
+    }
+
+    impl From<Config32> for Config {
+        fn from(from: Config32) -> Self {
+            let Config32 {
+                return_mode,
+                lasers,
+                distance_resolution,
+            } = from;
+            Self {
+                return_mode,
+                lasers: lasers.into(),
+                distance_resolution,
+            }
+        }
+    }
+
+    impl TryFrom<Config> for Config16 {
+        type Error = Config;
+
+        fn try_from(from: Config) -> Result<Self, Self::Error> {
+            let Config {
+                return_mode,
+                lasers,
+                distance_resolution,
+            } = from;
+
+            let lasers = lasers.try_into().map_err(|lasers| Config {
+                return_mode,
+                lasers,
+                distance_resolution,
+            })?;
+
+            Ok(Self {
+                return_mode,
+                lasers,
+                distance_resolution,
+            })
+        }
+    }
+
+    impl TryFrom<Config> for Config32 {
+        type Error = Config;
+
+        fn try_from(from: Config) -> Result<Self, Self::Error> {
+            let Config {
+                return_mode,
+                lasers,
+                distance_resolution,
+            } = from;
+
+            let lasers = lasers.try_into().map_err(|lasers| Config {
+                return_mode,
+                lasers,
+                distance_resolution,
+            })?;
+
+            Ok(Self {
+                return_mode,
+                lasers,
+                distance_resolution,
+            })
         }
     }
 }
@@ -146,19 +351,19 @@ mod params {
     use super::*;
 
     #[derive(Debug, Clone)]
-    pub struct BeamConfig {
+    pub(super) struct BeamConfig {
         pub lasers: Vec<Beam>,
         pub distance_resolution: Length,
     }
 
     #[derive(Debug, Clone)]
-    pub struct BeamConfig16 {
+    pub(super) struct BeamConfig16 {
         pub lasers: [Beam; 16],
         pub distance_resolution: Length,
     }
 
     #[derive(Debug, Clone)]
-    pub struct BeamConfig32 {
+    pub(super) struct BeamConfig32 {
         pub lasers: [Beam; 32],
         pub distance_resolution: Length,
     }

@@ -7,7 +7,7 @@ use crate::{
     firing_xyz::{FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
     kinds::FormatKind,
     packet::{Block, Channel},
-    BeamConfig, BeamConfig16, BeamConfig32,
+    Config, Config16, Config32,
 };
 use anyhow::anyhow;
 
@@ -20,7 +20,7 @@ pub struct FiringBlockS16<'a> {
 }
 
 impl<'a> FiringBlockS16<'a> {
-    pub fn to_firing_xyz(&self, beams: &BeamConfig16) -> FiringXyzS16 {
+    pub fn to_firing_xyz(&self, beams: &Config16) -> FiringXyzS16 {
         firing_block_to_xyz_s16(self, beams)
     }
 }
@@ -34,7 +34,7 @@ pub struct FiringBlockS32<'a> {
 }
 
 impl<'a> FiringBlockS32<'a> {
-    pub fn to_firing_xyz(&self, beams: &BeamConfig32) -> FiringXyzS32 {
+    pub fn to_firing_xyz(&self, beams: &Config32) -> FiringXyzS32 {
         firing_block_to_xyz_s32(self, beams)
     }
 }
@@ -50,7 +50,7 @@ pub struct FiringBlockD16<'a> {
 }
 
 impl<'a> FiringBlockD16<'a> {
-    pub fn to_firing_xyz(&self, beams: &BeamConfig16) -> FiringXyzD16 {
+    pub fn to_firing_xyz(&self, beams: &Config16) -> FiringXyzD16 {
         firing_block_to_xyz_d16(self, beams)
     }
 
@@ -100,7 +100,7 @@ pub struct FiringBlockD32<'a> {
 }
 
 impl<'a> FiringBlockD32<'a> {
-    pub fn to_firing_xyz(&self, beams: &BeamConfig32) -> FiringXyzD32 {
+    pub fn to_firing_xyz(&self, beams: &Config32) -> FiringXyzD32 {
         firing_block_to_xyz_d32(self, beams)
     }
 
@@ -143,26 +143,26 @@ pub type FiringBlock<'a> =
     FormatKind<FiringBlockS16<'a>, FiringBlockS32<'a>, FiringBlockD16<'a>, FiringBlockD32<'a>>;
 
 impl<'a> FiringBlock<'a> {
-    pub fn to_firing_xyz(&self, beams: &BeamConfig) -> Result<FiringXyz> {
+    pub fn to_firing_xyz(&self, beams: &Config) -> Result<FiringXyz> {
         let err = || anyhow!("TODO");
 
         use FormatKind as F;
 
         let output = match self {
             F::Single16(inner) => {
-                let beams: BeamConfig16 = beams.clone().try_into().map_err(|_| err())?;
+                let beams: Config16 = beams.clone().try_into().map_err(|_| err())?;
                 inner.to_firing_xyz(&beams).into()
             }
             F::Dual16(inner) => {
-                let beams: BeamConfig16 = beams.clone().try_into().map_err(|_| err())?;
+                let beams: Config16 = beams.clone().try_into().map_err(|_| err())?;
                 inner.to_firing_xyz(&beams).into()
             }
             F::Single32(inner) => {
-                let beams: BeamConfig32 = beams.clone().try_into().map_err(|_| err())?;
+                let beams: Config32 = beams.clone().try_into().map_err(|_| err())?;
                 inner.to_firing_xyz(&beams).into()
             }
             F::Dual32(inner) => {
-                let beams: BeamConfig32 = beams.clone().try_into().map_err(|_| err())?;
+                let beams: Config32 = beams.clone().try_into().map_err(|_| err())?;
                 inner.to_firing_xyz(&beams).into()
             }
         };

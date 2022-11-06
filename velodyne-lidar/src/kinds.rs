@@ -13,7 +13,7 @@ pub enum Format {
 }
 
 impl Format {
-    pub fn new(num_lines: usize, return_mode: ReturnMode) -> Option<Format> {
+    pub fn try_new(num_lines: usize, return_mode: ReturnMode) -> Option<Format> {
         use Format::*;
         use ReturnMode::*;
 
@@ -26,8 +26,16 @@ impl Format {
         })
     }
 
-    pub fn from_model(product_id: ProductID, return_mode: ReturnMode) -> Option<Format> {
-        Self::new(product_id.num_lines(), return_mode)
+    pub fn new(num_lines: usize, return_mode: ReturnMode) -> Format {
+        Self::try_new(num_lines, return_mode).unwrap()
+    }
+
+    pub fn try_from_model(product_id: ProductID, return_mode: ReturnMode) -> Option<Format> {
+        Self::try_new(product_id.num_lines(), return_mode)
+    }
+
+    pub fn from_model(product_id: ProductID, return_mode: ReturnMode) -> Format {
+        Self::try_from_model(product_id, return_mode).unwrap()
     }
 }
 

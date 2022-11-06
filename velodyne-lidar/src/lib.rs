@@ -8,6 +8,7 @@ pub mod convert;
 pub mod firing_block;
 pub mod firing_xyz;
 pub mod frame_xyz;
+pub mod iter;
 pub mod kinds;
 pub mod packet;
 #[cfg(feature = "pcap")]

@@ -5,7 +5,7 @@ use crate::{
     firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
     kinds::{Format, FormatKind},
     utils::AngleExt as _,
-    BeamConfig16, BeamConfig32,
+    Config16, Config32,
 };
 use std::f64::consts::PI;
 
@@ -144,29 +144,31 @@ impl DataPacket {
         Duration::from_micros(self.timestamp as u64)
     }
 
-    pub fn format(&self) -> Option<Format> {
+    pub fn try_format(&self) -> Option<Format> {
+        Format::try_from_model(self.product_id, self.return_mode)
+    }
+
+    pub fn format(&self) -> Format {
         Format::from_model(self.product_id, self.return_mode)
     }
 
     pub fn firing_block_iter(
         &self,
-    ) -> Option<
-        FormatKind<
-            impl Iterator<Item = FiringBlockS16<'_>> + Clone,
-            impl Iterator<Item = FiringBlockS32<'_>> + Clone,
-            impl Iterator<Item = FiringBlockD16<'_>> + Clone,
-            impl Iterator<Item = FiringBlockD32<'_>> + Clone,
-        >,
+    ) -> FormatKind<
+        impl Iterator<Item = FiringBlockS16<'_>> + Clone,
+        impl Iterator<Item = FiringBlockS32<'_>> + Clone,
+        impl Iterator<Item = FiringBlockD16<'_>> + Clone,
+        impl Iterator<Item = FiringBlockD32<'_>> + Clone,
     > {
         use Format::*;
         use FormatKind as F;
 
-        Some(match self.format()? {
+        match self.format() {
             Single16 => F::from_s16(self.firing_block_iter_s16()),
             Dual16 => F::from_d16(self.firing_block_iter_d16()),
             Single32 => F::from_s32(self.firing_block_iter_s32()),
             Dual32 => F::from_d32(self.firing_block_iter_d32()),
-        })
+        }
     }
 
     pub fn firing_block_iter_s16(
@@ -381,7 +383,7 @@ impl DataPacket {
 
     pub fn firing_xyz_iter_s16<'a>(
         &'a self,
-        beams: &'a BeamConfig16,
+        beams: &'a Config16,
     ) -> impl Iterator<Item = FiringXyzS16> + Clone + Sync + Send + 'a {
         self.firing_block_iter_s16()
             .map(|firing| firing.to_firing_xyz(beams))
@@ -389,7 +391,7 @@ impl DataPacket {
 
     pub fn firing_xyz_iter_s32<'a>(
         &'a self,
-        beams: &'a BeamConfig32,
+        beams: &'a Config32,
     ) -> impl Iterator<Item = FiringXyzS32> + Clone + Sync + Send + 'a {
         self.firing_block_iter_s32()
             .map(|firing| firing.to_firing_xyz(beams))
@@ -397,7 +399,7 @@ impl DataPacket {
 
     pub fn firing_xyz_iter_d16<'a>(
         &'a self,
-        beams: &'a BeamConfig16,
+        beams: &'a Config16,
     ) -> impl Iterator<Item = FiringXyzD16> + Clone + Sync + Send + 'a {
         self.firing_block_iter_d16()
             .map(|firing| firing.to_firing_xyz(beams))
@@ -405,7 +407,7 @@ impl DataPacket {
 
     pub fn firing_xyz_iter_d32<'a>(
         &'a self,
-        beams: &'a BeamConfig32,
+        beams: &'a Config32,
     ) -> impl Iterator<Item = FiringXyzD32> + Clone + Sync + Send + 'a {
         self.firing_block_iter_d32()
             .map(|firing| firing.to_firing_xyz(beams))

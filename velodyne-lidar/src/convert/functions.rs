@@ -6,13 +6,14 @@ use crate::{
     firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
     point::{Measurement, MeasurementDual, PointD, PointS},
     utils::{AngleExt as _, DurationExt as _},
-    BeamConfig16, BeamConfig32,
+    Config16, Config32,
 };
 
-pub fn firing_block_to_xyz_s16(firing: &FiringBlockS16, beams: &BeamConfig16) -> FiringXyzS16 {
-    let BeamConfig16 {
+pub fn firing_block_to_xyz_s16(firing: &FiringBlockS16, beams: &Config16) -> FiringXyzS16 {
+    let Config16 {
         ref lasers,
         distance_resolution,
+        ..
     } = *beams;
     let FiringBlockS16 {
         time: firing_time,
@@ -70,10 +71,11 @@ pub fn firing_block_to_xyz_s16(firing: &FiringBlockS16, beams: &BeamConfig16) ->
     }
 }
 
-pub fn firing_block_to_xyz_s32(firing: &FiringBlockS32, beams: &BeamConfig32) -> FiringXyzS32 {
-    let BeamConfig32 {
+pub fn firing_block_to_xyz_s32(firing: &FiringBlockS32, beams: &Config32) -> FiringXyzS32 {
+    let Config32 {
         ref lasers,
         distance_resolution,
+        ..
     } = *beams;
     let FiringBlockS32 {
         time: firing_time,
@@ -135,10 +137,11 @@ pub fn firing_block_to_xyz_s32(firing: &FiringBlockS32, beams: &BeamConfig32) ->
     }
 }
 
-pub fn firing_block_to_xyz_d16(firing: &FiringBlockD16, beams: &BeamConfig16) -> FiringXyzD16 {
-    let BeamConfig16 {
+pub fn firing_block_to_xyz_d16(firing: &FiringBlockD16, beams: &Config16) -> FiringXyzD16 {
+    let Config16 {
         ref lasers,
         distance_resolution,
+        ..
     } = *beams;
     let FiringBlockD16 {
         time: firing_time,
@@ -221,10 +224,11 @@ pub fn firing_block_to_xyz_d16(firing: &FiringBlockD16, beams: &BeamConfig16) ->
     }
 }
 
-pub fn firing_block_to_xyz_d32(firing: &FiringBlockD32, beams: &BeamConfig32) -> FiringXyzD32 {
-    let BeamConfig32 {
+pub fn firing_block_to_xyz_d32(firing: &FiringBlockD32, beams: &Config32) -> FiringXyzD32 {
+    let Config32 {
         ref lasers,
         distance_resolution,
+        ..
     } = *beams;
     let FiringBlockD32 {
         time: firing_time,
