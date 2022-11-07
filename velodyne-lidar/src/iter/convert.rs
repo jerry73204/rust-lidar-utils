@@ -27,7 +27,7 @@ fn audit_format(packet_format: Option<Format>, config_format: Format) {
     }
 }
 
-pub fn packet_to_frame_xyz_iter<'a, I>(config: Config, packets: I) -> Result<FrameXyzIter<'a>>
+pub fn packet_to_frame_xyz<'a, I>(config: Config, packets: I) -> Result<FrameXyzIter<'a>>
 where
     I: IntoIterator<Item = Packet> + 'a,
     I::IntoIter: Send,
@@ -39,24 +39,16 @@ where
         .map_err(|_| anyhow!("invalid configuration"))?;
 
     let iter: FrameXyzIter = match config_kinds {
-        K::Single16(config) => {
-            Box::new(packet_to_frame_xyz_iter_s16(config, packets).map(K::from_s16))
-        }
-        K::Single32(config) => {
-            Box::new(packet_to_frame_xyz_iter_s32(config, packets).map(K::from_s32))
-        }
-        K::Dual16(config) => {
-            Box::new(packet_to_frame_xyz_iter_d16(config, packets).map(K::from_d16))
-        }
-        K::Dual32(config) => {
-            Box::new(packet_to_frame_xyz_iter_d32(config, packets).map(K::from_d32))
-        }
+        K::Single16(config) => Box::new(packet_to_frame_xyz_s16(config, packets).map(K::from_s16)),
+        K::Single32(config) => Box::new(packet_to_frame_xyz_s32(config, packets).map(K::from_s32)),
+        K::Dual16(config) => Box::new(packet_to_frame_xyz_d16(config, packets).map(K::from_d16)),
+        K::Dual32(config) => Box::new(packet_to_frame_xyz_d32(config, packets).map(K::from_d32)),
     };
 
     Ok(iter)
 }
 
-pub fn packet_to_frame_xyz_iter_s16<I>(
+pub fn packet_to_frame_xyz_s16<I>(
     config: Config16,
     packets: I,
 ) -> impl Iterator<Item = FrameXyzS16> + Send
@@ -88,7 +80,7 @@ where
         .flatten()
 }
 
-pub fn packet_to_frame_xyz_iter_s32<I>(
+pub fn packet_to_frame_xyz_s32<I>(
     config: Config32,
     packets: I,
 ) -> impl Iterator<Item = FrameXyzS32> + Send
@@ -120,7 +112,7 @@ where
         .flatten()
 }
 
-pub fn packet_to_frame_xyz_iter_d16<I>(
+pub fn packet_to_frame_xyz_d16<I>(
     config: Config16,
     packets: I,
 ) -> impl Iterator<Item = FrameXyzD16> + Send
@@ -152,7 +144,7 @@ where
         .flatten()
 }
 
-pub fn packet_to_frame_xyz_iter_d32<I>(
+pub fn packet_to_frame_xyz_d32<I>(
     config: Config32,
     packets: I,
 ) -> impl Iterator<Item = FrameXyzD32> + Send
