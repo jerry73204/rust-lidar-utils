@@ -5,7 +5,7 @@ use crate::{
     firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
     frame_xyz::{FrameXyz, FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
     kinds::{Format, FormatKind},
-    Config, Config16, Config32, Packet,
+    Config, Config16, Config32, DataPacket,
 };
 use anyhow::{anyhow, Result};
 use log::warn;
@@ -32,7 +32,7 @@ fn audit_format(packet_format: Option<Format>, config_format: Format) {
 /// Converts an iterator of packets to an iterator of [FrameXyz].
 pub fn packet_to_frame_xyz<'a, I>(config: Config, packets: I) -> Result<FrameXyzIter<'a>>
 where
-    I: IntoIterator<Item = Packet> + 'a,
+    I: IntoIterator<Item = DataPacket> + 'a,
     I::IntoIter: Send,
 {
     use FormatKind as K;
@@ -55,14 +55,13 @@ macro_rules! declare_packet_to_frame_xyz_fn {
     ($name:ident, $config:ident, $firing:ident, $frame:ident, $iter_fn:ident) => {
         pub fn $name<I>(config: $config, packets: I) -> impl Iterator<Item = $frame> + Send
         where
-            I: IntoIterator<Item = Packet>,
+            I: IntoIterator<Item = DataPacket>,
             I::IntoIter: Send,
         {
             let batcher = Batcher::new();
 
             packets
                 .into_iter()
-                .filter_map(|packet| packet.try_into_data().ok())
                 .map(move |packet| {
                     audit_format(packet.try_format(), config.format());
 

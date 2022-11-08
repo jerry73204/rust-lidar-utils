@@ -1,9 +1,7 @@
 use anyhow::{ensure, Result};
 use itertools::{izip, Itertools};
 use pcap::Capture;
-use velodyne_lidar::{
-    config::Config, consts, iter::convert::packet_to_frame_xyz, DataPacket, Packet,
-};
+use velodyne_lidar::{config::Config, consts, iter::convert::packet_to_frame_xyz, DataPacket};
 
 const UDP_HEADER_SIZE: usize = 42;
 
@@ -39,7 +37,7 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
     // convert to point cloud
     {
         let config = Config::new_vlp_16_strongest();
-        packet_to_frame_xyz(config, data_packets.into_iter().map(Packet::from))?.count();
+        packet_to_frame_xyz(config, data_packets.into_iter())?.count();
     }
 
     // convert to frames
@@ -118,7 +116,7 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
     // convert to point cloud
     {
         let config = Config::new_vlp_32c_strongest();
-        packet_to_frame_xyz(config, data_packets.into_iter().map(Packet::from))?.count();
+        packet_to_frame_xyz(config, data_packets.into_iter())?.count();
     }
 
     // convert to frames
