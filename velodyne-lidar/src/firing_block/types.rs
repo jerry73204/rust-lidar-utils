@@ -4,6 +4,7 @@ use crate::{
         firing_block_to_xyz_d16, firing_block_to_xyz_d32, firing_block_to_xyz_s16,
         firing_block_to_xyz_s32,
     },
+    firing_raw::{FiringRawD16, FiringRawD32, FiringRawS16, FiringRawS32},
     firing_xyz::{FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
     kinds::FormatKind,
     packet::{Block, Channel},
@@ -20,6 +21,14 @@ pub struct FiringBlockS16<'a> {
 }
 
 impl<'a> FiringBlockS16<'a> {
+    pub fn to_firing_raw(&self) -> FiringRawS16 {
+        FiringRawS16 {
+            time: self.time,
+            azimuth_range: self.azimuth_range.clone(),
+            channels: *self.channels,
+        }
+    }
+
     pub fn to_firing_xyz(&self, beams: &Config16) -> FiringXyzS16 {
         firing_block_to_xyz_s16(self, beams)
     }
@@ -34,6 +43,14 @@ pub struct FiringBlockS32<'a> {
 }
 
 impl<'a> FiringBlockS32<'a> {
+    pub fn to_firing_raw(&self) -> FiringRawS32 {
+        FiringRawS32 {
+            time: self.time,
+            azimuth_range: self.azimuth_range.clone(),
+            channels: *self.channels,
+        }
+    }
+
     pub fn to_firing_xyz(&self, beams: &Config32) -> FiringXyzS32 {
         firing_block_to_xyz_s32(self, beams)
     }
@@ -50,6 +67,15 @@ pub struct FiringBlockD16<'a> {
 }
 
 impl<'a> FiringBlockD16<'a> {
+    pub fn to_firing_raw(&self) -> FiringRawD16 {
+        FiringRawD16 {
+            time: self.time,
+            azimuth_range: self.azimuth_range.clone(),
+            channels_strongest: *self.channels_strongest,
+            channels_last: *self.channels_last,
+        }
+    }
+
     pub fn to_firing_xyz(&self, beams: &Config16) -> FiringXyzD16 {
         firing_block_to_xyz_d16(self, beams)
     }
@@ -100,6 +126,15 @@ pub struct FiringBlockD32<'a> {
 }
 
 impl<'a> FiringBlockD32<'a> {
+    pub fn to_firing_raw(&self) -> FiringRawD32 {
+        FiringRawD32 {
+            time: self.time,
+            azimuth_range: self.azimuth_range.clone(),
+            channels_strongest: *self.channels_strongest,
+            channels_last: *self.channels_last,
+        }
+    }
+
     pub fn to_firing_xyz(&self, beams: &Config32) -> FiringXyzD32 {
         firing_block_to_xyz_d32(self, beams)
     }
