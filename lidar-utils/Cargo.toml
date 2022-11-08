@@ -20,6 +20,6 @@ pcap = "0.9.1"
 pcd-rs = "0.8.0"
 structopt = "0.3.26"
 tokio = { version = "1.16.1", features = ["rt-multi-thread"] }
-velodyne-lidar = { version = "0.1.0", path = "../velodyne-lidar", features = ["async"] }
+velodyne-lidar = { version = "0.1.0", path = "../velodyne-lidar" }
 
 [dev-dependencies]
