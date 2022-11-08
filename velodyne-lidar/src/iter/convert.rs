@@ -58,7 +58,7 @@ macro_rules! declare_packet_to_frame_xyz_fn {
             I: IntoIterator<Item = DataPacket>,
             I::IntoIter: Send,
         {
-            let batcher = Batcher::new();
+            let batcher: Batcher<$firing> = Batcher::new();
 
             packets
                 .into_iter()

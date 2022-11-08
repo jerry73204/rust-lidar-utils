@@ -86,7 +86,7 @@ where
     E: AzimuthRange,
 {
     fn default() -> Self {
-        Self::new()
+        Self { buffer: vec![] }
     }
 }
 
