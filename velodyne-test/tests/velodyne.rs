@@ -1,15 +1,19 @@
 use anyhow::{ensure, Result};
-use itertools::izip;
+use itertools::{izip, Itertools};
 use pcap::Capture;
-use velodyne_lidar::{config::Config, consts, pcap::PcapFileReader, DataPacket};
+use velodyne_lidar::{
+    config::Config, consts, iter::convert::packet_to_frame_xyz, DataPacket, Packet,
+};
 
 const UDP_HEADER_SIZE: usize = 42;
 
 #[test]
 fn velodyne_vlp_16_pcap_file() -> Result<()> {
-    let data_packets: Vec<_> = PcapFileReader::open("test_files/velodyne_vlp16.pcap")?
-        .filter_map(|packet| packet.try_into_data().ok())
-        .collect();
+    let data_packets: Vec<_> =
+        velodyne_lidar::iter::packet::from_file("test_files/velodyne_vlp16.pcap")?
+            .map_ok(|packet| packet.try_into_data().ok())
+            .flatten_ok()
+            .try_collect()?;
 
     // timestamp test
     {
@@ -19,7 +23,7 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
         ensure!(is_timestamp_valid, "invalid timestamp detected");
     }
 
-    //check if elevation angle is in order
+    // check if elevation angle is in order
     {
         let original = consts::vlp_16::ELEVAION_DEGREES;
         let mut sort = consts::vlp_16::ELEVAION_DEGREES;
@@ -34,14 +38,8 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
 
     // convert to point cloud
     {
-        let converter = Config::new_vlp_16_strongest()
-            .build_converter()
-            .unwrap()
-            .into_single16();
-        let _: Vec<_> = data_packets
-            .iter()
-            .flat_map(|packet| converter.packet_to_firing_xyz_iter(packet))
-            .collect();
+        let config = Config::new_vlp_16_strongest();
+        packet_to_frame_xyz(config, data_packets.into_iter().map(Packet::from))?.count();
     }
 
     // convert to frames
@@ -104,7 +102,7 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
         ensure!(is_timestamp_valid, "invalid timestamp detected");
     }
 
-    //check if elevation angle is in order
+    // check if elevation angle is in order
     {
         let original = consts::vlp_32c::ELEVAION_DEGREES;
         let mut sort = consts::vlp_32c::ELEVAION_DEGREES;
@@ -119,10 +117,8 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
 
     // convert to point cloud
     {
-        let converter = Config::new_vlp_32c_strongest().build_converter().unwrap();
-        converter
-            .packet_iter_to_frame_xyz_iter(data_packets)
-            .count();
+        let config = Config::new_vlp_32c_strongest();
+        packet_to_frame_xyz(config, data_packets.into_iter().map(Packet::from))?.count();
     }
 
     // convert to frames
