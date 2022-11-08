@@ -2,6 +2,14 @@
 name = "velodyne-lidar"
 version = "0.1.0"
 edition = "2021"
+authors = ["jerry73204 <jerry73204@gmail.com>"]
+description = "Velodyne lidar data processing algorithms and utilities"
+documentation = "https://docs.rs/velodyne-lidar/"
+homepage = "https://github.com/jerry73204/rust-lidar-utils"
+repository = "https://github.com/jerry73204/rust-lidar-utils"
+categories = ["algorithms"]
+readme = "README.md"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
