@@ -101,7 +101,7 @@ impl Block {
     }
 }
 
-/// Represents the data packet from Velodyne sensor.
+/// Represents a data packet from Velodyne sensor.
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct DataPacket {

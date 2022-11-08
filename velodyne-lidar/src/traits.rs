@@ -1,4 +1,6 @@
-pub type BoxIterator<'a, T> = Box<dyn Iterator<Item = T> + Sync + Send + 'a>;
+//! Trait definitions.
+
+pub(crate) type BoxIterator<'a, T> = Box<dyn Iterator<Item = T> + Sync + Send + 'a>;
 
 pub use azimuth::*;
 mod azimuth {
@@ -10,6 +12,7 @@ mod azimuth {
     use measurements::Angle;
     use std::ops::Range;
 
+    /// Provides an azimuth range value.
     pub trait AzimuthRange {
         fn azimuth_range(&self) -> Range<Angle>;
 
@@ -109,6 +112,7 @@ mod point_field {
 
     use super::BoxIterator;
 
+    /// Rectangular random accessible point array.
     pub trait PointField {
         type Point<'a>
         where

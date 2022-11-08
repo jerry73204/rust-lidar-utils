@@ -1,9 +1,12 @@
+//! Define the formats of point arrangements.
+
 use crate::{
     common::*,
     packet::{ProductID, ReturnMode},
     traits::{AzimuthRange, PointField},
 };
 
+/// An enumeration of point arrangement formats.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Format {
     Single16,
@@ -39,6 +42,7 @@ impl Format {
     }
 }
 
+/// An enumeration of point arrangement formats with additional generics.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FormatKind<S16, S32, D16, D32> {
     Single16(S16),

@@ -1,3 +1,5 @@
+//! Firings of blocks.
+
 use crate::{kinds::FormatKind, packet::Channel};
 use std::{ops::Range, time::Duration};
 

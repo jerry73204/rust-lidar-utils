@@ -1,3 +1,5 @@
+//! Group consecutive elements.
+
 use crate::{
     common::*,
     firing_block::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
@@ -6,6 +8,8 @@ use crate::{
     traits::AzimuthRange,
 };
 
+/// A helper that groups consecutive elements into frames according to
+/// their azimuth ranges.
 #[derive(Debug, Clone)]
 pub struct Batcher<E>
 where
@@ -18,10 +22,13 @@ impl<E> Batcher<E>
 where
     E: AzimuthRange,
 {
+    /// Create a new instance.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Pushes one element and returns a batch if the pushed element
+    /// is back aronud.
     pub fn push_one(&mut self, firing: E) -> Option<Vec<E>> {
         let buffer = &mut self.buffer;
         let wrap =
@@ -36,6 +43,7 @@ where
         }
     }
 
+    /// Pushes one element and returns an iterator of batches.
     pub fn push_many<'a, I>(&'a mut self, firings: I) -> impl Iterator<Item = Vec<E>> + 'a
     where
         I: IntoIterator<Item = E> + 'a,
@@ -45,11 +53,13 @@ where
             .filter_map(|firing| self.push_one(firing))
     }
 
+    /// Takes a batch of buffered elements.
     pub fn take(&mut self) -> Option<Vec<E>> {
         let firings = mem::take(&mut self.buffer);
         (!firings.is_empty()).then_some(firings)
     }
 
+    /// Converts an iterator of elements to an iterator of batches.
     pub fn with_iter<I>(self, firings: I) -> impl Iterator<Item = Vec<E>>
     where
         I: IntoIterator<Item = E>,

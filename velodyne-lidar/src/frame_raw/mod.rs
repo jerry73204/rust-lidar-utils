@@ -1,3 +1,5 @@
+//! Frames with raw sensor values.
+
 use crate::{
     common::*,
     firing_raw::{FiringRawD16, FiringRawD32, FiringRawS16, FiringRawS32},

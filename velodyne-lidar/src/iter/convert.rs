@@ -1,3 +1,5 @@
+//! Iterator conversion functions.
+
 use crate::{
     batcher::Batcher,
     firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
@@ -8,7 +10,7 @@ use crate::{
 use anyhow::{anyhow, Result};
 use log::warn;
 
-pub type FrameXyzIter<'a> = Box<dyn Iterator<Item = FrameXyz> + Send + 'a>;
+pub(crate) type FrameXyzIter<'a> = Box<dyn Iterator<Item = FrameXyz> + Send + 'a>;
 
 fn audit_format(packet_format: Option<Format>, config_format: Format) {
     match packet_format {
@@ -27,6 +29,7 @@ fn audit_format(packet_format: Option<Format>, config_format: Format) {
     }
 }
 
+/// Converts an iterator of packets to an iterator of [FrameXyz].
 pub fn packet_to_frame_xyz<'a, I>(config: Config, packets: I) -> Result<FrameXyzIter<'a>>
 where
     I: IntoIterator<Item = Packet> + 'a,

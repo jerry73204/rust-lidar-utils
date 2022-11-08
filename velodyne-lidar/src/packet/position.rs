@@ -1,5 +1,6 @@
 use crate::common::*;
 
+/// Represents a position packet from Velodyne sensor.
 #[repr(C, packed)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PositionPacket {

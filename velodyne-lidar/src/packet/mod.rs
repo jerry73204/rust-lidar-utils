@@ -1,3 +1,5 @@
+//! Defines Velodyne packet data structures.
+
 mod data;
 pub use data::*;
 

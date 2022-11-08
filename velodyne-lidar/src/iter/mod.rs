@@ -1,3 +1,5 @@
+//! Iterator combinators.
+
 pub mod convert;
-#[cfg(feature = "parallel")]
+#[cfg(feature = "pcap")]
 pub mod packet;
