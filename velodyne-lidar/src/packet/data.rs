@@ -197,7 +197,7 @@ impl DataPacket {
             })
         };
 
-        let iter = izip!(times, firing_azimuths, &self.blocks).flat_map(
+        izip!(times, firing_azimuths, &self.blocks).flat_map(
             move |(block_time, [former_azimuth, latter_azimuth], block)| {
                 let former_time = block_time;
                 let latter_time = former_time + FIRING_PERIOD;
@@ -223,9 +223,7 @@ impl DataPacket {
 
                 [former, latter]
             },
-        );
-
-        iter
+        )
     }
 
     pub fn firing_block_iter_d16(

@@ -11,13 +11,13 @@ mod frame_kind {
     pub type FrameXyz = FormatKind<FrameXyzS16, FrameXyzS32, FrameXyzD16, FrameXyzD32>;
 
     impl FrameXyz {
-        pub fn firing_iter<'a>(
-            &'a self,
+        pub fn firing_iter(
+            &self,
         ) -> FormatKind<
-            impl Iterator<Item = &'a FiringXyzS16> + Clone + Sync + Send,
-            impl Iterator<Item = &'a FiringXyzS32> + Clone + Sync + Send,
-            impl Iterator<Item = &'a FiringXyzD16> + Clone + Sync + Send,
-            impl Iterator<Item = &'a FiringXyzD32> + Clone + Sync + Send,
+            impl Iterator<Item = &FiringXyzS16> + Clone + Sync + Send,
+            impl Iterator<Item = &FiringXyzS32> + Clone + Sync + Send,
+            impl Iterator<Item = &FiringXyzD16> + Clone + Sync + Send,
+            impl Iterator<Item = &FiringXyzD32> + Clone + Sync + Send,
         > {
             match self {
                 FrameXyz::Single16(me) => FormatKind::from_s16(me.firings.iter()),

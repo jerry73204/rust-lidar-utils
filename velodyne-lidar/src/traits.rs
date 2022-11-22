@@ -122,9 +122,9 @@ mod point_field {
 
         fn ncols(&self) -> usize;
 
-        fn point_at<'a>(&'a self, row: usize, col: usize) -> Option<Self::Point<'a>>;
+        fn point_at(&self, row: usize, col: usize) -> Option<Self::Point<'_>>;
 
-        fn indexed_point_iter<'a>(&'a self) -> BoxIterator<'a, ((usize, usize), Self::Point<'a>)>
+        fn indexed_point_iter(&self) -> BoxIterator<'_, ((usize, usize), Self::Point<'_>)>
         where
             Self: Sync,
         {
@@ -134,7 +134,7 @@ mod point_field {
             )
         }
 
-        fn point_iter<'a>(&'a self) -> BoxIterator<'a, Self::Point<'a>>
+        fn point_iter(&self) -> BoxIterator<'_, Self::Point<'_>>
         where
             Self: Sync,
         {

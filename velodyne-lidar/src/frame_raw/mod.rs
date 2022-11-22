@@ -12,13 +12,13 @@ use crate::{
 pub type FrameRaw = FormatKind<FrameRawS16, FrameRawS32, FrameRawD16, FrameRawD32>;
 
 impl FrameRaw {
-    pub fn firing_iter<'a>(
-        &'a self,
+    pub fn firing_iter(
+        &self,
     ) -> FormatKind<
-        impl Iterator<Item = &'a FiringRawS16> + Clone + Sync + Send,
-        impl Iterator<Item = &'a FiringRawS32> + Clone + Sync + Send,
-        impl Iterator<Item = &'a FiringRawD16> + Clone + Sync + Send,
-        impl Iterator<Item = &'a FiringRawD32> + Clone + Sync + Send,
+        impl Iterator<Item = &FiringRawS16> + Clone + Sync + Send,
+        impl Iterator<Item = &FiringRawS32> + Clone + Sync + Send,
+        impl Iterator<Item = &FiringRawD16> + Clone + Sync + Send,
+        impl Iterator<Item = &FiringRawD32> + Clone + Sync + Send,
     > {
         match self {
             FrameRaw::Single16(me) => FormatKind::from_s16(me.firings.iter()),

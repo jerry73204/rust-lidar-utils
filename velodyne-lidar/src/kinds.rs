@@ -246,7 +246,7 @@ where
         }
     }
 
-    fn point_at<'a>(&'a self, row: usize, col: usize) -> Option<Self::Point<'a>> {
+    fn point_at(&self, row: usize, col: usize) -> Option<Self::Point<'_>> {
         let point = match self {
             FormatKind::Single16(inner) => FormatKind::from_s16(inner.point_at(row, col)?),
             FormatKind::Single32(inner) => FormatKind::from_s32(inner.point_at(row, col)?),
