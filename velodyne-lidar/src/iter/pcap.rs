@@ -1,11 +1,10 @@
 //! Packet iterator creation functions.
 
+use super::convert::{try_packet_to_frame_xyz, ResultFrameXyzIter};
 use crate::{Config, Packet};
 use anyhow::Result;
 use pcap::{Capture, Device};
 use std::{iter, path::Path};
-
-use super::convert::{try_packet_to_frame_xyz, ResultFrameXyzIter};
 
 const UDP_HEADER_SIZE: usize = 42;
 
