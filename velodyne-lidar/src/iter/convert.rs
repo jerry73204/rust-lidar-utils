@@ -1,7 +1,11 @@
 //! Iterator conversion functions.
 
-use crate::kinds::Format;
+use crate::{frame_xyz::FrameXyz, kinds::Format};
 use log::warn;
+
+pub(crate) type FrameXyzIter<'a> = Box<dyn Iterator<Item = FrameXyz> + Send + 'a>;
+pub(crate) type ResultFrameXyzIter<'a, E> =
+    Box<dyn Iterator<Item = Result<FrameXyz, E>> + Send + 'a>;
 
 fn audit_format(packet_format: Option<Format>, config_format: Format) {
     match packet_format {
@@ -22,17 +26,15 @@ fn audit_format(packet_format: Option<Format>, config_format: Format) {
 
 pub use data_packet_to_frame_xyz::*;
 mod data_packet_to_frame_xyz {
-    use super::audit_format;
+    use super::{audit_format, FrameXyzIter};
     use crate::{
         batcher::Batcher,
         firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
-        frame_xyz::{FrameXyz, FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
+        frame_xyz::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
         kinds::FormatKind,
         Config, Config16, Config32, DataPacket,
     };
     use anyhow::{anyhow, Result};
-
-    pub(crate) type FrameXyzIter<'a> = Box<dyn Iterator<Item = FrameXyz> + Send + 'a>;
 
     /// Converts an iterator of packets to an iterator of [FrameXyz].
     pub fn data_packet_to_frame_xyz<'a, I>(config: Config, packets: I) -> Result<FrameXyzIter<'a>>
@@ -132,20 +134,19 @@ mod try_packet_to_frame_xyz {
     use crate::{
         batcher::Batcher,
         firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
-        frame_xyz::{FrameXyz, FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
+        frame_xyz::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
+        iter::convert::ResultFrameXyzIter,
         kinds::FormatKind,
         Config, Config16, Config32, Packet,
     };
     use anyhow::{anyhow, Result};
     use itertools::Itertools;
 
-    pub(crate) type FrameXyzIter<'a, E> = Box<dyn Iterator<Item = Result<FrameXyz, E>> + Send + 'a>;
-
     /// Converts an iterator of packets to an iterator of [FrameXyz].
     pub fn try_packet_to_frame_xyz<'a, E, I>(
         config: Config,
         packets: I,
-    ) -> Result<FrameXyzIter<'a, E>>
+    ) -> Result<ResultFrameXyzIter<'a, E>>
     where
         I: IntoIterator<Item = Result<Packet, E>> + 'a,
         I::IntoIter: Send,
@@ -157,7 +158,7 @@ mod try_packet_to_frame_xyz {
             .try_into_kind()
             .map_err(|_| anyhow!("invalid configuration"))?;
 
-        let iter: FrameXyzIter<_> = match config_kinds {
+        let iter: ResultFrameXyzIter<_> = match config_kinds {
             K::Single16(config) => {
                 Box::new(try_packet_to_frame_xyz_s16(config, packets).map_ok(K::from_s16))
             }

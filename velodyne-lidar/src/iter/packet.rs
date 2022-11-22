@@ -1,9 +1,11 @@
 //! Packet iterator creation functions.
 
-use crate::Packet;
+use crate::{Config, Packet};
 use anyhow::Result;
 use pcap::{Capture, Device};
 use std::{iter, path::Path};
+
+use super::convert::{try_packet_to_frame_xyz, ResultFrameXyzIter};
 
 const UDP_HEADER_SIZE: usize = 42;
 
@@ -51,4 +53,39 @@ where
     let capture: Capture<pcap::Inactive> = Capture::from_device(device)?;
     let capture = capture.open()?;
     from_capture(capture)
+}
+
+pub fn from_capture_to_frame_xyz<A>(
+    config: Config,
+    capture: Capture<A>,
+) -> Result<ResultFrameXyzIter<'static, pcap::Error>>
+where
+    A: pcap::Activated + 'static,
+{
+    let packets = from_capture(capture)?;
+    let iter = try_packet_to_frame_xyz(config, packets)?;
+    Ok(iter)
+}
+
+pub fn from_file_to_frame_xyz<P>(
+    config: Config,
+    path: P,
+) -> Result<ResultFrameXyzIter<'static, pcap::Error>>
+where
+    P: AsRef<Path>,
+{
+    let capture: Capture<pcap::Offline> = Capture::from_file(path)?;
+    from_capture_to_frame_xyz(config, capture)
+}
+
+pub fn from_device_to_frame_xyz<D>(
+    config: Config,
+    device: D,
+) -> Result<ResultFrameXyzIter<'static, pcap::Error>>
+where
+    D: Into<Device>,
+{
+    let capture: Capture<pcap::Inactive> = Capture::from_device(device)?;
+    let capture = capture.open()?;
+    from_capture_to_frame_xyz(config, capture)
 }
