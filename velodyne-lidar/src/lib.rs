@@ -21,3 +21,7 @@ mod utils;
 
 pub use config::*;
 pub use packet::{DataPacket, Packet, PositionPacket, ProductID, ReturnMode};
+
+pub mod prelude {
+    pub use crate::traits::{AzimuthRange, FiringLike, PointField};
+}
