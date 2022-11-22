@@ -1,11 +1,18 @@
 //! Iterator conversion functions.
-
 use crate::{frame_xyz::FrameXyz, kinds::Format};
 use log::warn;
 
 pub(crate) type FrameXyzIter<'a> = Box<dyn Iterator<Item = FrameXyz> + Send + 'a>;
 pub(crate) type ResultFrameXyzIter<'a, E> =
     Box<dyn Iterator<Item = Result<FrameXyz, E>> + Send + 'a>;
+// pub(crate) type ResultFrameXyzIterS16<'a, E> =
+//     Box<dyn Iterator<Item = Result<FrameXyzS16, E>> + Send + 'a>;
+// pub(crate) type ResultFrameXyzIterD16<'a, E> =
+//     Box<dyn Iterator<Item = Result<FrameXyzD16, E>> + Send + 'a>;
+// pub(crate) type ResultFrameXyzIterS32<'a, E> =
+//     Box<dyn Iterator<Item = Result<FrameXyzS32, E>> + Send + 'a>;
+// pub(crate) type ResultFrameXyzIterD32<'a, E> =
+//     Box<dyn Iterator<Item = Result<FrameXyzD32, E>> + Send + 'a>;
 
 fn audit_format(packet_format: Option<Format>, config_format: Format) {
     match packet_format {

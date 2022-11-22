@@ -253,6 +253,123 @@ mod config_ {
                 Dual => Dual16,
             }
         }
+
+        pub fn new_vlp_16_last() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_vlp_16();
+
+            Self {
+                return_mode: ReturnMode::Last,
+                lasers: lasers.try_into().unwrap(),
+                distance_resolution,
+            }
+        }
+
+        pub fn new_vlp_16_strongest() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_vlp_16();
+
+            Self {
+                return_mode: ReturnMode::Strongest,
+                lasers: lasers.try_into().unwrap(),
+                distance_resolution,
+            }
+        }
+
+        pub fn new_vlp_16_dual() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_vlp_16();
+
+            Self {
+                return_mode: ReturnMode::Dual,
+                lasers: lasers.try_into().unwrap(),
+                distance_resolution,
+            }
+        }
+
+        pub fn new_puck_hires_last() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_puck_hires();
+
+            Self {
+                return_mode: ReturnMode::Last,
+                lasers: lasers.try_into().unwrap(),
+                distance_resolution,
+            }
+        }
+
+        pub fn new_puck_hires_strongest() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_puck_hires();
+
+            Self {
+                return_mode: ReturnMode::Strongest,
+                lasers: lasers.try_into().unwrap(),
+                distance_resolution,
+            }
+        }
+
+        pub fn new_puck_hires_dual() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_puck_hires();
+
+            Self {
+                return_mode: ReturnMode::Dual,
+                lasers: lasers.try_into().unwrap(),
+                distance_resolution,
+            }
+        }
+
+        pub fn new_puck_lite_last() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_puck_lite();
+
+            Self {
+                return_mode: ReturnMode::Last,
+                lasers: lasers.try_into().unwrap(),
+                distance_resolution,
+            }
+        }
+
+        pub fn new_puck_lite_strongest() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_puck_lite();
+
+            Self {
+                return_mode: ReturnMode::Strongest,
+                lasers: lasers.try_into().unwrap(),
+                distance_resolution,
+            }
+        }
+
+        pub fn new_puck_lite_dual() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_puck_lite();
+
+            Self {
+                return_mode: ReturnMode::Dual,
+                lasers: lasers.try_into().unwrap(),
+                distance_resolution,
+            }
+        }
     }
 
     impl Config32 {
@@ -263,6 +380,45 @@ mod config_ {
             match self.return_mode {
                 Strongest | Last => Single32,
                 Dual => Dual32,
+            }
+        }
+
+        pub fn new_vlp_32c_last() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_vlp_32c();
+
+            Self {
+                return_mode: ReturnMode::Last,
+                lasers: lasers.try_into().unwrap(),
+                distance_resolution,
+            }
+        }
+
+        pub fn new_vlp_32c_strongest() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_vlp_32c();
+
+            Self {
+                return_mode: ReturnMode::Strongest,
+                lasers: lasers.try_into().unwrap(),
+                distance_resolution,
+            }
+        }
+
+        pub fn new_vlp_32c_dual() -> Self {
+            let BeamConfig {
+                lasers,
+                distance_resolution,
+            } = BeamConfig::new_vlp_32c();
+
+            Self {
+                return_mode: ReturnMode::Dual,
+                lasers: lasers.try_into().unwrap(),
+                distance_resolution,
             }
         }
     }
