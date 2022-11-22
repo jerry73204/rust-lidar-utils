@@ -2,4 +2,4 @@
 
 pub mod convert;
 #[cfg(feature = "pcap")]
-pub mod packet;
+pub mod pcap;
