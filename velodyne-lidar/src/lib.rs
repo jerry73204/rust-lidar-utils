@@ -13,6 +13,8 @@ pub mod frame_xyz;
 pub mod iter;
 pub mod kinds;
 pub mod packet;
+#[cfg(feature = "parallel")]
+pub mod par_iter;
 pub mod point;
 pub mod traits;
 mod utils;
