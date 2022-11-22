@@ -8,6 +8,8 @@ use crate::{
     firing_xyz::{FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
     kinds::FormatKind,
     packet::{Block, Channel},
+    point::ChannelRefD,
+    traits::FiringLike,
     Config, Config16, Config32,
 };
 use anyhow::anyhow;
@@ -34,6 +36,22 @@ impl<'a> FiringBlockS16<'a> {
     }
 }
 
+impl<'a> FiringLike for FiringBlockS16<'a> {
+    type Point<'p> = &'p Channel where Self: 'p;
+
+    fn start_time(&self) -> Duration {
+        self.time
+    }
+
+    fn num_points(&self) -> usize {
+        self.channels.len()
+    }
+
+    fn point_at(&self, index: usize) -> Option<Self::Point<'_>> {
+        self.channels.get(index)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringBlockS32<'a> {
     pub time: Duration,
@@ -53,6 +71,22 @@ impl<'a> FiringBlockS32<'a> {
 
     pub fn to_firing_xyz(&self, beams: &Config32) -> FiringXyzS32 {
         firing_block_to_xyz_s32(self, beams)
+    }
+}
+
+impl<'a> FiringLike for FiringBlockS32<'a> {
+    type Point<'p> = &'p Channel where Self: 'p;
+
+    fn start_time(&self) -> Duration {
+        self.time
+    }
+
+    fn num_points(&self) -> usize {
+        self.channels.len()
+    }
+
+    fn point_at(&self, index: usize) -> Option<Self::Point<'_>> {
+        self.channels.get(index)
     }
 }
 
@@ -115,6 +149,24 @@ impl<'a> FiringBlockD16<'a> {
     }
 }
 
+impl<'a> FiringLike for FiringBlockD16<'a> {
+    type Point<'p> = ChannelRefD<'p> where Self: 'p;
+
+    fn start_time(&self) -> Duration {
+        self.time
+    }
+
+    fn num_points(&self) -> usize {
+        self.channels_strongest.len()
+    }
+
+    fn point_at(&self, index: usize) -> Option<Self::Point<'_>> {
+        let strongest = self.channels_strongest.get(index)?;
+        let last = self.channels_last.get(index)?;
+        Some(ChannelRefD { strongest, last })
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringBlockD32<'a> {
     pub time: Duration,
@@ -171,6 +223,24 @@ impl<'a> FiringBlockD32<'a> {
             block,
             channels,
         }
+    }
+}
+
+impl<'a> FiringLike for FiringBlockD32<'a> {
+    type Point<'p> = ChannelRefD<'p> where Self: 'p;
+
+    fn start_time(&self) -> Duration {
+        self.time
+    }
+
+    fn num_points(&self) -> usize {
+        self.channels_strongest.len()
+    }
+
+    fn point_at(&self, index: usize) -> Option<Self::Point<'_>> {
+        let strongest = self.channels_strongest.get(index)?;
+        let last = self.channels_last.get(index)?;
+        Some(ChannelRefD { strongest, last })
     }
 }
 
