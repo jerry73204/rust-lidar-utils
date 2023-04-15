@@ -3,5 +3,6 @@ members = [
     "velodyne-lidar",
     "ouster-lidar",
     "lidar-utils",
+    "velodyne-params",
     "velodyne-test",
 ]
