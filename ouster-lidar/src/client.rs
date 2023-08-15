@@ -5,11 +5,7 @@ use super::{
     enums::{LidarMode, MultipurposeIoMode, NmeaBaudRate, OnOffMode, Polarity, TimestampMode},
 };
 use crate::common::*;
-pub use serde_big_array::big_array;
-
-// TODO: This workaround handles large array for serde.
-//       We'll remove is it once the const generics is introduced.
-big_array! { BigArray; }
+pub use serde_big_array::BigArray;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ConfigText {

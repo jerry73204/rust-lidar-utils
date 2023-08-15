@@ -6,19 +6,19 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.53"
-serde = { version = "1.0.136", features = ["derive"] }
-serde_json = "1.0.78"
-serde-big-array = "0.3.2"
-chrono = "0.4.19"
+anyhow = "1.0.72"
+serde = { version = "1.0.183", features = ["derive"] }
+serde_json = "1.0.104"
+serde-big-array = "0.5.1"
+chrono = "0.4.26"
 derivative = "2.2.0"
-itertools = "0.10.3"
-num-traits = "0.2.14"
+itertools = "0.11.0"
+num-traits = "0.2.16"
 noisy_float = { version = "0.2.0", features = ["serde"] }
 measurements = "0.11.0"
 
 [dev-dependencies]
-pcap = "0.9.1"
+pcap = "1.1.0"
 
 [features]
 all-tests = ["ouster-client-test"]

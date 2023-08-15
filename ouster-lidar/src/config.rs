@@ -5,11 +5,7 @@ use super::{
     enums::LidarMode,
 };
 use crate::common::*;
-pub use serde_big_array::big_array;
-
-// TODO: This workaround handles large array for serde.
-//       We'll remove is it once the const generics is introduced.
-big_array! { BigArray; }
+pub use serde_big_array::BigArray;
 
 /// A serializable struct that represents a Ouster sensor configuration.
 #[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Derivative)]
