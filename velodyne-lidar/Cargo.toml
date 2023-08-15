@@ -40,5 +40,5 @@ docs-rs = ["full"]
 parallel = ["rayon"]
 
 [package.metadata.docs.rs]
-features = ["pcap", "docs-rs"]
+features = ["parallel", "pcap", "docs-rs"]
 no-default-features = true
