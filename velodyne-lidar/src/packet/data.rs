@@ -137,7 +137,7 @@ impl DataPacket {
     pub fn datetime(&self) -> NaiveDateTime {
         let secs = self.timestamp / 1_000_000;
         let nsecs = (self.timestamp % 1_000_000) * 1000;
-        NaiveDateTime::from_timestamp(secs as i64, nsecs as u32)
+        NaiveDateTime::from_timestamp_opt(secs as i64, nsecs as u32).unwrap()
     }
 
     pub fn time(&self) -> Duration {
