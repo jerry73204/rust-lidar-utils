@@ -2,11 +2,13 @@
 
 use crate::{
     common::*,
-    firing_raw::{FiringRawD16, FiringRawD32, FiringRawS16, FiringRawS32},
-    kinds::FormatKind,
     packet::Channel,
-    point::{ChannelD, ChannelKind, ChannelRefD},
     traits::{BoxIterator, PointField},
+    types::{
+        channel::{ChannelD, ChannelKind, ChannelRefD},
+        firing_raw::{FiringRawD16, FiringRawD32, FiringRawS16, FiringRawS32},
+        format::FormatKind,
+    },
 };
 
 pub type FrameRaw = FormatKind<FrameRawS16, FrameRawS32, FrameRawD16, FrameRawD32>;

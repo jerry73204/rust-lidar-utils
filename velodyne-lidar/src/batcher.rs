@@ -2,10 +2,12 @@
 
 use crate::{
     common::*,
-    firing_block::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
-    firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
-    kinds::FormatKind,
     traits::AzimuthRange,
+    types::{
+        firing_block::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
+        firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+        format::FormatKind,
+    },
 };
 
 /// A helper that groups consecutive elements into frames according to

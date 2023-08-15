@@ -23,8 +23,12 @@ where
                 Err(pcap::Error::NoMorePackets) => return None,
                 Err(err) => break Err(err),
             };
-            let Some(slice) =  packet.data.get(UDP_HEADER_SIZE..) else { continue };
-            let Ok(packet) = Packet::from_slice(slice) else { continue };
+            let Some(slice) = packet.data.get(UDP_HEADER_SIZE..) else {
+                continue;
+            };
+            let Ok(packet) = Packet::from_slice(slice) else {
+                continue;
+            };
             break Ok(packet);
         })
     });

@@ -1,9 +1,11 @@
 use crate::{
     common::*,
     consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK, FIRING_PERIOD},
-    firing_block::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
-    firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
-    kinds::{Format, FormatKind},
+    types::{
+        firing_block::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
+        firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+        format::{Format, FormatKind},
+    },
     utils::AngleExt as _,
     Config16, Config32,
 };

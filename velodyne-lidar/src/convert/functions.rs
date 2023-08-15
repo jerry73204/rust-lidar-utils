@@ -1,13 +1,18 @@
 use crate::{
-    common::*,
     config::Beam,
     consts::{CHANNEL_PERIOD, FIRING_PERIOD},
-    firing_block::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
-    firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
-    point::{Measurement, MeasurementDual, PointD, PointS},
+    types::{
+        firing_block::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
+        firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+        measurements::{Measurement, MeasurementDual},
+        point::{PointD, PointS},
+    },
     utils::{AngleExt as _, DurationExt as _},
     Config16, Config32,
 };
+use itertools::izip;
+use measurements::{Angle, Length};
+use std::iter;
 
 pub fn firing_block_to_xyz_s16(firing: &FiringBlockS16, beams: &Config16) -> FiringXyzS16 {
     let Config16 {
@@ -25,7 +30,7 @@ pub fn firing_block_to_xyz_s16(firing: &FiringBlockS16, beams: &Config16) -> Fir
     let channel_times = iter::successors(Some(firing_time), |&prev| Some(prev + CHANNEL_PERIOD));
 
     let points: Vec<_> = izip!(0.., channel_times, channels, lasers)
-        .map(move |(laser_id, channel_time, channel, laser)| {
+        .map(move |(laser_id, channel_time, channel, laser)| -> PointS {
             let ratio = (channel_time - firing_time).div_duration(FIRING_PERIOD);
             let Beam {
                 elevation,
@@ -161,7 +166,7 @@ pub fn firing_block_to_xyz_d16(firing: &FiringBlockD16, beams: &Config16) -> Fir
         lasers
     )
     .map(
-        move |(laser_id, channel_time, channel_strongest, channel_last, laser)| {
+        move |(laser_id, channel_time, channel_strongest, channel_last, laser)| -> PointD {
             let ratio = (channel_time - firing_time).div_duration(FIRING_PERIOD);
             let Beam {
                 elevation,

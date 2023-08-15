@@ -1,11 +1,15 @@
+//! Frames with points in 3D Cartesian coordinates.
+
 pub use frame_kind::*;
 mod frame_kind {
     use super::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32};
     use crate::{
-        firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
-        kinds::FormatKind,
-        point::Point,
         traits::BoxIterator,
+        types::{
+            firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+            format::FormatKind,
+            point::Point,
+        },
     };
 
     pub type FrameXyz = FormatKind<FrameXyzS16, FrameXyzS32, FrameXyzD16, FrameXyzD32>;
@@ -107,9 +111,11 @@ pub use frame_types::*;
 mod frame_types {
     use crate::{
         common::*,
-        firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
-        point::{PointD, PointS},
         traits::PointField,
+        types::{
+            firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+            point::{PointD, PointS},
+        },
     };
 
     macro_rules! declare_type {

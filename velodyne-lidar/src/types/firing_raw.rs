@@ -1,6 +1,6 @@
 //! Firings of blocks.
 
-use crate::{kinds::FormatKind, packet::Channel};
+use crate::{packet::Channel, types::format::FormatKind};
 use std::{ops::Range, time::Duration};
 
 #[derive(Debug, Clone, PartialEq, Eq)]

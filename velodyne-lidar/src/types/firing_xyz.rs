@@ -1,36 +1,28 @@
+//! Firings in 3D Cartesian coordinates.
+
 use crate::{
     common::*,
-    kinds::FormatKind,
-    point::{PointD, PointS},
+    types::{
+        format::FormatKind,
+        point::{PointD, PointS},
+    },
 };
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FiringXyzS16 {
-    pub time: Duration,
-    pub azimuth_range: Range<Angle>,
-    pub points: [PointS; 16],
+macro_rules! declare_firing_xyz {
+    ($name:ident, $size:expr, $point:path) => {
+        #[derive(Debug, Clone, PartialEq, Eq)]
+        pub struct $name {
+            pub time: Duration,
+            pub azimuth_range: Range<Angle>,
+            pub points: [$point; $size],
+        }
+    };
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FiringXyzS32 {
-    pub time: Duration,
-    pub azimuth_range: Range<Angle>,
-    pub points: [PointS; 32],
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FiringXyzD16 {
-    pub time: Duration,
-    pub azimuth_range: Range<Angle>,
-    pub points: [PointD; 16],
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FiringXyzD32 {
-    pub time: Duration,
-    pub azimuth_range: Range<Angle>,
-    pub points: [PointD; 32],
-}
+declare_firing_xyz!(FiringXyzS16, 16, PointS);
+declare_firing_xyz!(FiringXyzS32, 32, PointS);
+declare_firing_xyz!(FiringXyzD16, 16, PointD);
+declare_firing_xyz!(FiringXyzD32, 32, PointD);
 
 pub use kind::*;
 mod kind {

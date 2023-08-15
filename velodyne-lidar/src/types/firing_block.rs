@@ -1,15 +1,19 @@
+//! Firings of block references.
+
 use crate::{
     common::*,
     convert::functions::{
         firing_block_to_xyz_d16, firing_block_to_xyz_d32, firing_block_to_xyz_s16,
         firing_block_to_xyz_s32,
     },
-    firing_raw::{FiringRawD16, FiringRawD32, FiringRawS16, FiringRawS32},
-    firing_xyz::{FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
-    kinds::FormatKind,
     packet::{Block, Channel},
-    point::ChannelRefD,
     traits::FiringLike,
+    types::{
+        channel::ChannelRefD,
+        firing_raw::{FiringRawD16, FiringRawD32, FiringRawS16, FiringRawS32},
+        firing_xyz::{FiringXyz, FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+        format::FormatKind,
+    },
     Config, Config16, Config32,
 };
 use anyhow::anyhow;

@@ -1,5 +1,5 @@
 //! Iterator conversion functions.
-use crate::{frame_xyz::FrameXyz, kinds::Format};
+use crate::types::{format::Format, frame_xyz::FrameXyz};
 use log::warn;
 
 pub(crate) type FrameXyzIter<'a> = Box<dyn Iterator<Item = FrameXyz> + Send + 'a>;
@@ -28,9 +28,11 @@ mod data_packet_to_frame_xyz {
     use super::{audit_format, FrameXyzIter};
     use crate::{
         batcher::Batcher,
-        firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
-        frame_xyz::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
-        kinds::FormatKind,
+        types::{
+            firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+            format::FormatKind,
+            frame_xyz::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
+        },
         Config, Config16, Config32, DataPacket,
     };
     use anyhow::{anyhow, Result};
@@ -132,10 +134,12 @@ mod try_packet_to_frame_xyz {
     use super::audit_format;
     use crate::{
         batcher::Batcher,
-        firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
-        frame_xyz::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
         iter::convert::ResultFrameXyzIter,
-        kinds::FormatKind,
+        types::{
+            firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+            format::FormatKind,
+            frame_xyz::{FrameXyzD16, FrameXyzD32, FrameXyzS16, FrameXyzS32},
+        },
         Config, Config16, Config32, Packet,
     };
     use anyhow::{anyhow, Result};
@@ -209,8 +213,8 @@ mod try_packet_to_frame_xyz {
                             }
                         };
                         let Some(batcher) = batcher else {
-                                                                                        return None;
-                                                                                    };
+                            return None;
+                        };
 
                         let frames: Vec<_> = batcher
                             .push_many(firings)

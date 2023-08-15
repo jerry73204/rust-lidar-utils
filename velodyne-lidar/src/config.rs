@@ -4,7 +4,7 @@ use crate::{common::*, consts, packet::ReturnMode};
 
 pub use config_::*;
 mod config_ {
-    use crate::kinds::{Format, FormatKind};
+    use crate::types::format::{Format, FormatKind};
 
     use super::*;
 
