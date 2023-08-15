@@ -14,7 +14,7 @@ pub fn from_capture<A>(
 where
     A: pcap::Activated,
 {
-    Ok(crate::iter::pcap::from_capture(capture)?.par_bridge())
+    Ok(crate::iter::pcap::packet_iter_from_capture(capture)?.par_bridge())
 }
 
 /// Creates a packet iterator by loading from a file.

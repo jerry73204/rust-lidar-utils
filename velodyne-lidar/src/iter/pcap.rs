@@ -9,7 +9,7 @@ use std::{iter, path::Path};
 const UDP_HEADER_SIZE: usize = 42;
 
 /// Creates a packet iterator from [pcap::Capture].
-pub fn from_capture<A>(
+pub fn packet_iter_from_capture<A>(
     mut capture: Capture<A>,
 ) -> Result<impl Iterator<Item = Result<Packet, pcap::Error>> + Send, pcap::Error>
 where
@@ -32,18 +32,18 @@ where
 }
 
 /// Creates a packet iterator by loading from a file.
-pub fn from_file<P>(
+pub fn packet_iter_from_file<P>(
     path: P,
 ) -> Result<impl Iterator<Item = Result<Packet, pcap::Error>> + Send, pcap::Error>
 where
     P: AsRef<Path>,
 {
     let capture: Capture<pcap::Offline> = Capture::from_file(path)?;
-    from_capture(capture)
+    packet_iter_from_capture(capture)
 }
 
 /// Creates a packet iterator by reading a device.
-pub fn from_device<D>(
+pub fn packet_iter_from_device<D>(
     device: D,
 ) -> Result<impl Iterator<Item = Result<Packet, pcap::Error>> + Send, pcap::Error>
 where
@@ -51,22 +51,22 @@ where
 {
     let capture: Capture<pcap::Inactive> = Capture::from_device(device)?;
     let capture = capture.open()?;
-    from_capture(capture)
+    packet_iter_from_capture(capture)
 }
 
-pub fn from_capture_to_frame_xyz<A>(
+pub fn frame_xyz_iter_from_capture<A>(
     config: Config,
     capture: Capture<A>,
 ) -> Result<ResultFrameXyzIter<'static, pcap::Error>>
 where
     A: pcap::Activated + 'static,
 {
-    let packets = from_capture(capture)?;
+    let packets = packet_iter_from_capture(capture)?;
     let iter = try_packet_to_frame_xyz(config, packets)?;
     Ok(iter)
 }
 
-pub fn from_file_to_frame_xyz<P>(
+pub fn frame_xyz_iter_from_file<P>(
     config: Config,
     path: P,
 ) -> Result<ResultFrameXyzIter<'static, pcap::Error>>
@@ -74,10 +74,10 @@ where
     P: AsRef<Path>,
 {
     let capture: Capture<pcap::Offline> = Capture::from_file(path)?;
-    from_capture_to_frame_xyz(config, capture)
+    frame_xyz_iter_from_capture(config, capture)
 }
 
-pub fn from_device_to_frame_xyz<D>(
+pub fn frame_xyz_iter_from_device<D>(
     config: Config,
     device: D,
 ) -> Result<ResultFrameXyzIter<'static, pcap::Error>>
@@ -86,5 +86,5 @@ where
 {
     let capture: Capture<pcap::Inactive> = Capture::from_device(device)?;
     let capture = capture.open()?;
-    from_capture_to_frame_xyz(config, capture)
+    frame_xyz_iter_from_capture(config, capture)
 }
