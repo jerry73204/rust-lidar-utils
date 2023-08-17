@@ -1,11 +1,10 @@
 //! Packet parallel iterator creation functions.
 
-use crate::{Config, Packet};
+use crate::Packet;
 use anyhow::Result;
 use pcap::{Capture, Device};
 use rayon::{iter::IterBridge, prelude::*};
-use std::{iter, path::Path};
-// use super::convert::{try_packet_to_frame_xyz, ResultFrameXyzIter};
+use std::path::Path;
 
 /// Creates a packet iterator from [pcap::Capture].
 pub fn from_capture<A>(
@@ -14,7 +13,7 @@ pub fn from_capture<A>(
 where
     A: pcap::Activated,
 {
-    Ok(crate::iter::pcap::packet_iter_from_capture(capture)?.par_bridge())
+    Ok(crate::iter::packet_iter_from_capture(capture)?.par_bridge())
 }
 
 /// Creates a packet iterator by loading from a file.

@@ -2,7 +2,7 @@
 
 use crate::{
     common::*,
-    convert::functions::{
+    convert::{
         firing_block_to_xyz_d16, firing_block_to_xyz_d32, firing_block_to_xyz_s16,
         firing_block_to_xyz_s32,
     },
