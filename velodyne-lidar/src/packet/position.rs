@@ -40,8 +40,8 @@ impl PositionPacket {
     }
 
     #[cfg(feature = "nmea")]
-    pub fn parse_nmea(&self) -> Result<nmea::ParseResult, nmea::NmeaError<'_>> {
-        nmea::parse(&self.nmea)
+    pub fn parse_nmea(&self) -> Result<nmea::ParseResult, nmea::Error<'_>> {
+        nmea::parse_bytes(&self.nmea)
     }
 
     pub fn calibration_in_progress(&self) -> bool {
