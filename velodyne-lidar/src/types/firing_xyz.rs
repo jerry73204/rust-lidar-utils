@@ -26,7 +26,15 @@ declare_firing_xyz!(FiringXyzD32, 32, PointD);
 
 pub use kind::*;
 mod kind {
-    use super::*;
+    use super::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32};
+    use crate::{
+        traits::BoxIterator,
+        types::{
+            format::FormatKind,
+            point::{Point, PointRef},
+        },
+    };
+    use std::time::Duration;
 
     pub type FiringXyz = FormatKind<FiringXyzS16, FiringXyzS32, FiringXyzD16, FiringXyzD32>;
 
@@ -37,6 +45,24 @@ mod kind {
                 FiringXyz::Single32(me) => me.time,
                 FiringXyz::Dual16(me) => me.time,
                 FiringXyz::Dual32(me) => me.time,
+            }
+        }
+
+        pub fn point_iter(&self) -> BoxIterator<'_, PointRef<'_>> {
+            match self {
+                FiringXyz::Single16(me) => Box::new(me.points.iter().map(PointRef::from)),
+                FiringXyz::Single32(me) => Box::new(me.points.iter().map(PointRef::from)),
+                FiringXyz::Dual16(me) => Box::new(me.points.iter().map(PointRef::from)),
+                FiringXyz::Dual32(me) => Box::new(me.points.iter().map(PointRef::from)),
+            }
+        }
+
+        pub fn into_point_iter(self) -> BoxIterator<'static, Point> {
+            match self {
+                FiringXyz::Single16(me) => Box::new(me.points.into_iter().map(Point::from)),
+                FiringXyz::Single32(me) => Box::new(me.points.into_iter().map(Point::from)),
+                FiringXyz::Dual16(me) => Box::new(me.points.into_iter().map(Point::from)),
+                FiringXyz::Dual32(me) => Box::new(me.points.into_iter().map(Point::from)),
             }
         }
     }
@@ -69,14 +95,10 @@ mod kind {
 pub use ref_kind::*;
 mod ref_kind {
     use super::*;
+    use crate::{traits::BoxIterator, types::point::PointRef};
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub enum FiringXyzRef<'a> {
-        Single16(&'a FiringXyzS16),
-        Single32(&'a FiringXyzS32),
-        Dual16(&'a FiringXyzD16),
-        Dual32(&'a FiringXyzD32),
-    }
+    pub type FiringXyzRef<'a> =
+        FormatKind<&'a FiringXyzS16, &'a FiringXyzS32, &'a FiringXyzD16, &'a FiringXyzD32>;
 
     impl<'a> FiringXyzRef<'a> {
         pub fn time(&self) -> Duration {
@@ -85,6 +107,15 @@ mod ref_kind {
                 FiringXyzRef::Single32(me) => me.time,
                 FiringXyzRef::Dual16(me) => me.time,
                 FiringXyzRef::Dual32(me) => me.time,
+            }
+        }
+
+        pub fn point_iter(&self) -> BoxIterator<'_, PointRef<'_>> {
+            match self {
+                FiringXyzRef::Single16(me) => Box::new(me.points.iter().map(PointRef::from)),
+                FiringXyzRef::Single32(me) => Box::new(me.points.iter().map(PointRef::from)),
+                FiringXyzRef::Dual16(me) => Box::new(me.points.iter().map(PointRef::from)),
+                FiringXyzRef::Dual32(me) => Box::new(me.points.iter().map(PointRef::from)),
             }
         }
     }

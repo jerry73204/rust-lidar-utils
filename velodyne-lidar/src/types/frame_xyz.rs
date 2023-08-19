@@ -6,7 +6,7 @@ mod frame_kind {
     use crate::{
         traits::BoxIterator,
         types::{
-            firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
+            firing_xyz::{FiringXyz, FiringXyzRef},
             format::FormatKind,
             point::Point,
         },
@@ -15,14 +15,7 @@ mod frame_kind {
     pub type FrameXyz = FormatKind<FrameXyzS16, FrameXyzS32, FrameXyzD16, FrameXyzD32>;
 
     impl FrameXyz {
-        pub fn firing_iter(
-            &self,
-        ) -> FormatKind<
-            impl Iterator<Item = &FiringXyzS16> + Clone + Sync + Send,
-            impl Iterator<Item = &FiringXyzS32> + Clone + Sync + Send,
-            impl Iterator<Item = &FiringXyzD16> + Clone + Sync + Send,
-            impl Iterator<Item = &FiringXyzD32> + Clone + Sync + Send,
-        > {
+        pub fn firing_iter(&self) -> impl Iterator<Item = FiringXyzRef<'_>> + Clone + Sync + Send {
             match self {
                 FrameXyz::Single16(me) => FormatKind::from_s16(me.firings.iter()),
                 FrameXyz::Single32(me) => FormatKind::from_s32(me.firings.iter()),
@@ -31,14 +24,7 @@ mod frame_kind {
             }
         }
 
-        pub fn into_firing_iter(
-            self,
-        ) -> FormatKind<
-            impl Iterator<Item = FiringXyzS16> + Clone + Sync + Send,
-            impl Iterator<Item = FiringXyzS32> + Clone + Sync + Send,
-            impl Iterator<Item = FiringXyzD16> + Clone + Sync + Send,
-            impl Iterator<Item = FiringXyzD32> + Clone + Sync + Send + Clone + Sync + Send,
-        > {
+        pub fn into_firing_iter(self) -> impl Iterator<Item = FiringXyz> + Clone + Sync + Send {
             match self {
                 FrameXyz::Single16(me) => FormatKind::from_s16(me.firings.into_iter()),
                 FrameXyz::Single32(me) => FormatKind::from_s32(me.firings.into_iter()),

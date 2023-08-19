@@ -18,14 +18,7 @@ use crate::{
 pub type FrameRaw = FormatKind<FrameRawS16, FrameRawS32, FrameRawD16, FrameRawD32>;
 
 impl FrameRaw {
-    pub fn firing_iter(
-        &self,
-    ) -> FormatKind<
-        impl Iterator<Item = &FiringRawS16> + Clone + Sync + Send,
-        impl Iterator<Item = &FiringRawS32> + Clone + Sync + Send,
-        impl Iterator<Item = &FiringRawD16> + Clone + Sync + Send,
-        impl Iterator<Item = &FiringRawD32> + Clone + Sync + Send,
-    > {
+    pub fn firing_iter(&self) -> impl Iterator<Item = FiringRawRef<'_>> + Clone + Sync + Send {
         match self {
             FrameRaw::Single16(me) => FormatKind::from_s16(me.firings.iter()),
             FrameRaw::Single32(me) => FormatKind::from_s32(me.firings.iter()),
@@ -34,14 +27,7 @@ impl FrameRaw {
         }
     }
 
-    pub fn into_firing_iter(
-        self,
-    ) -> FormatKind<
-        impl Iterator<Item = FiringRawS16> + Clone + Sync + Send,
-        impl Iterator<Item = FiringRawS32> + Clone + Sync + Send,
-        impl Iterator<Item = FiringRawD16> + Clone + Sync + Send,
-        impl Iterator<Item = FiringRawD32> + Clone + Sync + Send + Clone + Sync + Send,
-    > {
+    pub fn into_firing_iter(self) -> impl Iterator<Item = FiringRaw> + Clone + Sync + Send {
         match self {
             FrameRaw::Single16(me) => FormatKind::from_s16(me.firings.into_iter()),
             FrameRaw::Single32(me) => FormatKind::from_s32(me.firings.into_iter()),
