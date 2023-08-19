@@ -1,5 +1,9 @@
 //! Frames with raw sensor values.
 
+use super::{
+    channel_array::ChannelArrayD,
+    firing_raw::{FiringRaw, FiringRawRef},
+};
 use crate::{
     common::*,
     packet::Channel,
@@ -171,8 +175,8 @@ macro_rules! declare_type_dual {
 
             fn point_at(&self, row: usize, col: usize) -> Option<Self::Point<'_>> {
                 let firing = self.firings.get(col)?;
-                let strongest = firing.channels_strongest.get(row)?;
-                let last = firing.channels_last.get(row)?;
+                let strongest = firing.channels.strongest.get(row)?;
+                let last = firing.channels.last.get(row)?;
                 Some(ChannelRefD { strongest, last })
             }
         }
@@ -180,13 +184,8 @@ macro_rules! declare_type_dual {
         impl $name {
             pub fn into_channel_iter(self) -> impl Iterator<Item = ChannelD> + Clone + Sync + Send {
                 self.firings.into_iter().flat_map(|firing| {
-                    let $firing {
-                        channels_strongest,
-                        channels_last,
-                        ..
-                    } = firing;
-                    izip!(channels_strongest, channels_last)
-                        .map(|(strongest, last)| ChannelD { strongest, last })
+                    let ChannelArrayD { strongest, last } = firing.channels;
+                    izip!(strongest, last).map(|(strongest, last)| ChannelD { strongest, last })
                 })
             }
 
@@ -197,17 +196,13 @@ macro_rules! declare_type_dual {
                     .into_iter()
                     .enumerate()
                     .flat_map(|(col, firing)| {
-                        let $firing {
-                            channels_strongest,
-                            channels_last,
-                            ..
-                        } = firing;
-                        izip!(channels_strongest, channels_last).enumerate().map(
-                            move |(row, (strongest, last))| {
+                        let ChannelArrayD { strongest, last } = firing.channels;
+                        izip!(strongest, last)
+                            .enumerate()
+                            .map(move |(row, (strongest, last))| {
                                 let pair = ChannelD { strongest, last };
                                 ((row, col), pair)
-                            },
-                        )
+                            })
                     })
             }
         }

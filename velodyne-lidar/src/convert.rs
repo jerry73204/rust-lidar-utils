@@ -2,6 +2,7 @@ use crate::{
     config::Beam,
     consts::{CHANNEL_PERIOD, FIRING_PERIOD},
     types::{
+        channel_array::ChannelArrayDRef,
         firing_block::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
         firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
         measurements::{Measurement, MeasurementDual},
@@ -151,10 +152,13 @@ pub fn firing_block_to_xyz_d16(firing: &FiringBlockD16, beams: &Config16) -> Fir
     let FiringBlockD16 {
         time: firing_time,
         ref azimuth_range,
-        channels_strongest,
-        channels_last,
+        channels:
+            ChannelArrayDRef {
+                strongest: channels_strongest,
+                last: channels_last,
+            },
         ..
-    } = *firing;
+    }: FiringBlockD16<'_> = *firing;
 
     let channel_times = iter::successors(Some(firing_time), |&prev| Some(prev + CHANNEL_PERIOD));
 
@@ -238,8 +242,11 @@ pub fn firing_block_to_xyz_d32(firing: &FiringBlockD32, beams: &Config32) -> Fir
     let FiringBlockD32 {
         time: firing_time,
         ref azimuth_range,
-        channels_strongest,
-        channels_last,
+        channels:
+            ChannelArrayDRef {
+                strongest: channels_strongest,
+                last: channels_last,
+            },
         ..
     } = *firing;
 

@@ -1,36 +1,35 @@
 //! Firings of blocks.
 
-use crate::{packet::Channel, types::format::FormatKind};
+use crate::types::format::FormatKind;
+use measurements::Angle;
 use std::{ops::Range, time::Duration};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringRawS16 {
     pub time: Duration,
     pub azimuth_range: Range<Angle>,
-    pub channels: [Channel; 16],
+    pub channels: ChannelArrayS<16>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringRawS32 {
     pub time: Duration,
     pub azimuth_range: Range<Angle>,
-    pub channels: [Channel; 32],
+    pub channels: ChannelArrayS<32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringRawD16 {
     pub time: Duration,
     pub azimuth_range: Range<Angle>,
-    pub channels_strongest: [Channel; 16],
-    pub channels_last: [Channel; 16],
+    pub channels: ChannelArrayD<16>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringRawD32 {
     pub time: Duration,
     pub azimuth_range: Range<Angle>,
-    pub channels_strongest: [Channel; 32],
-    pub channels_last: [Channel; 32],
+    pub channels: ChannelArrayD<32>,
 }
 
 pub use kind::*;
@@ -75,18 +74,14 @@ mod kind {
     }
 }
 
-use measurements::Angle;
 pub use ref_kind::*;
+
+use super::channel_array::{ChannelArrayD, ChannelArrayS};
 mod ref_kind {
     use super::*;
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub enum FiringRawRef<'a> {
-        Single16(&'a FiringRawS16),
-        Single32(&'a FiringRawS32),
-        Dual16(&'a FiringRawD16),
-        Dual32(&'a FiringRawD32),
-    }
+    pub type FiringRawRef<'a> =
+        FormatKind<&'a FiringRawS16, &'a FiringRawS32, &'a FiringRawD16, &'a FiringRawD32>;
 
     impl<'a> FiringRawRef<'a> {
         pub fn time(&self) -> Duration {

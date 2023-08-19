@@ -2,6 +2,7 @@ use crate::{
     common::*,
     consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK, FIRING_PERIOD},
     types::{
+        channel_array::ChannelArrayDRef,
         firing_block::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
         firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},
         format::{Format, FormatKind},
@@ -278,20 +279,24 @@ impl DataPacket {
                         azimuth_range: former_azimuth,
                         block_strongest,
                         block_last,
-                        channels_strongest: former_strongest
-                            .try_into()
-                            .unwrap_or_else(|_| unreachable!()),
-                        channels_last: former_last.try_into().unwrap_or_else(|_| unreachable!()),
+                        channels: ChannelArrayDRef {
+                            strongest: former_strongest
+                                .try_into()
+                                .unwrap_or_else(|_| unreachable!()),
+                            last: former_last.try_into().unwrap_or_else(|_| unreachable!()),
+                        },
                     },
                     FiringBlockD16 {
                         time: latter_time,
                         azimuth_range: latter_azimuth,
                         block_strongest,
                         block_last,
-                        channels_strongest: latter_strongest
-                            .try_into()
-                            .unwrap_or_else(|_| unreachable!()),
-                        channels_last: latter_last.try_into().unwrap_or_else(|_| unreachable!()),
+                        channels: ChannelArrayDRef {
+                            strongest: latter_strongest
+                                .try_into()
+                                .unwrap_or_else(|_| unreachable!()),
+                            last: latter_last.try_into().unwrap_or_else(|_| unreachable!()),
+                        },
                     },
                 ]
             },
@@ -374,8 +379,10 @@ impl DataPacket {
                     azimuth_range,
                     block_strongest,
                     block_last,
-                    channels_strongest: &block_strongest.channels,
-                    channels_last: &block_last.channels,
+                    channels: ChannelArrayDRef {
+                        strongest: &block_strongest.channels,
+                        last: &block_last.channels,
+                    },
                 }
             },
         )

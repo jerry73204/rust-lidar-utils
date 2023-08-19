@@ -18,12 +18,14 @@ use crate::{
 };
 use anyhow::anyhow;
 
+use super::channel_array::{ChannelArrayD, ChannelArrayDRef, ChannelArraySRef};
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringBlockS16<'a> {
     pub time: Duration,
     pub azimuth_range: Range<Angle>,
     pub block: &'a Block,
-    pub channels: &'a [Channel; 16],
+    pub channels: ChannelArraySRef<'a, 16>,
 }
 
 impl<'a> FiringBlockS16<'a> {
@@ -61,7 +63,7 @@ pub struct FiringBlockS32<'a> {
     pub time: Duration,
     pub azimuth_range: Range<Angle>,
     pub block: &'a Block,
-    pub channels: &'a [Channel; 32],
+    pub channels: ChannelArraySRef<'a, 32>,
 }
 
 impl<'a> FiringBlockS32<'a> {
@@ -100,8 +102,7 @@ pub struct FiringBlockD16<'a> {
     pub azimuth_range: Range<Angle>,
     pub block_strongest: &'a Block,
     pub block_last: &'a Block,
-    pub channels_strongest: &'a [Channel; 16],
-    pub channels_last: &'a [Channel; 16],
+    pub channels: ChannelArrayDRef<'a, 16>,
 }
 
 impl<'a> FiringBlockD16<'a> {
@@ -109,8 +110,10 @@ impl<'a> FiringBlockD16<'a> {
         FiringRawD16 {
             time: self.time,
             azimuth_range: self.azimuth_range.clone(),
-            channels_strongest: *self.channels_strongest,
-            channels_last: *self.channels_last,
+            channels: ChannelArrayD {
+                strongest: *self.channels.strongest,
+                last: *self.channels.last,
+            },
         }
     }
 
@@ -123,7 +126,11 @@ impl<'a> FiringBlockD16<'a> {
             time,
             ref azimuth_range,
             block_strongest: block,
-            channels_strongest: channels,
+            channels:
+                ChannelArrayDRef {
+                    strongest: channels,
+                    ..
+                },
             ..
         } = *self;
 
@@ -140,7 +147,7 @@ impl<'a> FiringBlockD16<'a> {
             time,
             ref azimuth_range,
             block_last: block,
-            channels_last: channels,
+            channels: ChannelArrayDRef { last: channels, .. },
             ..
         } = *self;
 
@@ -161,12 +168,12 @@ impl<'a> FiringLike for FiringBlockD16<'a> {
     }
 
     fn num_points(&self) -> usize {
-        self.channels_strongest.len()
+        self.channels.strongest.len()
     }
 
     fn point_at(&self, index: usize) -> Option<Self::Point<'_>> {
-        let strongest = self.channels_strongest.get(index)?;
-        let last = self.channels_last.get(index)?;
+        let strongest = self.channels.strongest.get(index)?;
+        let last = self.channels.last.get(index)?;
         Some(ChannelRefD { strongest, last })
     }
 }
@@ -177,8 +184,7 @@ pub struct FiringBlockD32<'a> {
     pub azimuth_range: Range<Angle>,
     pub block_strongest: &'a Block,
     pub block_last: &'a Block,
-    pub channels_strongest: &'a [Channel; 32],
-    pub channels_last: &'a [Channel; 32],
+    pub channels: ChannelArrayDRef<'a, 32>,
 }
 
 impl<'a> FiringBlockD32<'a> {
@@ -186,8 +192,10 @@ impl<'a> FiringBlockD32<'a> {
         FiringRawD32 {
             time: self.time,
             azimuth_range: self.azimuth_range.clone(),
-            channels_strongest: *self.channels_strongest,
-            channels_last: *self.channels_last,
+            channels: ChannelArrayD {
+                strongest: *self.channels.strongest,
+                last: *self.channels.last,
+            },
         }
     }
 
@@ -200,7 +208,11 @@ impl<'a> FiringBlockD32<'a> {
             time,
             ref azimuth_range,
             block_strongest: block,
-            channels_strongest: channels,
+            channels:
+                ChannelArrayDRef {
+                    strongest: channels,
+                    ..
+                },
             ..
         } = *self;
 
@@ -217,7 +229,7 @@ impl<'a> FiringBlockD32<'a> {
             time,
             ref azimuth_range,
             block_last: block,
-            channels_last: channels,
+            channels: ChannelArrayDRef { last: channels, .. },
             ..
         } = *self;
 
@@ -238,12 +250,12 @@ impl<'a> FiringLike for FiringBlockD32<'a> {
     }
 
     fn num_points(&self) -> usize {
-        self.channels_strongest.len()
+        self.channels.strongest.len()
     }
 
     fn point_at(&self, index: usize) -> Option<Self::Point<'_>> {
-        let strongest = self.channels_strongest.get(index)?;
-        let last = self.channels_last.get(index)?;
+        let strongest = self.channels.strongest.get(index)?;
+        let last = self.channels.last.get(index)?;
         Some(ChannelRefD { strongest, last })
     }
 }

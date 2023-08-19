@@ -1,4 +1,5 @@
 pub mod channel;
+pub mod channel_array;
 pub mod firing_block;
 pub mod firing_raw;
 pub mod firing_xyz;
