@@ -37,7 +37,7 @@ mod data_packet_to_frame_xyz {
     };
     use anyhow::{anyhow, Result};
 
-    /// Converts an iterator of packets to an iterator of [FrameXyz].
+    /// Converts an iterator of packets to an iterator of [crate::types::frame_xyz::FrameXyz].
     pub fn data_packet_to_frame_xyz<'a, I>(config: Config, packets: I) -> Result<FrameXyzIter<'a>>
     where
         I: IntoIterator<Item = DataPacket> + 'a,
@@ -145,7 +145,7 @@ mod try_packet_to_frame_xyz {
     use anyhow::{anyhow, Result};
     use itertools::Itertools;
 
-    /// Converts an iterator of packets to an iterator of [FrameXyz].
+    /// Converts an iterator of packets to an iterator of [crate::types::frame_xyz::FrameXyz].
     pub fn try_packet_to_frame_xyz<'a, E, I>(
         config: Config,
         packets: I,
