@@ -7,7 +7,8 @@
 //! use velodyne_lidar::{types::measurements::Measurement, Config};
 //!
 //! let config = Config::new_vlp_32c_strongest();
-//! let frame_iter = velodyne_lidar::iter::frame_xyz_iter_from_file(config, "data.pcap")?;
+//! let frame_iter =
+//!     velodyne_lidar::iter::frame_xyz_iter_from_file(config, "tests/velodyne_vlp32.pcap")?;
 //!
 //! for frame in frame_iter {
 //!     let frame = frame?;
