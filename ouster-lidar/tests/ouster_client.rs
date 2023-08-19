@@ -1,7 +1,6 @@
 #![cfg(feature = "ouster-client-test")]
 
 use anyhow::Result;
-use log::warn;
 use ouster_lidar::{client::CommandClient, packet::Packet as OusterPacket};
 use serde::Deserialize;
 use std::{
@@ -45,11 +44,10 @@ fn ouster_client_test() -> Result<()> {
     let lidar_intrinsics = client.get_lidar_intrinsics()?;
     let imu_intrinsics = client.get_imu_intrinsics()?;
 
-    dbg!(&config_txt);
-    dbg!(&time_info);
-    dbg!(&beam_intrinsics);
-    dbg!(&lidar_intrinsics);
-    dbg!(&imu_intrinsics);
+    println!("time_info {time_info:?}");
+    println!("beam_intrinsics {beam_intrinsics:?}");
+    println!("lidar_intrinsics {lidar_intrinsics:?}");
+    println!("imu_intrinsics {imu_intrinsics:?}");
 
     // try to receive udp packets
     client.set_udp_ip(config.listen_addr)?;
@@ -82,7 +80,7 @@ fn ouster_client_test() -> Result<()> {
                 break;
             }
             Err(error) => {
-                warn!(
+                println!(
                     "packet decoding error: {:?}. Proceed to next packet.",
                     error
                 );
