@@ -1,23 +1,26 @@
 use crate::{
     error::Error,
-    raw::{RawLaser, RawVelodyneParams},
+    serialized::{SerializedLaser, SerializedVelodyneParams},
 };
 use itertools::Itertools;
 use measurements::Length;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(try_from = "RawVelodyneParams", into = "RawVelodyneParams")]
+#[serde(
+    try_from = "SerializedVelodyneParams",
+    into = "SerializedVelodyneParams"
+)]
 pub struct VelodyneParams {
     pub distance_resolution: Length,
     pub lasers: Vec<Laser>,
 }
 
-impl TryFrom<RawVelodyneParams> for VelodyneParams {
+impl TryFrom<SerializedVelodyneParams> for VelodyneParams {
     type Error = Error;
 
-    fn try_from(orig: RawVelodyneParams) -> Result<Self, Self::Error> {
-        let RawVelodyneParams {
+    fn try_from(orig: SerializedVelodyneParams) -> Result<Self, Self::Error> {
+        let SerializedVelodyneParams {
             num_lasers,
             distance_resolution,
             lasers,
@@ -25,17 +28,15 @@ impl TryFrom<RawVelodyneParams> for VelodyneParams {
 
         if num_lasers != lasers.len() {
             return Err(Error::invalid_params(format!(
-                "The number of lasers mismatch.\n\
-                 Get num_lasers = {}, but `lasers` field has {} items.",
-                num_lasers,
+                "The number of lasers mismatches.\n\
+                 Get num_lasers = {num_lasers}, but `lasers` field has {} items.",
                 lasers.len()
             )));
         }
 
         if !distance_resolution.is_finite() || distance_resolution <= 0.0 {
             return Err(Error::invalid_params(format!(
-                "Invalid distance_resolution value {}",
-                distance_resolution
+                "Distance_resolution must be finite positive, but get {distance_resolution}"
             )));
         }
 
@@ -48,13 +49,13 @@ impl TryFrom<RawVelodyneParams> for VelodyneParams {
     }
 }
 
-impl From<VelodyneParams> for RawVelodyneParams {
+impl From<VelodyneParams> for SerializedVelodyneParams {
     fn from(orig: VelodyneParams) -> Self {
         let VelodyneParams {
             distance_resolution,
             lasers,
         } = orig;
-        let lasers: Vec<_> = lasers.into_iter().map(RawLaser::from).collect();
+        let lasers: Vec<_> = lasers.into_iter().map(SerializedLaser::from).collect();
 
         Self {
             num_lasers: lasers.len(),
@@ -65,7 +66,7 @@ impl From<VelodyneParams> for RawVelodyneParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(try_from = "RawLaser", into = "RawLaser")]
+#[serde(try_from = "SerializedLaser", into = "SerializedLaser")]
 pub struct Laser {
     pub laser_id: u32,
     pub dist_correction: f64,
@@ -79,11 +80,11 @@ pub struct Laser {
     pub vert_offset_correction: f64,
 }
 
-impl TryFrom<RawLaser> for Laser {
+impl TryFrom<SerializedLaser> for Laser {
     type Error = Error;
 
-    fn try_from(orig: RawLaser) -> Result<Self, Self::Error> {
-        let RawLaser {
+    fn try_from(orig: SerializedLaser) -> Result<Self, Self::Error> {
+        let SerializedLaser {
             dist_correction,
             dist_correction_x,
             dist_correction_y,
@@ -111,7 +112,7 @@ impl TryFrom<RawLaser> for Laser {
     }
 }
 
-impl From<Laser> for RawLaser {
+impl From<Laser> for SerializedLaser {
     fn from(orig: Laser) -> Self {
         let Laser {
             dist_correction,

@@ -1,7 +1,7 @@
-mod checked;
 mod error;
-mod raw;
+mod serialized;
+mod types;
 
-pub use checked::{Laser, VelodyneParams};
 pub use error::Error;
-pub use raw::{RawLaser, RawVelodyneParams};
+pub use serialized::{SerializedLaser, SerializedVelodyneParams};
+pub use types::{Laser, VelodyneParams};

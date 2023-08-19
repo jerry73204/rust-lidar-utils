@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RawVelodyneParams {
+pub struct SerializedVelodyneParams {
     pub num_lasers: usize,
     pub distance_resolution: f64,
-    pub lasers: Vec<RawLaser>,
+    pub lasers: Vec<SerializedLaser>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RawLaser {
+pub struct SerializedLaser {
     pub dist_correction: f64,
     pub dist_correction_x: f64,
     pub dist_correction_y: f64,
@@ -23,7 +23,7 @@ pub struct RawLaser {
 
 #[cfg(test)]
 mod tests {
-    use super::RawVelodyneParams;
+    use super::SerializedVelodyneParams;
     use std::fs;
 
     #[test]
@@ -46,7 +46,7 @@ mod tests {
 
         yaml_paths.for_each(|path| {
             let text = fs::read_to_string(&path).unwrap();
-            let _: RawVelodyneParams = serde_yaml::from_str(&text).unwrap_or_else(|err| {
+            let _: SerializedVelodyneParams = serde_yaml::from_str(&text).unwrap_or_else(|err| {
                 panic!("Unable to load this file '{}':\n{}", path.display(), err)
             });
         });
