@@ -6,7 +6,7 @@ pub trait FiringLike {
     where
         Self: 'a;
 
-    fn start_time(&self) -> Duration;
+    fn start_toh(&self) -> Duration;
 
     fn num_points(&self) -> usize;
 
@@ -16,7 +16,7 @@ pub trait FiringLike {
         TimeIterator {
             index: 0,
             len: self.num_points(),
-            value: self.start_time(),
+            value: self.start_toh(),
         }
     }
 }

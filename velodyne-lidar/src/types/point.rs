@@ -6,7 +6,7 @@ use std::time::Duration;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PointS {
     pub laser_id: usize,
-    pub time: Duration,
+    pub toh: Duration,
     pub azimuth: Angle,
     pub measurement: Measurement,
 }
@@ -14,7 +14,7 @@ pub struct PointS {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PointD {
     pub laser_id: usize,
-    pub time: Duration,
+    pub toh: Duration,
     pub azimuth: Angle,
     pub measurements: MeasurementDual,
 }
@@ -45,8 +45,8 @@ impl Point {
 
     pub fn time(&self) -> Duration {
         match self {
-            Self::Single(point) => point.time,
-            Self::Dual(point) => point.time,
+            Self::Single(point) => point.toh,
+            Self::Dual(point) => point.toh,
         }
     }
 
@@ -118,8 +118,8 @@ impl<'a> PointRef<'a> {
 
     pub fn time(&self) -> Duration {
         match self {
-            Self::Single(point) => point.time,
-            Self::Dual(point) => point.time,
+            Self::Single(point) => point.toh,
+            Self::Dual(point) => point.toh,
         }
     }
 

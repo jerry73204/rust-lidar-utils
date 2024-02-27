@@ -6,28 +6,28 @@ use std::{ops::Range, time::Duration};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringRawS16 {
-    pub time: Duration,
+    pub toh: Duration,
     pub azimuth_range: Range<Angle>,
     pub channels: ChannelArrayS<16>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringRawS32 {
-    pub time: Duration,
+    pub toh: Duration,
     pub azimuth_range: Range<Angle>,
     pub channels: ChannelArrayS<32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringRawD16 {
-    pub time: Duration,
+    pub toh: Duration,
     pub azimuth_range: Range<Angle>,
     pub channels: ChannelArrayD<16>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringRawD32 {
-    pub time: Duration,
+    pub toh: Duration,
     pub azimuth_range: Range<Angle>,
     pub channels: ChannelArrayD<32>,
 }
@@ -41,10 +41,10 @@ mod kind {
     impl FiringRaw {
         pub fn time(&self) -> Duration {
             match self {
-                FiringRaw::Single16(me) => me.time,
-                FiringRaw::Single32(me) => me.time,
-                FiringRaw::Dual16(me) => me.time,
-                FiringRaw::Dual32(me) => me.time,
+                FiringRaw::Single16(me) => me.toh,
+                FiringRaw::Single32(me) => me.toh,
+                FiringRaw::Dual16(me) => me.toh,
+                FiringRaw::Dual32(me) => me.toh,
             }
         }
     }
@@ -86,10 +86,10 @@ mod ref_kind {
     impl<'a> FiringRawRef<'a> {
         pub fn time(&self) -> Duration {
             match self {
-                FiringRawRef::Single16(me) => me.time,
-                FiringRawRef::Single32(me) => me.time,
-                FiringRawRef::Dual16(me) => me.time,
-                FiringRawRef::Dual32(me) => me.time,
+                FiringRawRef::Single16(me) => me.toh,
+                FiringRawRef::Single32(me) => me.toh,
+                FiringRawRef::Dual16(me) => me.toh,
+                FiringRawRef::Dual32(me) => me.toh,
             }
         }
     }

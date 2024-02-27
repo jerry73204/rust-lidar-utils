@@ -16,7 +16,7 @@ fn velodyne_vlp_16_pcap_file() -> Result<()> {
     // timestamp test
     {
         let is_timestamp_valid = izip!(data_packets.iter(), data_packets.iter().skip(1))
-            .all(|(former, latter)| former.timestamp < latter.timestamp);
+            .all(|(former, latter)| former.toh < latter.toh);
 
         ensure!(is_timestamp_valid, "invalid timestamp detected");
     }
@@ -63,7 +63,7 @@ fn velodyne_vlp_32_pcap_file() -> Result<()> {
     // timestamp test
     {
         let is_timestamp_valid = izip!(data_packets.iter(), data_packets.iter().skip(1))
-            .all(|(former, latter)| former.timestamp < latter.timestamp);
+            .all(|(former, latter)| former.toh < latter.toh);
 
         ensure!(is_timestamp_valid, "invalid timestamp detected");
     }

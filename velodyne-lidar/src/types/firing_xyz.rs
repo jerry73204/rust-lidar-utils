@@ -11,7 +11,7 @@ macro_rules! declare_firing_xyz {
     ($name:ident, $size:expr, $point:path) => {
         #[derive(Debug, Clone, PartialEq, Eq)]
         pub struct $name {
-            pub time: Duration,
+            pub toh: Duration,
             pub azimuth_range: Range<Angle>,
             pub points: [$point; $size],
         }
@@ -40,10 +40,10 @@ mod kind {
     impl FiringXyz {
         pub fn time(&self) -> Duration {
             match self {
-                FiringXyz::Single16(me) => me.time,
-                FiringXyz::Single32(me) => me.time,
-                FiringXyz::Dual16(me) => me.time,
-                FiringXyz::Dual32(me) => me.time,
+                FiringXyz::Single16(me) => me.toh,
+                FiringXyz::Single32(me) => me.toh,
+                FiringXyz::Dual16(me) => me.toh,
+                FiringXyz::Dual32(me) => me.toh,
             }
         }
 
@@ -102,10 +102,10 @@ mod ref_kind {
     impl<'a> FiringXyzRef<'a> {
         pub fn time(&self) -> Duration {
             match self {
-                FiringXyzRef::Single16(me) => me.time,
-                FiringXyzRef::Single32(me) => me.time,
-                FiringXyzRef::Dual16(me) => me.time,
-                FiringXyzRef::Dual32(me) => me.time,
+                FiringXyzRef::Single16(me) => me.toh,
+                FiringXyzRef::Single32(me) => me.toh,
+                FiringXyzRef::Dual16(me) => me.toh,
+                FiringXyzRef::Dual32(me) => me.toh,
             }
         }
 

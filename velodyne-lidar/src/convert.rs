@@ -22,17 +22,17 @@ pub fn firing_block_to_xyz_s16(firing: &FiringBlockS16, beams: &Config16) -> Fir
         ..
     } = *beams;
     let FiringBlockS16 {
-        time: firing_time,
+        toh: firing_toh,
         ref azimuth_range,
         channels,
         ..
     } = *firing;
 
-    let channel_times = iter::successors(Some(firing_time), |&prev| Some(prev + CHANNEL_PERIOD));
+    let channel_tohs = iter::successors(Some(firing_toh), |&prev| Some(prev + CHANNEL_PERIOD));
 
-    let points: Vec<_> = izip!(0.., channel_times, channels, lasers)
-        .map(move |(laser_id, channel_time, channel, laser)| -> PointS {
-            let ratio = (channel_time - firing_time).div_duration(FIRING_PERIOD);
+    let points: Vec<_> = izip!(0.., channel_tohs, channels, lasers)
+        .map(move |(laser_id, channel_toh, channel, laser)| -> PointS {
+            let ratio = (channel_toh - firing_toh).div_duration(FIRING_PERIOD);
             let Beam {
                 elevation,
                 azimuth_offset,
@@ -58,7 +58,7 @@ pub fn firing_block_to_xyz_s16(firing: &FiringBlockS16, beams: &Config16) -> Fir
 
             PointS {
                 laser_id,
-                time: channel_time,
+                toh: channel_toh,
                 azimuth,
                 measurement: Measurement {
                     distance,
@@ -71,7 +71,7 @@ pub fn firing_block_to_xyz_s16(firing: &FiringBlockS16, beams: &Config16) -> Fir
     let points: [_; 16] = points.try_into().unwrap_or_else(|_| unreachable!());
 
     FiringXyzS16 {
-        time: firing_time,
+        toh: firing_toh,
         azimuth_range: azimuth_range.clone(),
         points,
     }
@@ -84,20 +84,20 @@ pub fn firing_block_to_xyz_s32(firing: &FiringBlockS32, beams: &Config32) -> Fir
         ..
     } = *beams;
     let FiringBlockS32 {
-        time: firing_time,
+        toh: firing_toh,
         ref azimuth_range,
         channels,
         ..
     } = *firing;
 
-    let channel_times = iter::successors(Some(firing_time), |&prev| Some(prev + CHANNEL_PERIOD))
-        .flat_map(|time| [time, time]);
+    let channel_tohs = iter::successors(Some(firing_toh), |&prev| Some(prev + CHANNEL_PERIOD))
+        .flat_map(|toh| [toh, toh]);
 
-    let points: Vec<_> = izip!(0.., channel_times, channels, lasers)
-        .map(move |(laser_id, channel_time, channel, laser)| {
+    let points: Vec<_> = izip!(0.., channel_tohs, channels, lasers)
+        .map(move |(laser_id, channel_toh, channel, laser)| {
             // let timestamp = lower_timestamp + CHANNEL_PERIOD.mul_f64((channel_idx / 2) as f64);
 
-            let ratio = (channel_time - firing_time).div_duration(FIRING_PERIOD);
+            let ratio = (channel_toh - firing_toh).div_duration(FIRING_PERIOD);
             let Beam {
                 elevation,
                 azimuth_offset,
@@ -123,7 +123,7 @@ pub fn firing_block_to_xyz_s32(firing: &FiringBlockS32, beams: &Config32) -> Fir
 
             PointS {
                 laser_id,
-                time: channel_time,
+                toh: channel_toh,
                 azimuth,
                 measurement: Measurement {
                     distance,
@@ -137,7 +137,7 @@ pub fn firing_block_to_xyz_s32(firing: &FiringBlockS32, beams: &Config32) -> Fir
     let points = points.try_into().unwrap_or_else(|_| unreachable!());
 
     FiringXyzS32 {
-        time: firing_time,
+        toh: firing_toh,
         azimuth_range: azimuth_range.clone(),
         points,
     }
@@ -150,7 +150,7 @@ pub fn firing_block_to_xyz_d16(firing: &FiringBlockD16, beams: &Config16) -> Fir
         ..
     } = *beams;
     let FiringBlockD16 {
-        time: firing_time,
+        toh: firing_toh,
         ref azimuth_range,
         channels:
             ChannelArrayDRef {
@@ -160,74 +160,68 @@ pub fn firing_block_to_xyz_d16(firing: &FiringBlockD16, beams: &Config16) -> Fir
         ..
     }: FiringBlockD16<'_> = *firing;
 
-    let channel_times = iter::successors(Some(firing_time), |&prev| Some(prev + CHANNEL_PERIOD));
+    let channel_tohs = iter::successors(Some(firing_toh), |&prev| Some(prev + CHANNEL_PERIOD));
 
-    let points: Vec<_> = izip!(
-        0..,
-        channel_times,
-        channels_strongest,
-        channels_last,
-        lasers
-    )
-    .map(
-        move |(laser_id, channel_time, channel_strongest, channel_last, laser)| -> PointD {
-            let ratio = (channel_time - firing_time).div_duration(FIRING_PERIOD);
-            let Beam {
-                elevation,
-                azimuth_offset,
-                vertical_offset,
-                horizontal_offset,
-            } = *laser;
+    let points: Vec<_> = izip!(0.., channel_tohs, channels_strongest, channels_last, lasers)
+        .map(
+            move |(laser_id, channel_toh, channel_strongest, channel_last, laser)| -> PointD {
+                let ratio = (channel_toh - firing_toh).div_duration(FIRING_PERIOD);
+                let Beam {
+                    elevation,
+                    azimuth_offset,
+                    vertical_offset,
+                    horizontal_offset,
+                } = *laser;
 
-            // clockwise angle with origin points to front of sensor
-            let azimuth = {
-                let azimuth = azimuth_range.start
-                    + ((azimuth_range.end - azimuth_range.start) * ratio)
-                    + azimuth_offset;
-                azimuth.wrap_to_2pi()
-            };
-            let distance_strongest = distance_resolution * channel_strongest.distance as f64;
-            let distance_last = distance_resolution * channel_last.distance as f64;
+                // clockwise angle with origin points to front of sensor
+                let azimuth = {
+                    let azimuth = azimuth_range.start
+                        + ((azimuth_range.end - azimuth_range.start) * ratio)
+                        + azimuth_offset;
+                    azimuth.wrap_to_2pi()
+                };
+                let distance_strongest = distance_resolution * channel_strongest.distance as f64;
+                let distance_last = distance_resolution * channel_last.distance as f64;
 
-            let xyz_strongest = spherical_to_xyz(
-                distance_strongest,
-                elevation,
-                azimuth,
-                vertical_offset,
-                horizontal_offset,
-            );
-            let xyz_last = spherical_to_xyz(
-                distance_last,
-                elevation,
-                azimuth,
-                vertical_offset,
-                horizontal_offset,
-            );
+                let xyz_strongest = spherical_to_xyz(
+                    distance_strongest,
+                    elevation,
+                    azimuth,
+                    vertical_offset,
+                    horizontal_offset,
+                );
+                let xyz_last = spherical_to_xyz(
+                    distance_last,
+                    elevation,
+                    azimuth,
+                    vertical_offset,
+                    horizontal_offset,
+                );
 
-            PointD {
-                laser_id,
-                time: channel_time,
-                azimuth,
-                measurements: MeasurementDual {
-                    strongest: Measurement {
-                        distance: distance_strongest,
-                        intensity: channel_strongest.intensity,
-                        xyz: xyz_strongest,
+                PointD {
+                    laser_id,
+                    toh: channel_toh,
+                    azimuth,
+                    measurements: MeasurementDual {
+                        strongest: Measurement {
+                            distance: distance_strongest,
+                            intensity: channel_strongest.intensity,
+                            xyz: xyz_strongest,
+                        },
+                        last: Measurement {
+                            distance: distance_last,
+                            intensity: channel_last.intensity,
+                            xyz: xyz_last,
+                        },
                     },
-                    last: Measurement {
-                        distance: distance_last,
-                        intensity: channel_last.intensity,
-                        xyz: xyz_last,
-                    },
-                },
-            }
-        },
-    )
-    .collect();
+                }
+            },
+        )
+        .collect();
     let points: [_; 16] = points.try_into().unwrap_or_else(|_| unreachable!());
 
     FiringXyzD16 {
-        time: firing_time,
+        toh: firing_toh,
         azimuth_range: azimuth_range.clone(),
         points,
     }
@@ -240,7 +234,7 @@ pub fn firing_block_to_xyz_d32(firing: &FiringBlockD32, beams: &Config32) -> Fir
         ..
     } = *beams;
     let FiringBlockD32 {
-        time: firing_time,
+        toh: firing_toh,
         ref azimuth_range,
         channels:
             ChannelArrayDRef {
@@ -250,78 +244,72 @@ pub fn firing_block_to_xyz_d32(firing: &FiringBlockD32, beams: &Config32) -> Fir
         ..
     } = *firing;
 
-    let channel_times = iter::successors(Some(firing_time), |&prev| Some(prev + CHANNEL_PERIOD))
-        .flat_map(|time| [time, time]);
+    let channel_tohs = iter::successors(Some(firing_toh), |&prev| Some(prev + CHANNEL_PERIOD))
+        .flat_map(|toh| [toh, toh]);
 
-    let points: Vec<_> = izip!(
-        0..,
-        channel_times,
-        channels_strongest,
-        channels_last,
-        lasers
-    )
-    .map(
-        move |(laser_id, channel_time, channel_strongest, channel_last, laser)| {
-            // let timestamp = lower_timestamp + CHANNEL_PERIOD.mul_f64((channel_idx / 2) as f64);
+    let points: Vec<_> = izip!(0.., channel_tohs, channels_strongest, channels_last, lasers)
+        .map(
+            move |(laser_id, channel_toh, channel_strongest, channel_last, laser)| {
+                // let timestamp = lower_timestamp + CHANNEL_PERIOD.mul_f64((channel_idx / 2) as f64);
 
-            let ratio = (channel_time - firing_time).div_duration(FIRING_PERIOD);
-            let Beam {
-                elevation,
-                azimuth_offset,
-                vertical_offset,
-                horizontal_offset,
-            } = *laser;
+                let ratio = (channel_toh - firing_toh).div_duration(FIRING_PERIOD);
+                let Beam {
+                    elevation,
+                    azimuth_offset,
+                    vertical_offset,
+                    horizontal_offset,
+                } = *laser;
 
-            // clockwise angle with origin points to front of sensor
-            let azimuth = {
-                let azimuth = azimuth_range.start
-                    + ((azimuth_range.end - azimuth_range.start) * ratio)
-                    + azimuth_offset;
-                azimuth.wrap_to_2pi()
-            };
-            let distance_strongest = distance_resolution * channel_strongest.distance as f64;
-            let distance_last = distance_resolution * channel_last.distance as f64;
+                // clockwise angle with origin points to front of sensor
+                let azimuth = {
+                    let azimuth = azimuth_range.start
+                        + ((azimuth_range.end - azimuth_range.start) * ratio)
+                        + azimuth_offset;
+                    azimuth.wrap_to_2pi()
+                };
+                let distance_strongest = distance_resolution * channel_strongest.distance as f64;
+                let distance_last = distance_resolution * channel_last.distance as f64;
 
-            let xyz_strongest = spherical_to_xyz(
-                distance_strongest,
-                elevation,
-                azimuth,
-                vertical_offset,
-                horizontal_offset,
-            );
-            let xyz_last = spherical_to_xyz(
-                distance_last,
-                elevation,
-                azimuth,
-                vertical_offset,
-                horizontal_offset,
-            );
+                let xyz_strongest = spherical_to_xyz(
+                    distance_strongest,
+                    elevation,
+                    azimuth,
+                    vertical_offset,
+                    horizontal_offset,
+                );
+                let xyz_last = spherical_to_xyz(
+                    distance_last,
+                    elevation,
+                    azimuth,
+                    vertical_offset,
+                    horizontal_offset,
+                );
 
-            PointD {
-                laser_id,
-                time: channel_time,
-                azimuth,
-                measurements: MeasurementDual {
-                    strongest: Measurement {
-                        distance: distance_strongest,
-                        intensity: channel_strongest.intensity,
-                        xyz: xyz_strongest,
+                PointD {
+                    laser_id,
+                    toh: channel_toh,
+                    azimuth,
+                    measurements: MeasurementDual {
+                        strongest: Measurement {
+                            distance: distance_strongest,
+                            intensity: channel_strongest.intensity,
+                            xyz: xyz_strongest,
+                        },
+                        last: Measurement {
+                            distance: distance_last,
+                            intensity: channel_last.intensity,
+                            xyz: xyz_last,
+                        },
                     },
-                    last: Measurement {
-                        distance: distance_last,
-                        intensity: channel_last.intensity,
-                        xyz: xyz_last,
-                    },
-                },
-            }
-        },
-    )
-    .collect();
+                }
+            },
+        )
+        .collect();
 
     let points: [_; 32] = points.try_into().unwrap_or_else(|_| unreachable!());
 
     FiringXyzD32 {
-        time: firing_time,
+        toh: firing_toh,
         azimuth_range: azimuth_range.clone(),
         points,
     }

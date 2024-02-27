@@ -23,7 +23,7 @@ use super::channel_array::{ChannelArrayD, ChannelArrayDRef, ChannelArraySRef};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringBlockS16<'a> {
-    pub time: Duration,
+    pub toh: Duration,
     pub azimuth_range: Range<Angle>,
     pub block: &'a Block,
     pub channels: ChannelArraySRef<'a, 16>,
@@ -32,7 +32,7 @@ pub struct FiringBlockS16<'a> {
 impl<'a> FiringBlockS16<'a> {
     pub fn to_firing_raw(&self) -> FiringRawS16 {
         FiringRawS16 {
-            time: self.time,
+            toh: self.toh,
             azimuth_range: self.azimuth_range.clone(),
             channels: *self.channels,
         }
@@ -46,8 +46,8 @@ impl<'a> FiringBlockS16<'a> {
 impl<'a> FiringLike for FiringBlockS16<'a> {
     type Point<'p> = &'p Channel where Self: 'p;
 
-    fn start_time(&self) -> Duration {
-        self.time
+    fn start_toh(&self) -> Duration {
+        self.toh
     }
 
     fn num_points(&self) -> usize {
@@ -61,7 +61,7 @@ impl<'a> FiringLike for FiringBlockS16<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringBlockS32<'a> {
-    pub time: Duration,
+    pub toh: Duration,
     pub azimuth_range: Range<Angle>,
     pub block: &'a Block,
     pub channels: ChannelArraySRef<'a, 32>,
@@ -70,7 +70,7 @@ pub struct FiringBlockS32<'a> {
 impl<'a> FiringBlockS32<'a> {
     pub fn to_firing_raw(&self) -> FiringRawS32 {
         FiringRawS32 {
-            time: self.time,
+            toh: self.toh,
             azimuth_range: self.azimuth_range.clone(),
             channels: *self.channels,
         }
@@ -84,8 +84,8 @@ impl<'a> FiringBlockS32<'a> {
 impl<'a> FiringLike for FiringBlockS32<'a> {
     type Point<'p> = &'p Channel where Self: 'p;
 
-    fn start_time(&self) -> Duration {
-        self.time
+    fn start_toh(&self) -> Duration {
+        self.toh
     }
 
     fn num_points(&self) -> usize {
@@ -99,7 +99,7 @@ impl<'a> FiringLike for FiringBlockS32<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringBlockD16<'a> {
-    pub time: Duration,
+    pub toh: Duration,
     pub azimuth_range: Range<Angle>,
     pub block_strongest: &'a Block,
     pub block_last: &'a Block,
@@ -109,7 +109,7 @@ pub struct FiringBlockD16<'a> {
 impl<'a> FiringBlockD16<'a> {
     pub fn to_firing_raw(&self) -> FiringRawD16 {
         FiringRawD16 {
-            time: self.time,
+            toh: self.toh,
             azimuth_range: self.azimuth_range.clone(),
             channels: ChannelArrayD {
                 strongest: *self.channels.strongest,
@@ -124,7 +124,7 @@ impl<'a> FiringBlockD16<'a> {
 
     pub fn strongest_part(&self) -> FiringBlockS16<'a> {
         let Self {
-            time,
+            toh,
             ref azimuth_range,
             block_strongest: block,
             channels:
@@ -136,7 +136,7 @@ impl<'a> FiringBlockD16<'a> {
         } = *self;
 
         FiringBlockS16 {
-            time,
+            toh,
             azimuth_range: azimuth_range.clone(),
             block,
             channels,
@@ -145,7 +145,7 @@ impl<'a> FiringBlockD16<'a> {
 
     pub fn last_part(&self) -> FiringBlockS16<'a> {
         let Self {
-            time,
+            toh,
             ref azimuth_range,
             block_last: block,
             channels: ChannelArrayDRef { last: channels, .. },
@@ -153,7 +153,7 @@ impl<'a> FiringBlockD16<'a> {
         } = *self;
 
         FiringBlockS16 {
-            time,
+            toh,
             azimuth_range: azimuth_range.clone(),
             block,
             channels,
@@ -164,8 +164,8 @@ impl<'a> FiringBlockD16<'a> {
 impl<'a> FiringLike for FiringBlockD16<'a> {
     type Point<'p> = ChannelRefD<'p> where Self: 'p;
 
-    fn start_time(&self) -> Duration {
-        self.time
+    fn start_toh(&self) -> Duration {
+        self.toh
     }
 
     fn num_points(&self) -> usize {
@@ -181,7 +181,7 @@ impl<'a> FiringLike for FiringBlockD16<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FiringBlockD32<'a> {
-    pub time: Duration,
+    pub toh: Duration,
     pub azimuth_range: Range<Angle>,
     pub block_strongest: &'a Block,
     pub block_last: &'a Block,
@@ -191,7 +191,7 @@ pub struct FiringBlockD32<'a> {
 impl<'a> FiringBlockD32<'a> {
     pub fn to_firing_raw(&self) -> FiringRawD32 {
         FiringRawD32 {
-            time: self.time,
+            toh: self.toh,
             azimuth_range: self.azimuth_range.clone(),
             channels: ChannelArrayD {
                 strongest: *self.channels.strongest,
@@ -206,7 +206,7 @@ impl<'a> FiringBlockD32<'a> {
 
     pub fn strongest_part(&self) -> FiringBlockS32<'a> {
         let Self {
-            time,
+            toh,
             ref azimuth_range,
             block_strongest: block,
             channels:
@@ -218,7 +218,7 @@ impl<'a> FiringBlockD32<'a> {
         } = *self;
 
         FiringBlockS32 {
-            time,
+            toh,
             azimuth_range: azimuth_range.clone(),
             block,
             channels,
@@ -227,7 +227,7 @@ impl<'a> FiringBlockD32<'a> {
 
     pub fn last_part(&self) -> FiringBlockS32<'a> {
         let Self {
-            time,
+            toh,
             ref azimuth_range,
             block_last: block,
             channels: ChannelArrayDRef { last: channels, .. },
@@ -235,7 +235,7 @@ impl<'a> FiringBlockD32<'a> {
         } = *self;
 
         FiringBlockS32 {
-            time,
+            toh,
             azimuth_range: azimuth_range.clone(),
             block,
             channels,
@@ -246,8 +246,8 @@ impl<'a> FiringBlockD32<'a> {
 impl<'a> FiringLike for FiringBlockD32<'a> {
     type Point<'p> = ChannelRefD<'p> where Self: 'p;
 
-    fn start_time(&self) -> Duration {
-        self.time
+    fn start_toh(&self) -> Duration {
+        self.toh
     }
 
     fn num_points(&self) -> usize {

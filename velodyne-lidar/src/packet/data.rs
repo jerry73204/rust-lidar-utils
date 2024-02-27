@@ -10,7 +10,6 @@ use crate::{
     Config16, Config32,
 };
 use anyhow::{ensure, Result};
-use chrono::NaiveDateTime;
 use itertools::{chain, izip, Itertools as _};
 use measurements::Angle;
 use std::{f64::consts::PI, iter, mem, time::Duration};
@@ -114,7 +113,7 @@ pub struct DataPacket {
     /// Sensor data.
     pub blocks: [Block; BLOCKS_PER_PACKET],
     /// Timestamp in microseconds.
-    pub timestamp: u32,
+    pub toh: u32,
     /// Indicates single return mode or dual return mode.
     pub return_mode: ReturnMode,
     /// Sensor model.
@@ -139,15 +138,8 @@ impl DataPacket {
         Ok(packet)
     }
 
-    /// Construct [NaiveDateTime](chrono::NaiveDateTime) from packet timestamp.
-    pub fn datetime(&self) -> NaiveDateTime {
-        let secs = self.timestamp / 1_000_000;
-        let nsecs = (self.timestamp % 1_000_000) * 1000;
-        NaiveDateTime::from_timestamp_opt(secs as i64, nsecs).unwrap()
-    }
-
-    pub fn time(&self) -> Duration {
-        Duration::from_micros(self.timestamp as u64)
+    pub fn toh(&self) -> Duration {
+        Duration::from_micros(self.toh as u64)
     }
 
     pub fn try_format(&self) -> Option<Format> {
@@ -181,7 +173,7 @@ impl DataPacket {
         &self,
     ) -> impl Iterator<Item = FiringBlockS16<'_>> + Clone + Sync + Send {
         let block_period = FIRING_PERIOD.mul_f64(2.0);
-        let times = iter::successors(Some(self.time()), move |prev| Some(*prev + block_period));
+        let tohs = iter::successors(Some(self.toh()), move |prev| Some(*prev + block_period));
         let firing_azimuths = {
             let block_azimuths: Vec<_> = self.blocks.iter().map(|block| block.azimuth()).collect();
             let block_azimuth_diffs: Vec<_> = block_azimuths
@@ -203,15 +195,15 @@ impl DataPacket {
             })
         };
 
-        izip!(times, firing_azimuths, &self.blocks).flat_map(
-            move |(block_time, [former_azimuth, latter_azimuth], block)| {
-                let former_time = block_time;
-                let latter_time = former_time + FIRING_PERIOD;
+        izip!(tohs, firing_azimuths, &self.blocks).flat_map(
+            move |(block_toh, [former_azimuth, latter_azimuth], block)| {
+                let former_toh = block_toh;
+                let latter_toh = former_toh + FIRING_PERIOD;
 
                 let (former_channels, latter_channels) = block.channels.split_at(16);
 
                 let former = FiringBlockS16 {
-                    time: former_time,
+                    toh: former_toh,
                     azimuth_range: former_azimuth,
                     block,
                     channels: former_channels
@@ -219,7 +211,7 @@ impl DataPacket {
                         .unwrap_or_else(|_| unreachable!()),
                 };
                 let latter = FiringBlockS16 {
-                    time: latter_time,
+                    toh: latter_toh,
                     azimuth_range: latter_azimuth,
                     block,
                     channels: latter_channels
@@ -236,7 +228,7 @@ impl DataPacket {
         &self,
     ) -> impl Iterator<Item = FiringBlockD16<'_>> + Clone + Sync + Send {
         let block_period = FIRING_PERIOD.mul_f64(2.0);
-        let times = iter::successors(Some(self.time()), move |prev| Some(*prev + block_period));
+        let tohs = iter::successors(Some(self.toh()), move |prev| Some(*prev + block_period));
         let firing_azimuths = {
             let block_azimuths: Vec<_> = self
                 .blocks
@@ -263,22 +255,22 @@ impl DataPacket {
             })
         };
 
-        izip!(times, firing_azimuths, self.blocks.chunks(2)).flat_map(
-            |(block_time, [former_azimuth, latter_azimuth], block_pair)| {
+        izip!(tohs, firing_azimuths, self.blocks.chunks(2)).flat_map(
+            |(block_toh, [former_azimuth, latter_azimuth], block_pair)| {
                 let [block_strongest, block_last] = match block_pair {
                     [first, second] => [first, second],
                     _ => unreachable!(),
                 };
 
-                let former_time = block_time;
-                let latter_time = former_time + FIRING_PERIOD;
+                let former_toh = block_toh;
+                let latter_toh = former_toh + FIRING_PERIOD;
 
                 let (former_strongest, latter_strongest) = block_strongest.channels.split_at(16);
                 let (former_last, latter_last) = block_last.channels.split_at(16);
 
                 [
                     FiringBlockD16 {
-                        time: former_time,
+                        toh: former_toh,
                         azimuth_range: former_azimuth,
                         block_strongest,
                         block_last,
@@ -290,7 +282,7 @@ impl DataPacket {
                         },
                     },
                     FiringBlockD16 {
-                        time: latter_time,
+                        toh: latter_toh,
                         azimuth_range: latter_azimuth,
                         block_strongest,
                         block_last,
@@ -309,7 +301,7 @@ impl DataPacket {
     pub fn firing_block_iter_s32(
         &self,
     ) -> impl Iterator<Item = FiringBlockS32<'_>> + Clone + Sync + Send {
-        let times = iter::successors(Some(self.time()), move |prev| Some(*prev + FIRING_PERIOD));
+        let tohs = iter::successors(Some(self.toh()), move |prev| Some(*prev + FIRING_PERIOD));
         let azimuths = {
             let block_azimuths: Vec<_> = self.blocks.iter().map(|block| block.azimuth()).collect();
             let block_azimuth_diffs: Vec<_> = block_azimuths
@@ -330,12 +322,12 @@ impl DataPacket {
             })
         };
 
-        izip!(times, azimuths, &self.blocks).map(move |(block_time, azimuth_range, block)| {
-            let former_time = block_time;
-            let latter_time = former_time + FIRING_PERIOD;
+        izip!(tohs, azimuths, &self.blocks).map(move |(block_toh, azimuth_range, block)| {
+            let former_toh = block_toh;
+            let latter_toh = former_toh + FIRING_PERIOD;
 
             FiringBlockS32 {
-                time: latter_time,
+                toh: latter_toh,
                 azimuth_range,
                 block,
                 channels: &block.channels,
@@ -346,7 +338,7 @@ impl DataPacket {
     pub fn firing_block_iter_d32(
         &self,
     ) -> impl Iterator<Item = FiringBlockD32<'_>> + Clone + Sync + Send {
-        let times = iter::successors(Some(self.time()), move |prev| Some(*prev + FIRING_PERIOD));
+        let tohs = iter::successors(Some(self.toh()), move |prev| Some(*prev + FIRING_PERIOD));
         let azimuths = {
             let azimuths: Vec<_> = self
                 .blocks
@@ -370,15 +362,15 @@ impl DataPacket {
             )
         };
 
-        izip!(times, azimuths, self.blocks.chunks(2)).map(
-            move |(block_time, azimuth_range, chunk)| {
+        izip!(tohs, azimuths, self.blocks.chunks(2)).map(
+            move |(block_toh, azimuth_range, chunk)| {
                 let [block_strongest, block_last] = match chunk {
                     [first, second] => [first, second],
                     _ => unreachable!(),
                 };
 
                 FiringBlockD32 {
-                    time: block_time,
+                    toh: block_toh,
                     azimuth_range,
                     block_strongest,
                     block_last,
