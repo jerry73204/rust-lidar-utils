@@ -5,8 +5,12 @@ use super::{
     consts::PIXELS_PER_COLUMN,
     packet::{Column, Packet},
 };
-use crate::{common::*, utils::AngleExt as _};
-use std::f64::consts::PI;
+use crate::utils::AngleExt as _;
+use anyhow::{ensure, Result};
+use itertools::izip;
+use measurements::{Angle, Length};
+use num_traits::Float;
+use std::{f64::consts::PI, time::Duration};
 
 fn spherical_to_xyz(range: Length, azimuth_angle: Angle, altitude_angle: Angle) -> [Length; 3] {
     let x = range * altitude_angle.sin() * azimuth_angle.cos();

@@ -1,5 +1,4 @@
 use crate::{
-    common::*,
     consts::{AZIMUTH_COUNT_PER_REV, BLOCKS_PER_PACKET, CHANNELS_PER_BLOCK, FIRING_PERIOD},
     types::{
         channel_array::ChannelArrayDRef,
@@ -10,7 +9,11 @@ use crate::{
     utils::AngleExt as _,
     Config16, Config32,
 };
-use std::f64::consts::PI;
+use anyhow::{ensure, Result};
+use chrono::NaiveDateTime;
+use itertools::{chain, izip, Itertools as _};
+use measurements::Angle;
+use std::{f64::consts::PI, iter, mem, time::Duration};
 
 /// Represents the block index in range from 0 to 31, or from 32 to 63.
 #[repr(u16)]
@@ -140,7 +143,7 @@ impl DataPacket {
     pub fn datetime(&self) -> NaiveDateTime {
         let secs = self.timestamp / 1_000_000;
         let nsecs = (self.timestamp % 1_000_000) * 1000;
-        NaiveDateTime::from_timestamp_opt(secs as i64, nsecs as u32).unwrap()
+        NaiveDateTime::from_timestamp_opt(secs as i64, nsecs).unwrap()
     }
 
     pub fn time(&self) -> Duration {

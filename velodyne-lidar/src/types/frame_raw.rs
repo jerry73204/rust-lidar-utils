@@ -5,7 +5,6 @@ use super::{
     firing_raw::{FiringRaw, FiringRawRef},
 };
 use crate::{
-    common::*,
     packet::Channel,
     traits::{BoxIterator, PointField},
     types::{
@@ -14,6 +13,7 @@ use crate::{
         format::FormatKind,
     },
 };
+use itertools::izip;
 
 pub type FrameRaw = FormatKind<FrameRawS16, FrameRawS32, FrameRawD16, FrameRawD32>;
 

@@ -71,7 +71,7 @@ fn ouster_frame_converter() -> Result<()> {
     while let Ok(packet) = cap.next_packet() {
         let slice = &packet.data[UDP_HEADER_SIZE..];
         let lidar_packet = OusterPacket::from_slice(slice)?;
-        let new_frames = frame_converter.push_packet(&lidar_packet)?;
+        let new_frames = frame_converter.push_packet(lidar_packet)?;
         frames.extend(new_frames);
     }
 

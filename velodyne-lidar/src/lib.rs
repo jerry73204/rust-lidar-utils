@@ -32,7 +32,6 @@
 //! ```
 
 pub mod batcher;
-mod common;
 pub mod config;
 pub mod consts;
 mod convert;

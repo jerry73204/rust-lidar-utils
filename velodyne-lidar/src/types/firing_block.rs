@@ -1,7 +1,6 @@
 //! Firings of block references.
 
 use crate::{
-    common::*,
     convert::{
         firing_block_to_xyz_d16, firing_block_to_xyz_d32, firing_block_to_xyz_s16,
         firing_block_to_xyz_s32,
@@ -16,7 +15,9 @@ use crate::{
     },
     Config, Config16, Config32,
 };
-use anyhow::anyhow;
+use anyhow::{anyhow, Result};
+use measurements::Angle;
+use std::{ops::Range, time::Duration};
 
 use super::channel_array::{ChannelArrayD, ChannelArrayDRef, ChannelArraySRef};
 

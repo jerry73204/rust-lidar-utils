@@ -1,6 +1,9 @@
 //! Defines a set of Velodyne LiDAR configurations.
 
-use crate::{common::*, consts, packet::ReturnMode};
+use crate::{consts, packet::ReturnMode};
+use anyhow::Result;
+use itertools::izip;
+use measurements::{Angle, Length};
 
 pub use config_::*;
 mod config_ {

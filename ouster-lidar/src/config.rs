@@ -4,8 +4,12 @@ use super::{
     consts::{OS_1_BEAM_ALTITUDE_DEGREES, OS_1_BEAM_AZIMUTH_DEGREE_CORRECTIONS, PIXELS_PER_COLUMN},
     enums::LidarMode,
 };
-use crate::common::*;
+use anyhow::Result;
+use derivative::Derivative;
+use noisy_float::types::R64;
+use serde::{Deserialize, Serialize};
 pub use serde_big_array::BigArray;
+use std::{fs::File, io::prelude::*, mem, path::Path};
 
 /// A serializable struct that represents a Ouster sensor configuration.
 #[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Derivative)]

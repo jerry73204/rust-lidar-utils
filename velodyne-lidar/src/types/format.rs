@@ -1,10 +1,12 @@
 //! Define the formats of point arrangements.
 
 use crate::{
-    common::*,
     packet::{ProductID, ReturnMode},
     traits::{AzimuthRange, PointField},
 };
+use anyhow::Result;
+use measurements::Angle;
+use std::ops::Range;
 
 /// An enumeration of point arrangement formats.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

@@ -1,6 +1,7 @@
 //! Useful enums for Ouster sensors.
 
-use crate::common::*;
+use serde::{Deserialize, Serialize};
+use std::fmt::{self, Display, Formatter};
 
 /// The mode includes number of vertical scans in one revolution and rotation frequency (Hz).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

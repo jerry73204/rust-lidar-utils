@@ -1,7 +1,6 @@
 //! Group consecutive elements.
 
 use crate::{
-    common::*,
     traits::AzimuthRange,
     types::{
         firing_block::{FiringBlockD16, FiringBlockD32, FiringBlockS16, FiringBlockS32},
@@ -9,6 +8,7 @@ use crate::{
         format::FormatKind,
     },
 };
+use std::mem;
 
 /// A helper that groups consecutive elements into frames according to
 /// their azimuth ranges.

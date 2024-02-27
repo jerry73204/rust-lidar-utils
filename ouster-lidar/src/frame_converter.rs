@@ -6,7 +6,8 @@ use super::{
     packet::{Column, Packet},
     pcd_converter::{Point, PointCloudConverter},
 };
-use crate::common::*;
+use anyhow::{anyhow, bail, Result};
+use std::{cmp::Ordering, ops::Range};
 
 /// A frame is a collection of points gathered in one
 /// LIDAR rotation.
@@ -130,14 +131,14 @@ impl FrameConverter {
 
                         let output_frames = first_frame_opt
                             .into_iter()
-                            .chain(second_frame_opt.into_iter())
+                            .chain(second_frame_opt)
                             .collect();
 
                         (new_state, output_frames)
                     }
                     Ordering::Equal => {
                         if state.last_mid >= curr_mid {
-                            let error = format_err!(
+                            let error = anyhow!(
                                 "Measurement ID of received column is less than that of previous column"
                             );
                             return Err(error);
@@ -170,7 +171,7 @@ impl FrameConverter {
                         (new_state, output_frames)
                     }
                     Ordering::Greater => {
-                        let error = format_err!(
+                        let error = anyhow!(
                             "Frame ID of received column is less than that of previous column"
                         );
                         return Err(error);

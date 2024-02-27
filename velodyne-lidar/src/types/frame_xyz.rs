@@ -96,7 +96,6 @@ mod frame_kind {
 pub use frame_types::*;
 mod frame_types {
     use crate::{
-        common::*,
         traits::PointField,
         types::{
             firing_xyz::{FiringXyzD16, FiringXyzD32, FiringXyzS16, FiringXyzS32},

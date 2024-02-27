@@ -1,12 +1,11 @@
 //! Firings in 3D Cartesian coordinates.
 
-use crate::{
-    common::*,
-    types::{
-        format::FormatKind,
-        point::{PointD, PointS},
-    },
+use crate::types::{
+    format::FormatKind,
+    point::{PointD, PointS},
 };
+use measurements::Angle;
+use std::{ops::Range, time::Duration};
 
 macro_rules! declare_firing_xyz {
     ($name:ident, $size:expr, $point:path) => {

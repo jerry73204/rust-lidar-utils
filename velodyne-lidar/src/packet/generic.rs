@@ -1,5 +1,5 @@
 use super::{DataPacket, PositionPacket};
-use crate::common::*;
+use anyhow::{bail, Result};
 
 /// An enumeration of data packet and position packet.
 #[derive(Debug, Clone, PartialEq, Eq)]

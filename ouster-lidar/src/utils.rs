@@ -1,5 +1,5 @@
-use crate::common::*;
-use std::f64::consts::PI;
+use measurements::Angle;
+use std::{f64::consts::PI, time::Duration};
 
 pub(crate) trait AngleExt {
     fn sin(self) -> f64;

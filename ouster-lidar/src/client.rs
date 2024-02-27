@@ -4,8 +4,17 @@ use super::{
     consts::PIXELS_PER_COLUMN,
     enums::{LidarMode, MultipurposeIoMode, NmeaBaudRate, OnOffMode, Polarity, TimestampMode},
 };
-use crate::common::*;
-pub use serde_big_array::BigArray;
+use anyhow::{anyhow, ensure, Result};
+use derivative::Derivative;
+use noisy_float::types::R64;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_big_array::BigArray;
+use std::{
+    fmt::Display,
+    io::{prelude::*, BufReader, LineWriter, Lines},
+    net::{Ipv4Addr, TcpStream, ToSocketAddrs},
+    time::Duration,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ConfigText {
@@ -160,7 +169,7 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| anyhow!("Unexpected end of stream"))??;
         let config = serde_json::from_str(&line)?;
         Ok(config)
     }
@@ -170,7 +179,7 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| anyhow!("Unexpected end of stream"))??;
         let config = serde_json::from_str(&line)?;
         Ok(config)
     }
@@ -180,7 +189,7 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| anyhow!("Unexpected end of stream"))??;
         let config = serde_json::from_str(&line)?;
         Ok(config)
     }
@@ -190,7 +199,7 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| anyhow!("Unexpected end of stream"))??;
         let config = serde_json::from_str(&line)?;
         Ok(config)
     }
@@ -200,7 +209,7 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| anyhow!("Unexpected end of stream"))??;
         let config = serde_json::from_str(&line)?;
         Ok(config)
     }
@@ -210,7 +219,7 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| anyhow!("Unexpected end of stream"))??;
         ensure!(line == "reinitialize", "Unexpected response {:?}", line);
         Ok(())
     }
@@ -220,7 +229,7 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| anyhow!("Unexpected end of stream"))??;
         ensure!(line == "write_config_txt", "Unexpected response {:?}", line);
         Ok(())
     }
@@ -266,7 +275,7 @@ impl CommandClient {
         let line = self
             .reader
             .next()
-            .ok_or_else(|| format_err!("Unexpected end of stream"))??;
+            .ok_or_else(|| anyhow!("Unexpected end of stream"))??;
         ensure!(line == "set_config_param", "Unexpected response {:?}", line);
         Ok(())
     }

@@ -1,4 +1,5 @@
-use crate::common::*;
+use anyhow::{ensure, Result};
+use std::mem;
 
 /// Represents a position packet from Velodyne sensor.
 #[repr(C, packed)]

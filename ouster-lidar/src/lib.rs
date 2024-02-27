@@ -1,7 +1,6 @@
 //! Ouster packet format types, configs and converters.
 
 pub mod client;
-mod common;
 pub mod config;
 pub mod consts;
 pub mod enums;
